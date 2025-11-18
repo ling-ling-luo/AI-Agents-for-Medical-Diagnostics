@@ -1,8 +1,13 @@
 langchain
-langchain-community 
+langchain-community
 langchain-openai
 langchain-experimental
 python-dotenv
 langchain_ollama
 reportlab
 dotenv
+fastapi
+uvicorn[standard]
+pydantic
+sqlalchemy
+alembic

@@ -1,3 +1,4 @@
+import os
 from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 
@@ -6,10 +7,17 @@ class Agent:
         self.medical_report = medical_report
         self.role = role
         self.extra_info = extra_info
-        # Initialize the prompt based on role and other info
+        # 根据角色和额外信息初始化提示模板
         self.prompt_template = self.create_prompt_template()
-        # Initialize the model
-        self.model = ChatOpenAI(temperature=0, model="gpt-5")
+        # 使用自定义网关 / 环境变量配置初始化大模型
+        base_url = os.getenv("OPENAI_BASE_URL")
+        # 从环境变量读取模型名称，默认为 gemini-2.5-flash
+        model_name = os.getenv("LLM_MODEL", "gemini-2.5-flash")
+        self.model = ChatOpenAI(
+            temperature=0,
+            model=model_name,
+            base_url=base_url,
+        )
 
     def create_prompt_template(self):
         if self.role == "MultidisciplinaryTeam":
@@ -54,16 +62,23 @@ class Agent:
         return PromptTemplate.from_template(templates)
     
     def run(self):
-        print(f"{self.role} is running...")
+        print(f"{self.role} 智能体开始运行...")
         prompt = self.prompt_template.format(medical_report=self.medical_report)
         try:
             response = self.model.invoke(prompt)
-            return response.content
+            result = response.content
+            if not result or not result.strip():
+                print(f"⚠️  {self.role} 返回了空结果")
+                return None
+            print(f"✓ {self.role} 成功返回结果（长度: {len(result)} 字符）")
+            return result
         except Exception as e:
-            print("Error occurred:", e)
+            print(f"❌ {self.role} 运行过程中发生错误: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
             return None
 
-# Define specialized agent classes
+# 定义专科智能体类
 class Cardiologist(Agent):
     def __init__(self, medical_report):
         super().__init__(medical_report, "Cardiologist")
