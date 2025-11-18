@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, CheckCircle, FileText, Heart, Brain, Wind, Sparkles, Download, Star } from 'lucide-react';
+import { ChevronDown, ChevronUp, CheckCircle, FileText, Heart, Brain, Wind, Download } from 'lucide-react';
 import Markdown from 'markdown-to-jsx';
 
 interface DiagnosisResultProps {
@@ -20,7 +20,7 @@ export const DiagnosisResult = ({ result }: DiagnosisResultProps) => {
 
   // 提取专科报告
   const extractSpecialistReports = (markdown: string) => {
-    const reports: { title: string; content: string; icon: any; gradient: string; emoji: string }[] = [];
+    const reports: { title: string; content: string; icon: any; bgColor: string; borderColor: string }[] = [];
 
     // 心脏科
     const cardioMatch = markdown.match(/### Cardiologist[\s\S]*?(?=###|\Z)/);
@@ -29,8 +29,8 @@ export const DiagnosisResult = ({ result }: DiagnosisResultProps) => {
         title: '心脏科',
         content: cardioMatch[0],
         icon: Heart,
-        gradient: 'from-red-500 via-pink-500 to-rose-500',
-        emoji: '❤️'
+        bgColor: 'bg-red-50',
+        borderColor: 'border-red-200'
       });
     }
 
@@ -41,8 +41,8 @@ export const DiagnosisResult = ({ result }: DiagnosisResultProps) => {
         title: '心理学',
         content: psychMatch[0],
         icon: Brain,
-        gradient: 'from-purple-500 via-indigo-500 to-blue-500',
-        emoji: '🧠'
+        bgColor: 'bg-purple-50',
+        borderColor: 'border-purple-200'
       });
     }
 
@@ -53,8 +53,8 @@ export const DiagnosisResult = ({ result }: DiagnosisResultProps) => {
         title: '呼吸科',
         content: pulmoMatch[0],
         icon: Wind,
-        gradient: 'from-cyan-500 via-blue-500 to-indigo-500',
-        emoji: '💨'
+        bgColor: 'bg-cyan-50',
+        borderColor: 'border-cyan-200'
       });
     }
 
@@ -65,153 +65,121 @@ export const DiagnosisResult = ({ result }: DiagnosisResultProps) => {
   const specialistReports = extractSpecialistReports(result);
 
   return (
-    <div className="space-y-8">
-      {/* 超级彩色诊断完成提示 */}
-      <div className="relative group">
-        <div className="absolute inset-0 bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 rounded-3xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity animate-pulse"></div>
-        <div className="relative bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 rounded-3xl shadow-2xl p-8 border-4 border-white">
-          <div className="flex items-center">
-            <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mr-6 shadow-2xl transform rotate-12 group-hover:rotate-0 transition-transform">
-              <CheckCircle className="w-10 h-10 text-green-600" />
+    <div className="space-y-6 fade-in">
+      {/* 诊断完成提示 */}
+      <div className="card bg-green-50 border-green-200 overflow-hidden">
+        <div className="bg-gradient-to-r from-green-500 to-green-600 p-6">
+          <div className="flex items-center space-x-3 text-white">
+            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-6 h-6" />
             </div>
-            <div className="flex-1">
-              <h2 className="text-4xl font-black text-white mb-2 drop-shadow-lg">
-                ✅ AI 诊断已完成！
-              </h2>
-              <div className="flex items-center gap-3">
-                <span className="px-4 py-2 bg-white/30 backdrop-blur-lg rounded-full text-white font-bold text-sm border-2 border-white/50">
-                  <Sparkles className="w-4 h-4 inline mr-1" />
-                  多智能体协同分析
-                </span>
-                <span className="px-4 py-2 bg-white/30 backdrop-blur-lg rounded-full text-white font-bold text-sm border-2 border-white/50">
-                  <Star className="w-4 h-4 inline mr-1" />
-                  报告已生成
-                </span>
-              </div>
+            <div>
+              <h2 className="text-xl font-semibold">AI 诊断已完成</h2>
+              <p className="text-sm text-green-100">多智能体协同分析报告已生成</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 超彩色诊断摘要 */}
+      {/* 综合诊断摘要 */}
       {summary && (
-        <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 rounded-3xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity"></div>
-          <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-white">
-            <div className="bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 p-8">
-              <div className="flex items-center text-white">
-                <div className="w-16 h-16 bg-white/30 backdrop-blur-lg rounded-2xl flex items-center justify-center mr-4 shadow-xl">
-                  <FileText className="w-8 h-8" />
-                </div>
-                <div>
-                  <h3 className="text-3xl font-black drop-shadow-lg">⭐ 综合诊断摘要</h3>
-                  <p className="text-white/90 font-semibold mt-1">AI 智能体协同分析结果</p>
-                </div>
-              </div>
+        <div className="card overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-5">
+            <div className="flex items-center space-x-3 text-white">
+              <FileText className="w-6 h-6" />
+              <h3 className="text-lg font-semibold">综合诊断摘要</h3>
             </div>
-            <div className="p-8 bg-gradient-to-br from-yellow-50 to-orange-50">
-              <div className="prose prose-lg max-w-none text-gray-800">
-                <Markdown>{summary}</Markdown>
-              </div>
+          </div>
+          <div className="p-6 bg-blue-50">
+            <div className="prose prose-lg max-w-none">
+              <Markdown>{summary}</Markdown>
             </div>
           </div>
         </div>
       )}
 
-      {/* 专科报告 - 超级彩色可折叠 */}
-      <div className="relative group">
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 rounded-3xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity"></div>
-        <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-white">
-          <div
-            className="cursor-pointer bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 p-8 hover:from-purple-600 hover:via-pink-600 hover:to-blue-600 transition-all"
-            onClick={() => setIsExpanded(!isExpanded)}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center text-white">
-                <div className="w-16 h-16 bg-white/30 backdrop-blur-lg rounded-2xl flex items-center justify-center mr-4 shadow-xl">
-                  <Sparkles className="w-8 h-8" />
-                </div>
-                <div>
-                  <h3 className="text-3xl font-black drop-shadow-lg">🤖 专科智能体详细报告</h3>
-                  <p className="text-white/90 font-semibold mt-1">
-                    {specialistReports.length} 个专科智能体分析 · 点击{isExpanded ? '收起' : '展开'}
-                  </p>
-                </div>
-              </div>
-              <div className="w-14 h-14 bg-white/30 backdrop-blur-lg rounded-full flex items-center justify-center shadow-xl">
-                {isExpanded ? (
-                  <ChevronUp className="w-8 h-8 text-white" />
-                ) : (
-                  <ChevronDown className="w-8 h-8 text-white" />
-                )}
+      {/* 专科报告 */}
+      <div className="card overflow-hidden">
+        <div
+          className="cursor-pointer bg-gradient-to-r from-gray-700 to-gray-800 p-5 hover:from-gray-800 hover:to-gray-900 transition-colors"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          <div className="flex items-center justify-between text-white">
+            <div className="flex items-center space-x-3">
+              <Brain className="w-6 h-6" />
+              <div>
+                <h3 className="text-lg font-semibold">专科智能体详细报告</h3>
+                <p className="text-sm text-gray-300">
+                  {specialistReports.length} 个专科智能体分析
+                </p>
               </div>
             </div>
-          </div>
-
-          {isExpanded && (
-            <div className="p-8 space-y-6 bg-gradient-to-br from-gray-50 to-white">
-              {specialistReports.map((report, index) => {
-                const Icon = report.icon;
-                return (
-                  <div key={index} className="group relative transform hover:scale-105 transition-all">
-                    <div className={`absolute inset-0 bg-gradient-to-r ${report.gradient} rounded-3xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity`}></div>
-                    <div className="relative bg-white rounded-3xl overflow-hidden shadow-xl border-4 border-white">
-                      <div className={`bg-gradient-to-r ${report.gradient} p-6`}>
-                        <div className="flex items-center text-white">
-                          <div className="w-14 h-14 bg-white/30 backdrop-blur-lg rounded-2xl flex items-center justify-center mr-4 shadow-xl transform -rotate-6 group-hover:rotate-0 transition-transform">
-                            <Icon className="w-7 h-7" />
-                          </div>
-                          <div>
-                            <h4 className="text-2xl font-black drop-shadow-lg">
-                              {report.emoji} {report.title}智能体报告
-                            </h4>
-                            <p className="text-white/90 font-semibold text-sm mt-1">专科分析报告</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="p-6 bg-gradient-to-br from-gray-50 to-white">
-                        <div className="prose prose-base max-w-none text-gray-700">
-                          <Markdown>{report.content}</Markdown>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-
-              {specialistReports.length === 0 && (
-                <div className="text-center py-12">
-                  <div className="w-20 h-20 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <FileText className="w-10 h-10 text-gray-500" />
-                  </div>
-                  <p className="text-gray-500 text-lg font-semibold">暂无专科报告数据</p>
-                </div>
+            <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
+              {isExpanded ? (
+                <ChevronUp className="w-6 h-6" />
+              ) : (
+                <ChevronDown className="w-6 h-6" />
               )}
             </div>
-          )}
+          </div>
         </div>
+
+        {isExpanded && (
+          <div className="p-6 space-y-5 bg-gray-50">
+            {specialistReports.map((report, index) => {
+              const Icon = report.icon;
+              return (
+                <div
+                  key={index}
+                  className={`card ${report.bgColor} ${report.borderColor} overflow-hidden slide-in`}
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <div className="p-5">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className={`w-10 h-10 bg-white rounded-lg flex items-center justify-center border ${report.borderColor}`}>
+                        <Icon className="w-5 h-5 text-gray-700" />
+                      </div>
+                      <h4 className="text-lg font-semibold text-gray-900">
+                        {report.title}智能体报告
+                      </h4>
+                    </div>
+                    <div className="prose max-w-none">
+                      <Markdown>{report.content}</Markdown>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            {specialistReports.length === 0 && (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <FileText className="w-8 h-8 text-gray-400" />
+                </div>
+                <p className="text-gray-600">暂无专科报告数据</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* 超彩色下载按钮 */}
-      <div className="relative group">
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 rounded-3xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity"></div>
-        <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-white">
-          <div className="p-8 bg-gradient-to-br from-indigo-50 to-purple-50">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center mr-4 shadow-xl">
-                  <FileText className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h4 className="text-2xl font-black text-gray-800">📄 完整诊断报告</h4>
-                  <p className="text-gray-600 font-semibold mt-1">包含所有智能体的详细分析结果</p>
-                </div>
+      {/* 导出报告 */}
+      <div className="card overflow-hidden">
+        <div className="p-6 bg-gradient-to-r from-gray-50 to-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <FileText className="w-6 h-6 text-blue-600" />
               </div>
-              <button className="px-8 py-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white rounded-2xl hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 transition-all shadow-xl hover:shadow-2xl font-black text-lg transform hover:scale-105 flex items-center">
-                <Download className="w-6 h-6 mr-2" />
-                导出 PDF
-              </button>
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900">完整诊断报告</h4>
+                <p className="text-sm text-gray-600">包含所有智能体的详细分析结果</p>
+              </div>
             </div>
+            <button className="btn-primary inline-flex items-center">
+              <Download className="w-4 h-4 mr-2" />
+              导出 PDF
+            </button>
           </div>
         </div>
       </div>
