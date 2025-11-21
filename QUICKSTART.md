@@ -37,7 +37,7 @@ source venv/bin/activate  # Linux/macOS
 # venv\Scripts\activate  # Windows
 
 # 启动 FastAPI 服务
-python -m uvicorn api.main:app --reload --port 8000
+python3 -m uvicorn api.main:app --reload --port 8000
 ```
 
 ✅ **成功标志：**

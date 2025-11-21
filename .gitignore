@@ -115,3 +115,24 @@ datasets/
 results/
 outputs/
 logs/
+
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# Frontend build outputs
+frontend/dist/
+frontend/build/
+frontend/.vite/
+frontend-next/dist/
+frontend-next/build/
+frontend-next/.next/
+frontend-next/.vite/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3

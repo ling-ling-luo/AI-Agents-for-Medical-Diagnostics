@@ -47,7 +47,7 @@ export const DiagnosisResult = ({ result }: DiagnosisResultProps) => {
     }
 
     // 呼吸科
-    const pulmoMatch = markdown.match(/### Pulmonologist[\s\S]*?(?=###|\Z)/);
+    const pulmoMatch = markdown.match(/### Pulmonologist[\s\S]*$/);
     if (pulmoMatch) {
       reports.push({
         title: '呼吸科',
