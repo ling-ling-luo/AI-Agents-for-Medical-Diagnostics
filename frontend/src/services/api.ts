@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Case, CaseDetail, DiagnosisResponse, CreateCaseRequest, CreateCaseResponse } from '../types';
+import type { Case, CaseDetail, DiagnosisResponse, CreateCaseRequest, CreateCaseResponse, UpdateCaseRequest, DiagnosisHistoryResponse, DiagnosisDetail } from '../types';
 
 // 配置 API 基础 URL - 开发环境指向 FastAPI 后端
 const API_BASE_URL = 'http://localhost:8000';
@@ -10,6 +10,18 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+export interface ImportCasesResponse {
+  success_count: number;
+  failed_count: number;
+  total_count: number;
+  failed_cases: Array<{
+    index: number;
+    patient_id: string;
+    error: string;
+  }>;
+  message: string;
+}
 
 export const caseApi = {
   // 获取病例列表
@@ -35,6 +47,50 @@ export const caseApi = {
   // 新增病例
   createCase: async (data: CreateCaseRequest): Promise<CreateCaseResponse> => {
     const response = await api.post<CreateCaseResponse>('/api/cases', data);
+    return response.data;
+  },
+
+  // 批量导入病例
+  importCases: async (file: File): Promise<ImportCasesResponse> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await axios.post<ImportCasesResponse>(
+      `${API_BASE_URL}/api/cases/import`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data;
+  },
+
+  // 删除病例
+  deleteCase: async (caseId: number): Promise<{ message: string; deleted_case_id: number }> => {
+    const response = await api.delete(`/api/cases/${caseId}`);
+    return response.data;
+  },
+
+  // 更新病例
+  updateCase: async (caseId: number, data: UpdateCaseRequest): Promise<CaseDetail> => {
+    const response = await api.put<CaseDetail>(`/api/cases/${caseId}`, data);
+    return response.data;
+  },
+
+  // 获取诊断历史
+  getDiagnosisHistory: async (caseId: number, includeFull: boolean = false): Promise<DiagnosisHistoryResponse> => {
+    const response = await api.get<DiagnosisHistoryResponse>(
+      `/api/cases/${caseId}/diagnoses`,
+      { params: { include_full: includeFull } }
+    );
+    return response.data;
+  },
+
+  // 获取单个诊断详情
+  getDiagnosisDetail: async (caseId: number, diagnosisId: number): Promise<DiagnosisDetail> => {
+    const response = await api.get<DiagnosisDetail>(`/api/cases/${caseId}/diagnoses/${diagnosisId}`);
     return response.data;
   },
 };

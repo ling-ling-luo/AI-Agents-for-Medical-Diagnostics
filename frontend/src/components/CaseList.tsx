@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, User, Stethoscope, Activity, Search, RefreshCw, Plus } from 'lucide-react';
+import { FileText, User, Stethoscope, Activity, Search, RefreshCw, Plus, Upload } from 'lucide-react';
 import type { Case } from '../types';
 import { caseApi } from '../services/api';
 import { Loading } from './Loading';
+import { Dropdown } from './Dropdown';
 
 export const CaseList = () => {
   const [cases, setCases] = useState<Case[]>([]);
@@ -32,6 +33,31 @@ export const CaseList = () => {
 
   const handleRunDiagnosis = (caseId: number) => {
     navigate(`/case/${caseId}`);
+  };
+
+  const handleEditCase = (caseId: number) => {
+    navigate(`/edit/${caseId}`);
+  };
+
+  const handleViewHistory = (caseId: number) => {
+    navigate(`/history/${caseId}`);
+  };
+
+  const handleDeleteCase = async (caseId: number) => {
+    try {
+      setError(null);
+      await caseApi.deleteCase(caseId);
+
+      // 删除成功后从列表中移除该病例
+      setCases(prevCases => prevCases.filter(c => c.id !== caseId));
+    } catch (err: any) {
+      setError(err.response?.data?.detail || '删除失败，请重试');
+      console.error('Error deleting case:', err);
+    }
+  };
+
+  const handleImportClick = () => {
+    navigate('/import');
   };
 
   const filteredCases = cases.filter(case_ => {
@@ -74,11 +100,13 @@ export const CaseList = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-white">
-      {/* 顶部导航栏 - 增强质感 */}
+      {/* 顶部导航栏 + 搜索栏 - 固定置顶 */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
         <div className="container-custom py-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          {/* 标题行和搜索栏 */}
+          <div className="flex items-center justify-between gap-6">
+            {/* 左侧：标题 */}
+            <div className="flex items-center gap-3 flex-shrink-0">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow">
                 <Stethoscope className="w-5 h-5 text-white" />
               </div>
@@ -87,41 +115,53 @@ export const CaseList = () => {
                 <p className="text-xs text-gray-500 mt-0.5">共 {cases.length} 个病例</p>
               </div>
             </div>
-            <button
-              onClick={() => navigate('/create')}
-              className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-semibold rounded-xl transition-all flex items-center gap-2 shadow hover:shadow-md whitespace-nowrap min-w-[130px]"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="min-w-max">新增病例</span>
-            </button>
+
+            {/* 中间：搜索栏 */}
+            <div className="flex-1 max-w-2xl">
+              <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm hover:shadow-md transition-shadow focus-within:ring-2 focus-within:ring-blue-400 focus-within:border-blue-400">
+                <Search className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" />
+                <input
+                  type="text"
+                  placeholder="搜索患者姓名、病历号或主诉"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 focus:outline-none"
+                />
+              </div>
+              {searchTerm && (
+                <p className="text-xs text-gray-500 mt-2">
+                  找到 {filteredCases.length} 个匹配结果
+                </p>
+              )}
+            </div>
+
+            {/* 右侧：操作按钮 */}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {/* 导入病例按钮 */}
+              <button
+                onClick={handleImportClick}
+                className="px-5 py-2.5 bg-white border-2 border-blue-500 text-blue-500 hover:bg-blue-50 text-sm font-semibold rounded-xl transition-all flex items-center gap-2 shadow-sm hover:shadow whitespace-nowrap"
+              >
+                <Upload className="w-4 h-4" />
+                <span>导入病例</span>
+              </button>
+
+              {/* 新增病例按钮 */}
+              <button
+                onClick={() => navigate('/create')}
+                className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-semibold rounded-xl transition-all flex items-center gap-2 shadow hover:shadow-md whitespace-nowrap min-w-[130px]"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="min-w-max">新增病例</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="container-custom py-8 flex flex-col gap-12">
-        {/* 搜索栏 - 类似谷歌搜索框设计 */}
-        <div className="relative z-20">
-          <div className="relative max-w-3xl mx-auto">
-            <div className="flex items-center bg-white border border-gray-200 rounded-full px-6 py-4 shadow-md hover:shadow-lg transition-shadow focus-within:ring-2 focus-within:ring-blue-400 focus-within:border-blue-400">
-              <Search className="w-6 h-6 text-gray-400 mr-4 flex-shrink-0" />
-              <input
-                type="text"
-                placeholder="搜索患者姓名、病历号或主诉"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="flex-1 bg-transparent text-lg text-gray-700 placeholder-gray-400 focus:outline-none h-full w-full"
-              />
-            </div>
-            {searchTerm && (
-              <p className="text-sm text-gray-500 mt-4 text-center">
-                找到 {filteredCases.length} 个匹配结果
-              </p>
-            )}
-          </div>
-        </div>
-
+      <main className="container-custom py-8">
         {/* 病例列表 - 增强卡片质感 */}
-        <div className="relative z-0 pt-8">
+        <div className="relative z-0">
           {filteredCases.length === 0 ? (
             <div className="text-center py-20">
               <FileText className="w-14 h-14 text-gray-300 mx-auto mb-3" />
@@ -151,6 +191,30 @@ export const CaseList = () => {
                         </h3>
                         <p className="text-xs text-gray-500 truncate mt-1.5">{case_.patient_id}</p>
                       </div>
+                      {/* 更多操作菜单 */}
+                      <Dropdown
+                        options={[
+                          {
+                            label: '编辑资料',
+                            icon: 'edit',
+                            color: 'gray',
+                            onClick: () => handleEditCase(case_.id),
+                          },
+                          {
+                            label: '查看历史',
+                            icon: 'clock',
+                            color: 'gray',
+                            onClick: () => handleViewHistory(case_.id),
+                          },
+                          {
+                            label: '删除病历',
+                            icon: 'trash',
+                            color: 'red',
+                            onClick: () => handleDeleteCase(case_.id),
+                            needsConfirmation: true,
+                          },
+                        ]}
+                      />
                     </div>
 
                   {/* 患者信息标签 - 增强质感 */}
