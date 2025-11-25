@@ -11,7 +11,7 @@ import './App.css';
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50">
+      <div className="w-full min-h-screen">
         <Routes>
           <Route path="/" element={<CaseList />} />
           <Route path="/case/:caseId" element={<CaseDetail />} />

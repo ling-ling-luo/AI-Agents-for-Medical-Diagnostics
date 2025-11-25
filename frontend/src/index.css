@@ -29,20 +29,40 @@
   --spacing-2xl: 48px;
 }
 
-/* 全局样式 */
+/* 全局样式 - 强制铺满全屏（最高优先级） */
 * {
-  box-sizing: border-box;
+  box-sizing: border-box !important;
   margin: 0;
   padding: 0;
 }
 
+html {
+  width: 100vw !important;
+  height: 100% !important;
+  overflow-x: hidden !important; /* 防止水平滚动条 */
+}
+
 body {
+  width: 100vw !important;
+  height: 100% !important;
+  min-height: 100vh !important; /* 最小高度占满视口 */
   font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--bg-gray);
   color: var(--text-dark);
   line-height: 1.7;
+  overflow-x: hidden !important; /* 防止水平滚动条 */
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* React 根元素必须铺满 */
+#root {
+  width: 100vw !important;
+  min-height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 img {
@@ -959,15 +979,29 @@ main {
   margin: 2rem 0;
 }
 
-/* 响应式容器 */
+/* 响应式容器 - 优化宽度限制 */
 .container-custom {
-  max-width: 1280px;
+  width: 100%; /* 强制占满容器宽度 */
+  max-width: 1440px; /* 增大最大宽度，适配大屏 */
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 1.5rem;
 }
 
 @media (min-width: 768px) {
   .container-custom {
     padding: 0 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-custom {
+    padding: 0 3rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .container-custom {
+    max-width: 1600px; /* 超大屏幕更宽 */
+    padding: 0 4rem;
   }
 }

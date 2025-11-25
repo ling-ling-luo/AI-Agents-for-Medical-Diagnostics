@@ -1,13 +1,86 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, CheckCircle, FileText, Heart, Brain, Wind, Download } from 'lucide-react';
+import { ChevronDown, ChevronUp, CheckCircle, FileText, Heart, Brain, Wind, Download, Info } from 'lucide-react';
 import Markdown from 'markdown-to-jsx';
+import { AgentInfoModal } from './AgentInfoModal';
 
 interface DiagnosisResultProps {
   result: string;
 }
 
+interface AgentInfo {
+  name: string;
+  role: string;
+  description: string;
+  focus: string;
+  task: string;
+  prompt: string;
+  icon: any;
+  color: string;
+}
+
+// 智能体信息配置
+const agentsInfo: Record<string, AgentInfo> = {
+  cardiologist: {
+    name: '心脏科智能体',
+    role: 'Cardiologist',
+    description: '心脏科智能体专注于心血管系统的评估和诊断，能够分析心电图、血液检测、Holter监测结果和超声心动图等数据。',
+    task: '审查患者的心脏检查结果，包括ECG、血液检测、Holter监测结果和超声心动图，识别可能解释患者症状的心脏问题迹象。',
+    focus: '确定是否存在可能在常规检测中被遗漏的心脏问题的微妙迹象，排除任何潜在的心脏疾病，如心律失常或结构异常。',
+    prompt: `Act like a cardiologist. You will receive a medical report of a patient.
+Task: Review the patient's cardiac workup, including ECG, blood tests, Holter monitor results, and echocardiogram.
+Focus: Determine if there are any subtle signs of cardiac issues that could explain the patient's symptoms. Rule out any underlying heart conditions, such as arrhythmias or structural abnormalities, that might be missed on routine testing.
+Recommendation: Provide guidance on any further cardiac testing or monitoring needed to ensure there are no hidden heart-related concerns. Suggest potential management strategies if a cardiac issue is identified.
+Please only return the possible causes of the patient's symptoms and the recommended next steps.
+Medical Report: {medical_report}`,
+    icon: Heart,
+    color: 'bg-gradient-to-br from-red-50 to-pink-50'
+  },
+  psychologist: {
+    name: '心理学智能体',
+    role: 'Psychologist',
+    description: '心理学智能体专注于心理健康评估，能够识别焦虑、抑郁、创伤等心理问题，并提供相应的干预建议。',
+    task: '审查患者报告并提供心理评估，识别可能影响患者福祉的潜在心理健康问题。',
+    focus: '识别任何可能影响患者福祉的潜在心理健康问题，如焦虑、抑郁或创伤，提供应对这些心理健康问题的指导。',
+    prompt: `Act like a psychologist. You will receive a patient's report.
+Task: Review the patient's report and provide a psychological assessment.
+Focus: Identify any potential mental health issues, such as anxiety, depression, or trauma, that may be affecting the patient's well-being.
+Recommendation: Offer guidance on how to address these mental health concerns, including therapy, counseling, or other interventions.
+Please only return the possible mental health issues and the recommended next steps.
+Patient's Report: {medical_report}`,
+    icon: Brain,
+    color: 'bg-gradient-to-br from-purple-50 to-indigo-50'
+  },
+  pulmonologist: {
+    name: '呼吸科智能体',
+    role: 'Pulmonologist',
+    description: '呼吸科智能体专注于呼吸系统疾病的诊断和评估，能够识别哮喘、COPD、肺部感染等呼吸问题。',
+    task: '审查患者报告并提供肺部评估，识别可能影响患者呼吸的潜在呼吸问题。',
+    focus: '识别任何可能影响患者呼吸的潜在呼吸问题，如哮喘、COPD或肺部感染，提供应对这些呼吸问题的指导。',
+    prompt: `Act like a pulmonologist. You will receive a patient's report.
+Task: Review the patient's report and provide a pulmonary assessment.
+Focus: Identify any potential respiratory issues, such as asthma, COPD, or lung infections, that may be affecting the patient's breathing.
+Recommendation: Offer guidance on how to address these respiratory concerns, including pulmonary function tests, imaging studies, or other interventions.
+Please only return the possible respiratory issues and the recommended next steps.
+Patient's Report: {medical_report}`,
+    icon: Wind,
+    color: 'bg-gradient-to-br from-cyan-50 to-blue-50'
+  }
+};
+
 export const DiagnosisResult = ({ result }: DiagnosisResultProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [selectedAgent, setSelectedAgent] = useState<AgentInfo | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleAgentClick = (agentKey: string) => {
+    setSelectedAgent(agentsInfo[agentKey]);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setTimeout(() => setSelectedAgent(null), 300);
+  };
 
   // 提取诊断摘要
   const extractSummary = (markdown: string) => {
@@ -20,7 +93,7 @@ export const DiagnosisResult = ({ result }: DiagnosisResultProps) => {
 
   // 提取专科报告
   const extractSpecialistReports = (markdown: string) => {
-    const reports: { title: string; content: string; icon: any; bgColor: string; borderColor: string }[] = [];
+    const reports: { title: string; content: string; icon: any; bgColor: string; borderColor: string; agentKey: string }[] = [];
 
     // 心脏科
     const cardioMatch = markdown.match(/### Cardiologist[\s\S]*?(?=###|\Z)/);
@@ -30,7 +103,8 @@ export const DiagnosisResult = ({ result }: DiagnosisResultProps) => {
         content: cardioMatch[0],
         icon: Heart,
         bgColor: 'bg-red-50',
-        borderColor: 'border-red-200'
+        borderColor: 'border-red-200',
+        agentKey: 'cardiologist'
       });
     }
 
@@ -42,7 +116,8 @@ export const DiagnosisResult = ({ result }: DiagnosisResultProps) => {
         content: psychMatch[0],
         icon: Brain,
         bgColor: 'bg-purple-50',
-        borderColor: 'border-purple-200'
+        borderColor: 'border-purple-200',
+        agentKey: 'psychologist'
       });
     }
 
@@ -54,7 +129,8 @@ export const DiagnosisResult = ({ result }: DiagnosisResultProps) => {
         content: pulmoMatch[0],
         icon: Wind,
         bgColor: 'bg-cyan-50',
-        borderColor: 'border-cyan-200'
+        borderColor: 'border-cyan-200',
+        agentKey: 'pulmonologist'
       });
     }
 
@@ -65,17 +141,27 @@ export const DiagnosisResult = ({ result }: DiagnosisResultProps) => {
   const specialistReports = extractSpecialistReports(result);
 
   return (
-    <div className="space-y-6 fade-in">
-      {/* 诊断完成提示 - 增强质感 */}
-      <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-6 shadow-sm">
-        <div className="flex items-center gap-4">
-          <CheckCircle className="w-8 h-8 text-green-600 flex-shrink-0" />
-          <div>
-            <h2 className="text-base font-semibold text-gray-800">诊断完成</h2>
-            <p className="text-sm text-gray-600 mt-1">AI 智能体分析报告已生成</p>
+    <>
+      {/* 智能体信息模态框 */}
+      {selectedAgent && (
+        <AgentInfoModal
+          agent={selectedAgent}
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+        />
+      )}
+
+      <div className="space-y-6 fade-in">
+        {/* 诊断完成提示 - 增强质感 */}
+        <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center gap-4">
+            <CheckCircle className="w-8 h-8 text-green-600 flex-shrink-0" />
+            <div>
+              <h2 className="text-base font-semibold text-gray-800">诊断完成</h2>
+              <p className="text-sm text-gray-600 mt-1">AI 智能体分析报告已生成</p>
+            </div>
           </div>
         </div>
-      </div>
 
       {/* 综合诊断摘要 - 增强质感 */}
       {summary && (
@@ -129,13 +215,25 @@ export const DiagnosisResult = ({ result }: DiagnosisResultProps) => {
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   <div className="px-5 py-4 border-b border-gray-200 bg-gradient-to-br from-gray-50 to-white">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 bg-white border border-gray-200 rounded-lg flex items-center justify-center shadow-inner">
-                        <Icon className="w-4 h-4 text-gray-700" />
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-white border border-gray-200 rounded-lg flex items-center justify-center shadow-inner">
+                          <Icon className="w-4 h-4 text-gray-700" />
+                        </div>
+                        <h4 className="text-base font-semibold text-gray-800">
+                          {report.title}
+                        </h4>
                       </div>
-                      <h4 className="text-base font-semibold text-gray-800">
-                        {report.title}
-                      </h4>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAgentClick(report.agentKey);
+                        }}
+                        className="p-2 hover:bg-blue-50 rounded-lg transition-colors group"
+                        title="查看智能体详情"
+                      >
+                        <Info className="w-4 h-4 text-gray-500 group-hover:text-blue-600 transition-colors" />
+                      </button>
                     </div>
                   </div>
                   <div className="p-5">
@@ -175,6 +273,7 @@ export const DiagnosisResult = ({ result }: DiagnosisResultProps) => {
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };

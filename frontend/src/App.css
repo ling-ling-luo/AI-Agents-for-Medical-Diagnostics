@@ -1,9 +1,4 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
+/* App.css - 移除限制性样式，让页面铺满全屏 */
 
 .logo {
   height: 6em;
