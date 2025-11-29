@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Clock, FileText, ArrowLeft, Eye, Zap, AlertCircle, X, Sparkles, Calendar } from 'lucide-react';
+import { Clock, FileText, ArrowLeft, Eye, Zap, AlertCircle, X, Sparkles, Calendar, Download, ChevronDown, CheckSquare, Square, Package } from 'lucide-react';
 import { caseApi } from '../services/api';
 import type { DiagnosisHistoryResponse, DiagnosisDetail } from '../types';
 import { Loading } from './Loading';
 import ReactMarkdown from 'react-markdown';
+import { SmartDropdown, DropdownItem } from './SmartDropdown';
 
 export const DiagnosisHistory = () => {
   const { caseId } = useParams<{ caseId: string }>();
@@ -14,6 +15,9 @@ export const DiagnosisHistory = () => {
   const [historyData, setHistoryData] = useState<DiagnosisHistoryResponse | null>(null);
   const [selectedDiagnosis, setSelectedDiagnosis] = useState<DiagnosisDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [showExportMenu, setShowExportMenu] = useState<number | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     loadHistory();
@@ -66,6 +70,85 @@ export const DiagnosisHistory = () => {
     return `${(ms / 1000).toFixed(1)}s`;
   };
 
+  // 全选/取消全选
+  const toggleSelectAll = () => {
+    if (!historyData) return;
+
+    if (selectedIds.size === historyData.history.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(historyData.history.map(item => item.id)));
+    }
+  };
+
+  // 切换单个选择
+  const toggleSelect = (id: number) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  // 单个导出
+  const handleExportSingle = async (diagnosisId: number, format: 'pdf' | 'markdown' | 'json' | 'docx') => {
+    if (!caseId) return;
+
+    try {
+      setExporting(true);
+
+      const blob = await caseApi.exportDiagnosisById(parseInt(caseId), diagnosisId, format);
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `diagnosis-${diagnosisId}.${format === 'markdown' ? 'md' : format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('导出失败，请稍后重试');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // 批量导出
+  const handleBatchExport = async (format: 'pdf' | 'markdown' | 'json' | 'docx') => {
+    if (!caseId || selectedIds.size === 0) {
+      alert('请先选择要导出的诊断记录');
+      return;
+    }
+
+    try {
+      setExporting(true);
+
+      const blob = await caseApi.exportDiagnosisBatch(
+        parseInt(caseId),
+        Array.from(selectedIds),
+        format
+      );
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `diagnosis-batch-${caseId}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Batch export failed:', error);
+      alert('批量导出失败，请稍后重试');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-white flex items-center justify-center">
@@ -105,16 +188,78 @@ export const DiagnosisHistory = () => {
             <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
             返回病例列表
           </button>
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
-              <Clock className="w-6 h-6 text-white" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <Clock className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-800">诊断历史</h1>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  {historyData?.patient_name} ({historyData?.patient_id}) · 共 {historyData?.total_diagnoses} 次诊断记录
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-800">诊断历史</h1>
-              <p className="text-sm text-gray-500 mt-0.5">
-                {historyData?.patient_name} ({historyData?.patient_id}) · 共 {historyData?.total_diagnoses} 次诊断记录
-              </p>
-            </div>
+
+            {/* 批量操作按钮组 */}
+            {historyData && historyData.history.length > 0 && (
+              <div className="flex items-center gap-3">
+                {/* 全选按钮 */}
+                <button
+                  onClick={toggleSelectAll}
+                  className="px-4 py-2 bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg transition-all flex items-center gap-2"
+                >
+                  {selectedIds.size === historyData.history.length ? (
+                    <CheckSquare className="w-4 h-4" />
+                  ) : (
+                    <Square className="w-4 h-4" />
+                  )}
+                  <span>{selectedIds.size === historyData.history.length ? '取消全选' : '全选'}</span>
+                </button>
+
+                {/* 批量导出按钮 */}
+                {selectedIds.size > 0 && (
+                  <SmartDropdown
+                    trigger={
+                      <button
+                        disabled={exporting}
+                        className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-semibold rounded-lg transition-all flex items-center gap-2 shadow hover:shadow-md disabled:opacity-50"
+                      >
+                        <Package className="w-4 h-4" />
+                        <span>批量导出 ({selectedIds.size})</span>
+                        <ChevronDown className={`w-4 h-4 transition-transform ${showExportMenu === -1 ? 'rotate-180' : ''}`} />
+                      </button>
+                    }
+                    isOpen={showExportMenu === -1}
+                    onToggle={() => setShowExportMenu(showExportMenu === -1 ? null : -1)}
+                    onClose={() => setShowExportMenu(null)}
+                    preferredPosition={{ vertical: 'top', horizontal: 'right' }}
+                    minWidth="12rem"
+                  >
+                    <DropdownItem
+                      icon={<FileText className="w-4 h-4 text-red-500" />}
+                      label="PDF 压缩包"
+                      onClick={() => handleBatchExport('pdf')}
+                    />
+                    <DropdownItem
+                      icon={<FileText className="w-4 h-4 text-blue-500" />}
+                      label="Word 压缩包"
+                      onClick={() => handleBatchExport('docx')}
+                    />
+                    <DropdownItem
+                      icon={<FileText className="w-4 h-4 text-gray-500" />}
+                      label="Markdown 压缩包"
+                      onClick={() => handleBatchExport('markdown')}
+                    />
+                    <DropdownItem
+                      icon={<FileText className="w-4 h-4 text-green-500" />}
+                      label="JSON 压缩包"
+                      onClick={() => handleBatchExport('json')}
+                    />
+                  </SmartDropdown>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -221,50 +366,107 @@ export const DiagnosisHistory = () => {
               >
                 {/* 诊断记录头部 */}
                 <div className="flex items-start justify-between mb-6">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4 mb-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-2xl flex items-center justify-center shadow-lg">
-                        <FileText className="w-6 h-6 text-blue-600" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-bold text-gray-800">
-                          诊断记录 #{item.id}
-                        </h3>
-                        <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                          <Calendar className="w-4 h-4" />
-                          <span>{formatDate(item.timestamp)}</span>
+                  <div className="flex items-start gap-4 flex-1">
+                    {/* 复选框 */}
+                    <button
+                      onClick={() => toggleSelect(item.id)}
+                      className="mt-1 p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                      {selectedIds.has(item.id) ? (
+                        <CheckSquare className="w-5 h-5 text-blue-600" />
+                      ) : (
+                        <Square className="w-5 h-5 text-gray-400" />
+                      )}
+                    </button>
+
+                    <div className="flex-1">
+                      <div className="flex items-center gap-4 mb-3">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-2xl flex items-center justify-center shadow-lg">
+                          <FileText className="w-6 h-6 text-blue-600" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-gray-800">
+                            诊断记录 #{item.id}
+                          </h3>
+                          <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+                            <Calendar className="w-4 h-4" />
+                            <span>{formatDate(item.timestamp)}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-3 mt-4">
-                      <div className="px-4 py-2 bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 text-blue-700 rounded-xl text-sm font-bold shadow-sm">
-                        {item.model}
-                      </div>
-                      <div className="px-4 py-2 bg-gradient-to-br from-cyan-50 to-blue-50 border border-cyan-200 text-cyan-700 rounded-xl text-sm font-bold shadow-sm flex items-center gap-2">
-                        <Zap className="w-4 h-4" />
-                        {formatExecutionTime(item.execution_time_ms)}
+                      <div className="flex items-center gap-3 mt-4">
+                        <div className="px-4 py-2 bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 text-blue-700 rounded-xl text-sm font-bold shadow-sm">
+                          {item.model}
+                        </div>
+                        <div className="px-4 py-2 bg-gradient-to-br from-cyan-50 to-blue-50 border border-cyan-200 text-cyan-700 rounded-xl text-sm font-bold shadow-sm flex items-center gap-2">
+                          <Zap className="w-4 h-4" />
+                          {formatExecutionTime(item.execution_time_ms)}
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => handleViewDetail(item.id)}
-                    disabled={loadingDetail}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-base font-bold rounded-xl transition-all flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                  >
-                    {loadingDetail ? (
-                      <>
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>加载中...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Eye className="w-5 h-5" />
-                        <span>查看完整诊断</span>
-                      </>
-                    )}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {/* 单个导出按钮 */}
+                    <SmartDropdown
+                      trigger={
+                        <button
+                          disabled={exporting}
+                          className="px-4 py-2.5 bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg transition-all flex items-center gap-2 disabled:opacity-50"
+                        >
+                          <Download className="w-4 h-4" />
+                          <span>导出</span>
+                          <ChevronDown className={`w-4 h-4 transition-transform ${showExportMenu === item.id ? 'rotate-180' : ''}`} />
+                        </button>
+                      }
+                      isOpen={showExportMenu === item.id}
+                      onToggle={() => setShowExportMenu(showExportMenu === item.id ? null : item.id)}
+                      onClose={() => setShowExportMenu(null)}
+                      preferredPosition={{ vertical: 'bottom', horizontal: 'right' }}
+                      minWidth="10rem"
+                    >
+                      <DropdownItem
+                        icon={<FileText className="w-4 h-4 text-red-500" />}
+                        label="PDF 格式"
+                        onClick={() => handleExportSingle(item.id, 'pdf')}
+                      />
+                      <DropdownItem
+                        icon={<FileText className="w-4 h-4 text-blue-500" />}
+                        label="Word 格式"
+                        onClick={() => handleExportSingle(item.id, 'docx')}
+                      />
+                      <DropdownItem
+                        icon={<FileText className="w-4 h-4 text-gray-500" />}
+                        label="Markdown 格式"
+                        onClick={() => handleExportSingle(item.id, 'markdown')}
+                      />
+                      <DropdownItem
+                        icon={<FileText className="w-4 h-4 text-green-500" />}
+                        label="JSON 格式"
+                        onClick={() => handleExportSingle(item.id, 'json')}
+                      />
+                    </SmartDropdown>
+
+                    {/* 查看完整诊断按钮 */}
+                    <button
+                      onClick={() => handleViewDetail(item.id)}
+                      disabled={loadingDetail}
+                      className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-base font-bold rounded-xl transition-all flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    >
+                      {loadingDetail ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>加载中...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="w-5 h-5" />
+                          <span>查看完整诊断</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 {/* 诊断预览 */}

@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { ChevronDown, ChevronUp, CheckCircle, FileText, Heart, Brain, Wind, Download, Info } from 'lucide-react';
 import Markdown from 'markdown-to-jsx';
 import { AgentInfoModal } from './AgentInfoModal';
+import { SmartDropdown, DropdownItem } from './SmartDropdown';
+import { caseApi } from '../services/api';
 
 interface DiagnosisResultProps {
   result: string;
+  caseId?: number;
 }
 
 interface AgentInfo {
@@ -67,10 +70,12 @@ Patient's Report: {medical_report}`,
   }
 };
 
-export const DiagnosisResult = ({ result }: DiagnosisResultProps) => {
+export const DiagnosisResult = ({ result, caseId }: DiagnosisResultProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [selectedAgent, setSelectedAgent] = useState<AgentInfo | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const handleAgentClick = (agentKey: string) => {
     setSelectedAgent(agentsInfo[agentKey]);
@@ -80,6 +85,36 @@ export const DiagnosisResult = ({ result }: DiagnosisResultProps) => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setTimeout(() => setSelectedAgent(null), 300);
+  };
+
+  // 导出报告
+  const handleExport = async (format: 'pdf' | 'docx' | 'markdown' | 'json') => {
+    if (!caseId) {
+      alert('无法导出：病例ID缺失');
+      return;
+    }
+
+    try {
+      setExporting(true);
+      setShowExportMenu(false);
+
+      const blob = await caseApi.exportDiagnosis(caseId, format);
+
+      // 创建下载链接
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `diagnosis-${caseId}.${format === 'markdown' ? 'md' : format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('导出失败，请稍后重试');
+    } finally {
+      setExporting(false);
+    }
   };
 
   // 提取诊断摘要
@@ -267,10 +302,43 @@ export const DiagnosisResult = ({ result }: DiagnosisResultProps) => {
               <p className="text-sm text-gray-600 mt-1">包含所有智能体的详细分析结果</p>
             </div>
           </div>
-          <button className="px-4 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-semibold rounded-xl transition-all flex items-center gap-2 shadow hover:shadow-md">
-            <Download className="w-4 h-4" />
-            导出 PDF
-          </button>
+          <SmartDropdown
+            trigger={
+              <button
+                disabled={exporting || !caseId}
+                className="px-4 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-semibold rounded-xl transition-all flex items-center gap-2 shadow hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Download className="w-4 h-4 flex-shrink-0" />
+                <span>{exporting ? '导出中...' : '导出报告'}</span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${showExportMenu ? 'rotate-180' : ''}`} />
+              </button>
+            }
+            isOpen={showExportMenu}
+            onToggle={() => setShowExportMenu(!showExportMenu)}
+            onClose={() => setShowExportMenu(false)}
+            preferredPosition={{ vertical: 'top', horizontal: 'right' }}
+          >
+            <DropdownItem
+              icon={<FileText className="w-4 h-4 text-red-500" />}
+              label="PDF 格式"
+              onClick={() => handleExport('pdf')}
+            />
+            <DropdownItem
+              icon={<FileText className="w-4 h-4 text-blue-500" />}
+              label="Word 格式"
+              onClick={() => handleExport('docx')}
+            />
+            <DropdownItem
+              icon={<FileText className="w-4 h-4 text-gray-500" />}
+              label="Markdown 格式"
+              onClick={() => handleExport('markdown')}
+            />
+            <DropdownItem
+              icon={<FileText className="w-4 h-4 text-green-500" />}
+              label="JSON 格式"
+              onClick={() => handleExport('json')}
+            />
+          </SmartDropdown>
         </div>
       </div>
       </div>

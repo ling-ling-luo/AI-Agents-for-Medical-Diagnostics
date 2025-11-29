@@ -5,9 +5,12 @@ langchain-experimental
 python-dotenv
 langchain_ollama
 reportlab
+python-docx
+markdown
 dotenv
 fastapi
 uvicorn[standard]
 pydantic
 sqlalchemy
 alembic
+python-multipart

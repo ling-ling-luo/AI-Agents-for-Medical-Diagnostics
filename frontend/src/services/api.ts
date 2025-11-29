@@ -93,4 +93,38 @@ export const caseApi = {
     const response = await api.get<DiagnosisDetail>(`/api/cases/${caseId}/diagnoses/${diagnosisId}`);
     return response.data;
   },
+
+  // 导出最新诊断报告
+  exportDiagnosis: async (caseId: number, format: string): Promise<Blob> => {
+    const response = await axios.get(
+      `${API_BASE_URL}/api/cases/${caseId}/export`,
+      {
+        params: { format },
+        responseType: 'blob',
+      }
+    );
+    return response.data;
+  },
+
+  // 导出指定诊断报告
+  exportDiagnosisById: async (caseId: number, diagnosisId: number, format: string): Promise<Blob> => {
+    const response = await axios.get(
+      `${API_BASE_URL}/api/cases/${caseId}/diagnoses/${diagnosisId}/export`,
+      {
+        params: { format },
+        responseType: 'blob',
+      }
+    );
+    return response.data;
+  },
+
+  // 批量导出诊断报告
+  exportDiagnosisBatch: async (caseId: number, diagnosisIds: number[], format: string): Promise<Blob> => {
+    const response = await axios.post(
+      `${API_BASE_URL}/api/cases/${caseId}/export-batch`,
+      { diagnosis_ids: diagnosisIds, format },
+      { responseType: 'blob' }
+    );
+    return response.data;
+  },
 };

@@ -271,7 +271,10 @@ export const CaseDetail = () => {
 
         {/* 诊断结果 */}
         {diagnosis && !loading && (
-          <DiagnosisResult result={diagnosis.diagnosis_markdown} />
+          <DiagnosisResult
+            result={diagnosis.diagnosis_markdown}
+            caseId={caseId ? parseInt(caseId) : undefined}
+          />
         )}
       </main>
     </div>

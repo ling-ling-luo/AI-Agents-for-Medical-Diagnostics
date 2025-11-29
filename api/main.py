@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy.orm import Session
@@ -8,12 +9,15 @@ from datetime import datetime
 import time
 import os
 import json
+import zipfile
+import io
 
 from Main import run_multi_agent_diagnosis
 from api.db.database import get_db
 from api.models.case import MedicalCase, DiagnosisHistory
 from api.utils.case_formatter import CaseFormatter
 from api.utils.txt_parser import parse_txt_file
+from api.utils.export import DiagnosisExporter
 
 app = FastAPI(title="AI Medical Diagnostics API")
 
@@ -598,4 +602,294 @@ async def delete_case(case_id: int, db: Session = Depends(get_db)):
     db.commit()
 
     return {"message": f"病例 {case_id} 已成功删除", "deleted_case_id": case_id}
+
+
+# ---- 导出功能 API ----
+
+@app.get("/api/cases/{case_id}/export")
+async def export_latest_diagnosis(
+    case_id: int,
+    format: str = "pdf",
+    db: Session = Depends(get_db)
+):
+    """
+    导出病例的最新诊断报告
+
+    支持格式：pdf, docx, markdown, json
+    """
+    # 查询病例
+    case = db.query(MedicalCase).filter(MedicalCase.id == case_id).first()
+    if not case:
+        raise HTTPException(status_code=404, detail=f"病例 ID {case_id} 不存在")
+
+    # 查询最新的诊断记录
+    latest_diagnosis = db.query(DiagnosisHistory).filter(
+        DiagnosisHistory.case_id == case_id
+    ).order_by(DiagnosisHistory.run_timestamp.desc()).first()
+
+    if not latest_diagnosis:
+        raise HTTPException(status_code=404, detail=f"病例 {case_id} 还没有诊断记录")
+
+    # 根据格式导出
+    try:
+        if format.lower() == "pdf":
+            file_bytes = DiagnosisExporter.export_to_pdf(
+                diagnosis_markdown=latest_diagnosis.diagnosis_markdown,
+                patient_name=case.patient_name or "Unknown",
+                patient_id=case.patient_id or "Unknown",
+                case_id=case_id,
+                diagnosis_id=latest_diagnosis.id,
+                timestamp=latest_diagnosis.run_timestamp.isoformat() if latest_diagnosis.run_timestamp else None
+            )
+            media_type = "application/pdf"
+            filename = f"diagnosis-{case_id}.pdf"
+
+        elif format.lower() == "docx":
+            file_bytes = DiagnosisExporter.export_to_docx(
+                diagnosis_markdown=latest_diagnosis.diagnosis_markdown,
+                patient_name=case.patient_name or "Unknown",
+                patient_id=case.patient_id or "Unknown",
+                case_id=case_id,
+                diagnosis_id=latest_diagnosis.id,
+                timestamp=latest_diagnosis.run_timestamp.isoformat() if latest_diagnosis.run_timestamp else None
+            )
+            media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            filename = f"diagnosis-{case_id}.docx"
+
+        elif format.lower() == "markdown" or format.lower() == "md":
+            file_bytes = DiagnosisExporter.export_to_markdown(
+                diagnosis_markdown=latest_diagnosis.diagnosis_markdown,
+                patient_name=case.patient_name or "Unknown",
+                patient_id=case.patient_id or "Unknown",
+                case_id=case_id,
+                diagnosis_id=latest_diagnosis.id,
+                timestamp=latest_diagnosis.run_timestamp.isoformat() if latest_diagnosis.run_timestamp else None
+            )
+            media_type = "text/markdown"
+            filename = f"diagnosis-{case_id}.md"
+
+        elif format.lower() == "json":
+            file_bytes = DiagnosisExporter.export_to_json(
+                diagnosis_markdown=latest_diagnosis.diagnosis_markdown,
+                patient_name=case.patient_name or "Unknown",
+                patient_id=case.patient_id or "Unknown",
+                case_id=case_id,
+                diagnosis_id=latest_diagnosis.id,
+                timestamp=latest_diagnosis.run_timestamp.isoformat() if latest_diagnosis.run_timestamp else None,
+                model=latest_diagnosis.model_name,
+                execution_time_ms=latest_diagnosis.execution_time_ms
+            )
+            media_type = "application/json"
+            filename = f"diagnosis-{case_id}.json"
+        else:
+            raise HTTPException(status_code=400, detail=f"不支持的导出格式: {format}")
+
+        return Response(
+            content=file_bytes,
+            media_type=media_type,
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"'
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"导出失败: {str(e)}")
+
+
+@app.get("/api/cases/{case_id}/diagnoses/{diagnosis_id}/export")
+async def export_specific_diagnosis(
+    case_id: int,
+    diagnosis_id: int,
+    format: str = "pdf",
+    db: Session = Depends(get_db)
+):
+    """
+    导出指定的诊断记录
+
+    支持格式：pdf, docx, markdown, json
+    """
+    # 查询病例
+    case = db.query(MedicalCase).filter(MedicalCase.id == case_id).first()
+    if not case:
+        raise HTTPException(status_code=404, detail=f"病例 ID {case_id} 不存在")
+
+    # 查询指定的诊断记录
+    diagnosis = db.query(DiagnosisHistory).filter(
+        DiagnosisHistory.id == diagnosis_id,
+        DiagnosisHistory.case_id == case_id
+    ).first()
+
+    if not diagnosis:
+        raise HTTPException(status_code=404, detail=f"诊断记录 ID {diagnosis_id} 不存在")
+
+    # 根据格式导出
+    try:
+        if format.lower() == "pdf":
+            file_bytes = DiagnosisExporter.export_to_pdf(
+                diagnosis_markdown=diagnosis.diagnosis_markdown,
+                patient_name=case.patient_name or "Unknown",
+                patient_id=case.patient_id or "Unknown",
+                case_id=case_id,
+                diagnosis_id=diagnosis_id,
+                timestamp=diagnosis.run_timestamp.isoformat() if diagnosis.run_timestamp else None
+            )
+            media_type = "application/pdf"
+            filename = f"diagnosis-{diagnosis_id}.pdf"
+
+        elif format.lower() == "docx":
+            file_bytes = DiagnosisExporter.export_to_docx(
+                diagnosis_markdown=diagnosis.diagnosis_markdown,
+                patient_name=case.patient_name or "Unknown",
+                patient_id=case.patient_id or "Unknown",
+                case_id=case_id,
+                diagnosis_id=diagnosis_id,
+                timestamp=diagnosis.run_timestamp.isoformat() if diagnosis.run_timestamp else None
+            )
+            media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            filename = f"diagnosis-{diagnosis_id}.docx"
+
+        elif format.lower() == "markdown" or format.lower() == "md":
+            file_bytes = DiagnosisExporter.export_to_markdown(
+                diagnosis_markdown=diagnosis.diagnosis_markdown,
+                patient_name=case.patient_name or "Unknown",
+                patient_id=case.patient_id or "Unknown",
+                case_id=case_id,
+                diagnosis_id=diagnosis_id,
+                timestamp=diagnosis.run_timestamp.isoformat() if diagnosis.run_timestamp else None
+            )
+            media_type = "text/markdown"
+            filename = f"diagnosis-{diagnosis_id}.md"
+
+        elif format.lower() == "json":
+            file_bytes = DiagnosisExporter.export_to_json(
+                diagnosis_markdown=diagnosis.diagnosis_markdown,
+                patient_name=case.patient_name or "Unknown",
+                patient_id=case.patient_id or "Unknown",
+                case_id=case_id,
+                diagnosis_id=diagnosis_id,
+                timestamp=diagnosis.run_timestamp.isoformat() if diagnosis.run_timestamp else None,
+                model=diagnosis.model_name,
+                execution_time_ms=diagnosis.execution_time_ms
+            )
+            media_type = "application/json"
+            filename = f"diagnosis-{diagnosis_id}.json"
+        else:
+            raise HTTPException(status_code=400, detail=f"不支持的导出格式: {format}")
+
+        return Response(
+            content=file_bytes,
+            media_type=media_type,
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"'
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"导出失败: {str(e)}")
+
+
+class BatchExportRequest(BaseModel):
+    """批量导出请求"""
+    diagnosis_ids: List[int]
+    format: str = "pdf"
+
+
+@app.post("/api/cases/{case_id}/export-batch")
+async def export_diagnoses_batch(
+    case_id: int,
+    request: BatchExportRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    批量导出诊断记录为ZIP压缩包
+
+    支持格式：pdf, docx, markdown, json
+    """
+    # 查询病例
+    case = db.query(MedicalCase).filter(MedicalCase.id == case_id).first()
+    if not case:
+        raise HTTPException(status_code=404, detail=f"病例 ID {case_id} 不存在")
+
+    if not request.diagnosis_ids:
+        raise HTTPException(status_code=400, detail="diagnosis_ids 不能为空")
+
+    # 创建ZIP文件
+    zip_buffer = io.BytesIO()
+
+    try:
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            # 遍历每个诊断ID
+            for diagnosis_id in request.diagnosis_ids:
+                # 查询诊断记录
+                diagnosis = db.query(DiagnosisHistory).filter(
+                    DiagnosisHistory.id == diagnosis_id,
+                    DiagnosisHistory.case_id == case_id
+                ).first()
+
+                if not diagnosis:
+                    continue  # 跳过不存在的诊断记录
+
+                # 根据格式导出
+                if request.format.lower() == "pdf":
+                    file_bytes = DiagnosisExporter.export_to_pdf(
+                        diagnosis_markdown=diagnosis.diagnosis_markdown,
+                        patient_name=case.patient_name or "Unknown",
+                        patient_id=case.patient_id or "Unknown",
+                        case_id=case_id,
+                        diagnosis_id=diagnosis_id,
+                        timestamp=diagnosis.run_timestamp.isoformat() if diagnosis.run_timestamp else None
+                    )
+                    filename = f"diagnosis-{diagnosis_id}.pdf"
+
+                elif request.format.lower() == "docx":
+                    file_bytes = DiagnosisExporter.export_to_docx(
+                        diagnosis_markdown=diagnosis.diagnosis_markdown,
+                        patient_name=case.patient_name or "Unknown",
+                        patient_id=case.patient_id or "Unknown",
+                        case_id=case_id,
+                        diagnosis_id=diagnosis_id,
+                        timestamp=diagnosis.run_timestamp.isoformat() if diagnosis.run_timestamp else None
+                    )
+                    filename = f"diagnosis-{diagnosis_id}.docx"
+
+                elif request.format.lower() == "markdown" or request.format.lower() == "md":
+                    file_bytes = DiagnosisExporter.export_to_markdown(
+                        diagnosis_markdown=diagnosis.diagnosis_markdown,
+                        patient_name=case.patient_name or "Unknown",
+                        patient_id=case.patient_id or "Unknown",
+                        case_id=case_id,
+                        diagnosis_id=diagnosis_id,
+                        timestamp=diagnosis.run_timestamp.isoformat() if diagnosis.run_timestamp else None
+                    )
+                    filename = f"diagnosis-{diagnosis_id}.md"
+
+                elif request.format.lower() == "json":
+                    file_bytes = DiagnosisExporter.export_to_json(
+                        diagnosis_markdown=diagnosis.diagnosis_markdown,
+                        patient_name=case.patient_name or "Unknown",
+                        patient_id=case.patient_id or "Unknown",
+                        case_id=case_id,
+                        diagnosis_id=diagnosis_id,
+                        timestamp=diagnosis.run_timestamp.isoformat() if diagnosis.run_timestamp else None,
+                        model=diagnosis.model_name,
+                        execution_time_ms=diagnosis.execution_time_ms
+                    )
+                    filename = f"diagnosis-{diagnosis_id}.json"
+                else:
+                    raise HTTPException(status_code=400, detail=f"不支持的导出格式: {request.format}")
+
+                # 添加文件到ZIP
+                zip_file.writestr(filename, file_bytes)
+
+        # 获取ZIP数据
+        zip_buffer.seek(0)
+        zip_bytes = zip_buffer.getvalue()
+
+        return Response(
+            content=zip_bytes,
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": f'attachment; filename="diagnosis-batch-{case_id}.zip"'
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"批量导出失败: {str(e)}")
 
