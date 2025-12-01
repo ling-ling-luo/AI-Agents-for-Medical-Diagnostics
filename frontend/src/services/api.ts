@@ -36,10 +36,17 @@ export const caseApi = {
     return response.data;
   },
 
+  // 获取可用的AI模型列表
+  getAvailableModels: async (): Promise<{ models: Array<{ id: string; name: string; provider: string }> }> => {
+    const response = await api.get('/api/models');
+    return response.data;
+  },
+
   // 运行诊断
-  runDiagnosis: async (caseId: number): Promise<DiagnosisResponse> => {
+  runDiagnosis: async (caseId: number, model?: string): Promise<DiagnosisResponse> => {
     const response = await api.post<DiagnosisResponse>(
-      `/api/cases/${caseId}/run-diagnosis`
+      `/api/cases/${caseId}/run-diagnosis`,
+      { model }
     );
     return response.data;
   },

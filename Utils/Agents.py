@@ -3,7 +3,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 
 class Agent:
-    def __init__(self, medical_report=None, role=None, extra_info=None):
+    def __init__(self, medical_report=None, role=None, extra_info=None, model_name=None):
         self.medical_report = medical_report
         self.role = role
         self.extra_info = extra_info
@@ -11,8 +11,9 @@ class Agent:
         self.prompt_template = self.create_prompt_template()
         # 使用自定义网关 / 环境变量配置初始化大模型
         base_url = os.getenv("OPENAI_BASE_URL")
-        # 从环境变量读取模型名称，默认为 gemini-2.5-flash
-        model_name = os.getenv("LLM_MODEL", "gemini-2.5-flash")
+        # 如果传入了model_name参数，使用它；否则从环境变量读取
+        if model_name is None:
+            model_name = os.getenv("LLM_MODEL", "gemini-2.5-flash")
         self.model = ChatOpenAI(
             temperature=0,
             model=model_name,
@@ -80,22 +81,22 @@ class Agent:
 
 # 定义专科智能体类
 class Cardiologist(Agent):
-    def __init__(self, medical_report):
-        super().__init__(medical_report, "Cardiologist")
+    def __init__(self, medical_report, model_name=None):
+        super().__init__(medical_report, "Cardiologist", model_name=model_name)
 
 class Psychologist(Agent):
-    def __init__(self, medical_report):
-        super().__init__(medical_report, "Psychologist")
+    def __init__(self, medical_report, model_name=None):
+        super().__init__(medical_report, "Psychologist", model_name=model_name)
 
 class Pulmonologist(Agent):
-    def __init__(self, medical_report):
-        super().__init__(medical_report, "Pulmonologist")
+    def __init__(self, medical_report, model_name=None):
+        super().__init__(medical_report, "Pulmonologist", model_name=model_name)
 
 class MultidisciplinaryTeam(Agent):
-    def __init__(self, cardiologist_report, psychologist_report, pulmonologist_report):
+    def __init__(self, cardiologist_report, psychologist_report, pulmonologist_report, model_name=None):
         extra_info = {
             "cardiologist_report": cardiologist_report,
             "psychologist_report": psychologist_report,
             "pulmonologist_report": pulmonologist_report
         }
-        super().__init__(role="MultidisciplinaryTeam", extra_info=extra_info)
+        super().__init__(role="MultidisciplinaryTeam", extra_info=extra_info, model_name=model_name)

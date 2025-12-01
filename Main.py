@@ -10,13 +10,17 @@ import json, os
 load_dotenv(dotenv_path='apikey.env')
 
 
-def run_multi_agent_diagnosis(medical_report: str) -> str:
+def run_multi_agent_diagnosis(medical_report: str, model_name: str = None) -> str:
     """运行三个专科智能体 + 多学科团队智能体，返回**结构化的 markdown 结果**。
+
+    Args:
+        medical_report: 病历报告文本
+        model_name: 使用的AI模型名称（可选，如果为None则使用环境变量）
 
     你可以在自己的项目中直接 import 使用，例如：
 
         from Main import run_multi_agent_diagnosis
-        result_md = run_multi_agent_diagnosis(medical_report)
+        result_md = run_multi_agent_diagnosis(medical_report, model_name="claude-sonnet-4.5")
 
     返回值是一个包含以下结构的 markdown 字符串：
 
@@ -30,9 +34,9 @@ def run_multi_agent_diagnosis(medical_report: str) -> str:
     ...
     """
     agents = {
-        "Cardiologist": Cardiologist(medical_report),
-        "Psychologist": Psychologist(medical_report),
-        "Pulmonologist": Pulmonologist(medical_report),
+        "Cardiologist": Cardiologist(medical_report, model_name=model_name),
+        "Psychologist": Psychologist(medical_report, model_name=model_name),
+        "Pulmonologist": Pulmonologist(medical_report, model_name=model_name),
     }
 
     # 定义一个函数，用于运行单个智能体并获取返回结果
@@ -56,6 +60,7 @@ def run_multi_agent_diagnosis(medical_report: str) -> str:
         cardiologist_report=responses.get("Cardiologist"),
         psychologist_report=responses.get("Psychologist"),
         pulmonologist_report=responses.get("Pulmonologist"),
+        model_name=model_name,
     )
 
     # 运行多学科团队智能体，生成最终诊断总结

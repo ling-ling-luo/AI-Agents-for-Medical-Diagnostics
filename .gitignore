@@ -136,3 +136,9 @@ frontend-next/.vite/
 *.db
 *.sqlite
 *.sqlite3
+
+# 配置文件（不提交实际配置，只提交模板）
+api/config/models.json
+
+# 保留示例文件（提交到仓库）
+!api/config/models.example.json

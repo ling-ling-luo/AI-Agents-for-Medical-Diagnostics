@@ -5,6 +5,13 @@ import { caseApi } from '../services/api';
 import type { CaseDetail as CaseDetailType, DiagnosisResponse } from '../types';
 import { Loading } from './Loading';
 import { DiagnosisResult } from './DiagnosisResult';
+import { ModelSelector } from './ModelSelector';
+
+interface Model {
+  id: string;
+  name: string;
+  provider: string;
+}
 
 export const CaseDetail = () => {
   const { caseId } = useParams<{ caseId: string }>();
@@ -14,6 +21,33 @@ export const CaseDetail = () => {
   const [loading, setLoading] = useState(false);
   const [loadingCase, setLoadingCase] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [availableModels, setAvailableModels] = useState<Model[]>([]);
+  const [selectedModel, setSelectedModel] = useState<string>('');
+
+  // 加载模型列表
+  useEffect(() => {
+    const loadModels = async () => {
+      try {
+        const data = await caseApi.getAvailableModels();
+        setAvailableModels(data.models);
+
+        // 从 localStorage 读取用户上次选择的模型
+        const savedModel = localStorage.getItem('selectedModel');
+        if (savedModel && data.models.some(m => m.id === savedModel)) {
+          setSelectedModel(savedModel);
+        } else if (data.models.length > 0) {
+          // 默认选择第一个模型
+          setSelectedModel(data.models[0].id);
+        }
+      } catch (err) {
+        console.error('Error loading models:', err);
+        // 设置默认模型
+        setSelectedModel('gemini-2.5-flash');
+      }
+    };
+
+    loadModels();
+  }, []);
 
   // 加载病例详情
   useEffect(() => {
@@ -35,13 +69,19 @@ export const CaseDetail = () => {
     loadCaseDetail();
   }, [caseId]);
 
+  // 处理模型选择变化
+  const handleModelChange = (modelId: string) => {
+    setSelectedModel(modelId);
+    localStorage.setItem('selectedModel', modelId);
+  };
+
   const runDiagnosis = async () => {
     if (!caseId) return;
 
     try {
       setLoading(true);
       setError(null);
-      const result = await caseApi.runDiagnosis(parseInt(caseId));
+      const result = await caseApi.runDiagnosis(parseInt(caseId), selectedModel);
       setDiagnosis(result);
     } catch (err) {
       setError('诊断失败，请检查后端服务并稍后重试');
@@ -104,23 +144,33 @@ export const CaseDetail = () => {
                 <p className="text-xs text-gray-500 mt-0.5">AI 智能诊断</p>
               </div>
             </div>
-            <button
-              onClick={runDiagnosis}
-              disabled={loading}
-              className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-semibold rounded-xl transition-all flex items-center gap-2 shadow hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap min-w-[130px]"
-            >
-              {loading ? (
-                <>
-                  <Loader className="w-4 h-4 animate-spin flex-shrink-0" />
-                  <span className="truncate">分析中</span>
-                </>
-              ) : (
-                <>
-                  <Play className="w-4 h-4 flex-shrink-0" />
-                  <span className="truncate">开始诊断</span>
-                </>
-              )}
-            </button>
+            <div className="flex items-center gap-3">
+              {/* 模型选择器 */}
+              <ModelSelector
+                selectedModel={selectedModel}
+                onModelChange={handleModelChange}
+                models={availableModels}
+              />
+
+              {/* 开始诊断按钮 */}
+              <button
+                onClick={runDiagnosis}
+                disabled={loading || !selectedModel}
+                className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-semibold rounded-xl transition-all flex items-center gap-2 shadow hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap min-w-[130px]"
+              >
+                {loading ? (
+                  <>
+                    <Loader className="w-4 h-4 animate-spin flex-shrink-0" />
+                    <span className="truncate">分析中</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">开始诊断</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </header>

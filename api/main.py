@@ -18,8 +18,12 @@ from api.models.case import MedicalCase, DiagnosisHistory
 from api.utils.case_formatter import CaseFormatter
 from api.utils.txt_parser import parse_txt_file
 from api.utils.export import DiagnosisExporter
+from api.config_loader import ConfigLoader
 
 app = FastAPI(title="AI Medical Diagnostics API")
+
+# 从配置文件加载支持的AI模型列表
+AVAILABLE_MODELS = ConfigLoader.load_models()
 
 # 配置 CORS - 允许前端访问
 app.add_middleware(
@@ -46,6 +50,12 @@ class Case(BaseModel):
 
 
 # ---- 路由定义 ----
+
+@app.get("/api/models")
+async def get_available_models():
+    """获取所有支持的AI模型列表"""
+    return {"models": AVAILABLE_MODELS}
+
 
 @app.get("/api/cases", response_model=List[Case])
 async def list_cases(db: Session = Depends(get_db)) -> List[Case]:
@@ -164,13 +174,22 @@ class DiagnosisResponse(BaseModel):
     diagnosis_markdown: str
 
 
+class RunDiagnosisRequest(BaseModel):
+    """运行诊断请求参数"""
+    model: Optional[str] = None  # 使用的模型，如果为None则使用默认模型
+
+
 @app.post("/api/cases/{case_id}/run-diagnosis", response_model=DiagnosisResponse)
-async def run_diagnosis(case_id: int, db: Session = Depends(get_db)) -> DiagnosisResponse:
+async def run_diagnosis(
+    case_id: int,
+    request: RunDiagnosisRequest = RunDiagnosisRequest(),
+    db: Session = Depends(get_db)
+) -> DiagnosisResponse:
     """对指定病例运行多智能体 AI 诊断，并保存到数据库
 
     流程：
     1. 从数据库读取病例的 raw_report
-    2. 调用 run_multi_agent_diagnosis 生成诊断结果
+    2. 使用指定模型调用 run_multi_agent_diagnosis 生成诊断结果
     3. 将诊断结果保存到 diagnosis_history 表
     4. 返回诊断结果给前端
     """
@@ -179,14 +198,20 @@ async def run_diagnosis(case_id: int, db: Session = Depends(get_db)) -> Diagnosi
     if not case:
         raise HTTPException(status_code=404, detail=f"病例 ID {case_id} 不存在")
 
-    # 2. 运行诊断（记录执行时间）
+    # 2. 确定使用的模型
+    model_name = request.model if request.model else os.getenv("LLM_MODEL", "gemini-2.5-flash")
+
+    # 验证模型是否在支持列表中
+    valid_model_ids = [m["id"] for m in AVAILABLE_MODELS]
+    if model_name not in valid_model_ids:
+        raise HTTPException(status_code=400, detail=f"不支持的模型: {model_name}。支持的模型: {', '.join(valid_model_ids)}")
+
+    # 3. 运行诊断（记录执行时间）
     start_time = time.time()
-    diagnosis_md = run_multi_agent_diagnosis(case.raw_report)
+    diagnosis_md = run_multi_agent_diagnosis(case.raw_report, model_name=model_name)
     execution_time_ms = int((time.time() - start_time) * 1000)
 
-    # 3. 保存诊断历史
-    # 从环境变量获取当前使用的模型名称
-    model_name = os.getenv("LLM_MODEL", "gemini-2.5-flash")
+    # 4. 保存诊断历史
     diagnosis_record = DiagnosisHistory(
         case_id=case_id,
         diagnosis_markdown=diagnosis_md,
@@ -198,7 +223,7 @@ async def run_diagnosis(case_id: int, db: Session = Depends(get_db)) -> Diagnosi
     db.commit()
     db.refresh(diagnosis_record)
 
-    # 4. 返回结果
+    # 5. 返回结果
     return DiagnosisResponse(case_id=case_id, diagnosis_markdown=diagnosis_md)
 
 
