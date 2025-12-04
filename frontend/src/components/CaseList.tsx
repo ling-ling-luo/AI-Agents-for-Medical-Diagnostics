@@ -5,6 +5,7 @@ import type { Case } from '../types';
 import { caseApi } from '../services/api';
 import { Loading } from './Loading';
 import { Dropdown } from './Dropdown';
+import '../styles/hide-scrollbar.css'; // 引入样式文件以隐藏数字输入框的箭头
 
 const ITEMS_PER_PAGE = 9; // 每页显示9个病例
 
@@ -155,14 +156,14 @@ export const CaseList = () => {
 
             {/* 中间：搜索栏 */}
             <div className="flex-1 max-w-2xl">
-              <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm hover:shadow-md transition-shadow focus-within:ring-2 focus-within:ring-blue-400 focus-within:border-blue-400">
+              <div className="flex items-center border border-gray-300 rounded-full px-4 py-1.5 focus-within:border-blue-500 transition-colors">
                 <Search className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" />
                 <input
                   type="text"
                   placeholder="搜索患者姓名、病历号或主诉"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 focus:outline-none"
+                  className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 focus:outline-none py-0.5"
                 />
               </div>
               {searchTerm && (
@@ -177,19 +178,17 @@ export const CaseList = () => {
               {/* 导入病例按钮 */}
               <button
                 onClick={handleImportClick}
-                className="px-5 py-2.5 bg-white border-2 border-blue-500 text-blue-500 hover:bg-blue-50 text-sm font-semibold rounded-xl transition-all flex items-center gap-2 shadow-sm hover:shadow whitespace-nowrap"
+                className="px-5 py-2.5 bg-transparent hover:bg-gray-50 text-blue-600 hover:text-blue-700 text-sm font-semibold transition-all whitespace-nowrap min-w-[100px]"
               >
-                <Upload className="w-4 h-4" />
                 <span>导入病例</span>
               </button>
 
               {/* 新增病例按钮 */}
               <button
                 onClick={() => navigate('/create')}
-                className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-semibold rounded-xl transition-all flex items-center gap-2 shadow hover:shadow-md whitespace-nowrap min-w-[130px]"
+                className="px-5 py-2.5 bg-transparent hover:bg-gray-50 text-blue-600 hover:text-blue-700 text-sm font-semibold transition-all whitespace-nowrap min-w-[100px]"
               >
-                <Plus className="w-4 h-4" />
-                <span className="min-w-max">新增病例</span>
+                <span>新增病例</span>
               </button>
             </div>
           </div>
@@ -219,13 +218,31 @@ export const CaseList = () => {
                   {currentCases.map((case_) => (
                 <div
                   key={case_.id}
-                  className="bg-white rounded-2xl border border-gray-200 transition-all duration-300 overflow-hidden group shadow-sm hover:shadow-lg hover:-translate-y-1 transform"
+                  className="bg-white rounded-2xl border border-gray-200 transition-all duration-300 overflow-hidden group shadow-lg hover:shadow-xl hover:-translate-y-1 transform"
+                  onClick={(e) => {
+                    // 检查点击事件是否来自下拉菜单或其子元素
+                    if (!e.target.closest('.dropdown-container')) {
+                      navigate(`/case/${case_.id}`);
+                    }
+                  }}
                 >
                   {/* 病例头部 - 增强质感 */}
                   <div className="p-6">
                     <div className="flex items-start gap-4 mb-5">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform shadow-inner">
-                        <User className="w-5 h-5 text-blue-600" />
+                      <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                        {case_.gender === 'male' ? (
+                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                            <User className="w-5 h-5 text-blue-600" />
+                          </div>
+                        ) : case_.gender === 'female' ? (
+                          <div className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center">
+                            <User className="w-5 h-5 text-pink-600" />
+                          </div>
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                            <User className="w-5 h-5 text-gray-600" />
+                          </div>
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-base font-semibold text-gray-800 truncate">
@@ -234,48 +251,53 @@ export const CaseList = () => {
                         <p className="text-xs text-gray-500 truncate mt-1.5">{case_.patient_id}</p>
                       </div>
                       {/* 更多操作菜单 */}
-                      <Dropdown
-                        options={[
-                          {
-                            label: '编辑资料',
-                            icon: 'edit',
-                            color: 'gray',
-                            onClick: () => handleEditCase(case_.id),
-                          },
-                          {
-                            label: '查看历史',
-                            icon: 'clock',
-                            color: 'gray',
-                            onClick: () => handleViewHistory(case_.id),
-                          },
-                          {
-                            label: '删除病历',
-                            icon: 'trash',
-                            color: 'red',
-                            onClick: () => handleDeleteCase(case_.id),
-                            needsConfirmation: true,
-                          },
-                        ]}
-                      />
+                      <div className="dropdown-container">
+                        <Dropdown
+                          options={[
+                            {
+                              label: '编辑资料',
+                              icon: 'edit',
+                              color: 'gray',
+                              onClick: () => handleEditCase(case_.id),
+                            },
+                            {
+                              label: '查看历史',
+                              icon: 'clock',
+                              color: 'gray',
+                              onClick: () => handleViewHistory(case_.id),
+                            },
+                            {
+                              label: '删除病历',
+                              icon: 'trash',
+                              color: 'red',
+                              onClick: () => handleDeleteCase(case_.id),
+                              needsConfirmation: true,
+                            },
+                          ]}
+                        />
+                      </div>
                     </div>
 
-                  {/* 患者信息标签 - 增强质感 */}
-                  <div className="flex items-center gap-2.5 mb-5">
+                  {/* 患者信息标签 - 纯文字 */}
+                  <div className="flex items-center gap-3 mb-5 text-sm text-gray-600 font-medium">
                     {case_.age && (
-                      <span className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-semibold shadow-sm">
+                      <span>
                         {case_.age} 岁
                       </span>
                     )}
+                    {case_.age && case_.gender && (
+                      <span className="text-gray-300">|</span>
+                    )}
                     {case_.gender && (
-                      <span className="px-3 py-1.5 bg-cyan-50 text-cyan-700 rounded-lg text-xs font-semibold shadow-sm">
+                      <span>
                         {case_.gender === 'male' ? '男' : case_.gender === 'female' ? '女' : '其他'}
                       </span>
                     )}
                   </div>
 
-                  {/* 主诉信息 - 增强质感 */}
+                  {/* 主诉信息 - 严格矩形，严丝合缝 */}
                   {case_.chief_complaint && (
-                    <div className="mb-6 p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-100 shadow-inner">
+                    <div className="mb-0 p-4 bg-blue-50 rounded-none border-t border-b border-blue-100">
                       <p className="text-xs font-semibold text-gray-600 mb-2">主诉</p>
                       <p className="text-xs text-gray-700 leading-relaxed truncate">
                         {case_.chief_complaint}
@@ -283,10 +305,13 @@ export const CaseList = () => {
                     </div>
                   )}
 
-                  {/* 诊断按钮 - 增强质感，防止文字溢出 */}
+                  {/* 诊断按钮 - 严格矩形，严丝合缝 */}
                   <button
-                    onClick={() => handleRunDiagnosis(case_.id)}
-                    className="w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow hover:shadow-md whitespace-nowrap min-w-[120px]"
+                    onClick={(e) => {
+                      e.stopPropagation(); // 阻止事件冒泡到卡片容器
+                      navigate(`/case/${case_.id}?autoDiagnose=true`);
+                    }}
+                    className="w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-semibold rounded-none rounded-b-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap min-w-[120px]"
                   >
                     <Stethoscope className="w-4 h-4 flex-shrink-0" />
                     <span className="truncate">开始诊断</span>
@@ -297,14 +322,14 @@ export const CaseList = () => {
           </div>
               </div>
 
-          {/* 分页控件 - 固定在底部中央 */}
+          {/* 分页控件 - 简化版 */}
           {totalPages > 1 && (
-            <div className="mt-8 pt-6 border-t border-gray-200 flex items-center justify-center gap-2">
+            <div className="mt-8 pt-6 border-t border-gray-200 flex items-center justify-center gap-2 flex-wrap">
               {/* 上一页按钮 */}
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-sm"
+                className="px-3 py-1.5 bg-transparent text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1"
               >
                 <ChevronLeft className="w-4 h-4" />
                 <span className="text-sm font-medium">上一页</span>
@@ -337,10 +362,10 @@ export const CaseList = () => {
                     <button
                       key={page}
                       onClick={() => handlePageChange(page)}
-                      className={`min-w-[40px] h-10 rounded-lg text-sm font-medium transition-all ${
+                      className={`min-w-[32px] h-8 text-sm font-medium transition-all ${
                         currentPage === page
-                          ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md'
-                          : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm'
+                          ? 'text-blue-700 font-bold'
+                          : 'text-blue-600 hover:text-blue-800'
                       }`}
                     >
                       {page}
@@ -353,36 +378,32 @@ export const CaseList = () => {
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-sm"
+                className="px-3 py-1.5 bg-transparent text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1"
               >
                 <span className="text-sm font-medium">下一页</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
 
-              {/* 页码信息 */}
-              <div className="ml-4 text-sm text-gray-600">
-                第 {currentPage} / {totalPages} 页，共 {filteredCases.length} 个病例
-              </div>
-
-              {/* 跳转到指定页 */}
-              <div className="ml-6 flex items-center gap-2">
-                <span className="text-sm text-gray-600">跳转到</span>
+              {/* 页码信息与跳转 */}
+              <div className="flex items-center gap-1 ml-4 text-sm text-gray-600">
+                <span>第</span>
                 <input
                   type="number"
                   min="1"
                   max={totalPages}
-                  value={jumpToPage}
+                  value={jumpToPage || ''}
                   onChange={(e) => setJumpToPage(e.target.value)}
                   onKeyPress={handleJumpInputKeyPress}
-                  placeholder="页码"
-                  className="w-16 px-2 py-1.5 border border-gray-300 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+                  onFocus={() => setJumpToPage('')}
+                  onBlur={() => {
+                    if (jumpToPage) {
+                      handleJumpToPage();
+                    }
+                  }}
+                  placeholder={String(currentPage)}
+                  className="w-8 text-center border-b border-gray-300 focus:border-blue-500 focus:outline-none bg-transparent px-0 py-0 transition-colors mx-1 hide-spin-buttons text-gray-600"
                 />
-                <button
-                  onClick={handleJumpToPage}
-                  className="px-3 py-1.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-medium rounded-lg transition-all shadow-sm"
-                >
-                  跳转
-                </button>
+                <span>/ {totalPages} 页</span>
               </div>
             </div>
           )}

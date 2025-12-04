@@ -4,17 +4,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 技术栈与环境
 
-- 语言：Python 3.10.12
-- 现有依赖（requirements.txt）：
-  - langchain / langchain-community / langchain-openai / langchain-experimental
-  - python-dotenv / dotenv
-  - langchain_ollama
-  - reportlab
-- 建议新增依赖（用于 Web API + MySQL）——请维护者确认后再写入 requirements.txt：
-  - fastapi
-  - uvicorn[standard]
-  - sqlalchemy
-  - pymysql  （或其它 MySQL 驱动，例如 mysqlclient / aiomysql）
+- **后端**: Python 3.10.12
+  - LangChain (langchain, langchain-openai, langchain-community, langchain-experimental)
+  - FastAPI + Uvicorn (Web API)
+  - SQLAlchemy + Alembic (ORM + 数据库迁移)
+  - ReportLab, python-docx, markdown (文档导出)
+  - python-dotenv (环境变量)
+
+- **前端**:
+  - React 19.2.0 + TypeScript + Vite (`frontend/`)
+  - Next.js 16.0.3 + TypeScript (`frontend-next/`)
+  - Tailwind CSS 4.1.17
+  - Axios (API 客户端)
+
+- **数据库**: SQLite (`medical_diagnostics.db`)
 
 ## 现有核心架构概览
 
@@ -40,71 +43,103 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - 调用 `MultidisciplinaryTeam` 生成最终诊断摘要。
   - 将结果写入 `results/final_diagnosis.txt`。
   - 提供可复用函数：
-    - `run_multi_agent_diagnosis(medical_report: str) -> str`
-      - 输入：任意病历文本。
+    - `run_multi_agent_diagnosis(medical_report: str, model_name: str = None) -> str`
+      - 输入：任意病历文本 + 可选的模型名称
       - 输出：结构化 markdown，包含：
         - `# Multidisciplinary Diagnosis`
         - `## Final Diagnosis (Summary)`
         - `## Specialist Reports`（按专科分区）
-      - 建议所有新功能都通过此函数复用诊断逻辑，而不要重复实现 LLM 调用流程。
+      - **关键**：所有新功能都应通过此函数复用诊断逻辑，而不要重复实现 LLM 调用流程。
 
-### 配置与凭证
+### 配置系统
 
-- `apikey.env`
-  - 由 `.env` 机制加载，当前示例内容类似：
-    - `OPENAI_API_KEY="..."`
-    - `OPENAI_BASE_URL="https://llm-gateway.momenta.works"`
-    - `LLM_MODEL="gemini-2.5-flash"`（可切换为 "claude-sonnet-4.5"、"minimax-m2" 等）
-  - 注意：不要将真实密钥提交到仓库。示例值仅供演示。
+项目使用两级配置系统：
 
-- 代码中已将大部分注释和用户可见的 print 文案改为中文，便于中文环境开发；函数名、类名、变量名仍为英文。
+**1. 环境变量配置** (`apikey.env`)
+- `OPENAI_API_KEY`: API 密钥
+- `OPENAI_BASE_URL`: LLM 网关地址
+- `LLM_MODEL`: 默认模型名称（后备值）
+- 注意：不要将真实密钥提交到仓库
+
+**2. 模型配置** (`api/config/models.json`)
+- 定义前端可选择的所有 AI 模型列表
+- 由 `api/config_loader.py` 中的 `ConfigLoader` 类加载
+- 支持自动回退到默认模型列表（如果文件不存在或格式错误）
+- 配置格式：
+  ```json
+  {
+    "available_models": [
+      {"id": "model-id", "name": "显示名称", "provider": "提供商"}
+    ]
+  }
+  ```
+- 模板文件：`api/config/models.example.json`
+- `.gitignore` 已配置忽略实际配置文件，仅提交模板
+- 详见 `CONFIG_GUIDE.md` 获取完整配置指南
+
+**国际化风格**：
+- 代码注释和用户可见文本使用中文
+- 函数名、类名、变量名使用英文
 
 ## Web API 架构
 
-本仓库已实现完整的 Web API 后端：
+### 后端结构 (`api/` 目录)
 
-- 后端 API（`api/` 目录）：
-  - `api/main.py`：FastAPI 应用入口。
-    - 路由：
-      - `GET /api/cases`：获取病例列表。
-      - `POST /api/cases/{case_id}/run-diagnosis`：对指定病例运行 AI 诊断。
-      - `GET /api/cases/{case_id}/diagnoses`：获取指定病例的诊断历史。
-    - 通过 `from Main import run_multi_agent_diagnosis` 复用现有诊断逻辑。
-  - `api/models/case.py`：SQLAlchemy ORM 模型。
-  - `api/db/database.py`：数据库会话管理。
+**核心文件**：
+- `api/main.py`: FastAPI 应用入口，定义所有路由
+- `api/models/case.py`: SQLAlchemy ORM 模型 (`MedicalCase`, `DiagnosisHistory`)
+- `api/db/database.py`: 数据库会话管理
+- `api/config_loader.py`: 配置加载工具类
+- `api/utils/export.py`: 诊断报告导出工具（支持 PDF、Word、Markdown、JSON）
+- `api/utils/case_formatter.py`: 病例格式化工具
+- `api/utils/txt_parser.py`: TXT 文件解析器
 
-- 数据库（SQLite）：
-  - 文件：`medical_diagnostics.db`
-  - 表：`medical_cases` 和 `diagnosis_history`
+**关键 API 路由**：
+- `GET /api/cases`: 获取病例列表（支持搜索）
+- `POST /api/cases`: 创建新病例
+- `GET /api/cases/{id}`: 获取病例详情
+- `PUT /api/cases/{id}`: 更新病例
+- `DELETE /api/cases/{id}`: 删除病例
+- `POST /api/cases/import`: 批量导入病例（TXT 文件）
+- `POST /api/cases/{id}/run-diagnosis`: 运行 AI 诊断（接受可选 `model` 参数）
+- `GET /api/cases/{id}/diagnoses`: 获取诊断历史
+- `GET /api/cases/{id}/diagnoses/{diagnosis_id}/export`: 导出诊断报告（支持多格式）
+- `POST /api/cases/{id}/diagnoses/export-multiple`: 批量导出诊断（ZIP 文件）
+- `GET /api/models`: 获取可用的 AI 模型列表
+
+**数据库**：
+- SQLite 文件：`medical_diagnostics.db`
+- 表：`medical_cases`、`diagnosis_history`
+- 初始化：`python3 api/init_db.py`
 
 ## 前端架构
 
-本仓库已实现现代化的 React 前端（位于 `frontend/` 目录）和新的 Next.js 前端（位于 `frontend-next/` 目录）：
+项目提供两个前端实现，功能相同但技术栈不同：
 
-### 现有 React 前端 (`frontend/`)
-- React 19.2.0 + TypeScript
-- Vite 构建工具
-- Tailwind CSS 4.1.17 样式框架
-- Axios API 客户端
+### React + Vite 前端 (`frontend/`)
+- **技术**: React 19.2.0 + TypeScript + Vite + Tailwind CSS 4.1.17
+- **端口**: 5173
+- **主要组件**:
+  - `CaseList.tsx`: 病例列表页（带分页、搜索、导入功能）
+  - `CaseDetail.tsx`: 病例详情页（AI 诊断、模型选择）
+  - `DiagnosisHistory.tsx`: 诊断历史记录（带导出功能）
+  - `ModelSelector.tsx`: AI 模型选择器
+  - `ImportWizard.tsx`: 病例导入向导
+  - `SmartDropdown.tsx`: 智能下拉菜单（视口检测）
+- **API 服务层**: `src/services/api.ts` (Axios 客户端)
 
-### 新的 Next.js 前端 (`frontend-next/`)
-- Next.js 16.0.3 + TypeScript
-- Tailwind CSS 样式框架
-- Google-like 设计语言
-- React Server Components 架构
-- Axios API 客户端
+### Next.js 前端 (`frontend-next/`)
+- **技术**: Next.js 16.0.3 + TypeScript + Tailwind CSS
+- **端口**: 3000
+- **架构**: App Router + React Server Components
+- **主要页面**:
+  - `src/app/page.tsx`: 首页（病例搜索）
+  - `src/app/case/[id]/page.tsx`: 病例详情页
 
-#### 目录结构
-- `src/app/` - Next.js App Router 结构
-  - `page.tsx` - 首页（病例搜索）
-  - `layout.tsx` - 根布局
-  - `case/[id]/page.tsx` - 病例详情页
-- `src/services/` - API 服务层
-- `src/components/` - 可复用组件
-
-#### 主要功能页面
-1. 首页 (`/`) - 病例搜索和列表展示
-2. 病例详情页 (`/case/{id}`) - 病例详细信息和 AI 诊断功能
+**前后端通信**：
+- 前端通过 REST API 调用后端，不直接访问 LLM 或数据库
+- API 基础 URL: `http://localhost:8000`
+- 所有 API 调用集中在 `services/api.ts` 中管理
 
 ## 常用命令与开发流程
 
@@ -169,37 +204,63 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   ```
   - 访问地址：`http://localhost:3000`
 
-### 接口约定
+## 核心功能流程
 
-- `GET /api/cases`
-  - 用于前端病例列表页。
-  - 返回病例列表。
+### AI 诊断流程
+1. 用户在前端选择病例并点击"开始诊断"
+2. 前端可选择 AI 模型（从 `api/config/models.json` 加载）
+3. 前端调用 `POST /api/cases/{id}/run-diagnosis` (附带可选的 `model` 参数)
+4. 后端调用 `run_multi_agent_diagnosis(raw_report, model_name)`
+5. 三个专科智能体并发分析病例
+6. `MultidisciplinaryTeam` 汇总生成最终诊断
+7. 诊断结果保存到 `diagnosis_history` 表
+8. 返回结构化 Markdown 给前端展示
 
-- `POST /api/cases/{case_id}/run-diagnosis`
-  - 用于对单个病例运行 AI 诊断。
-  - 后端调用 `run_multi_agent_diagnosis(raw_report)` 获取 markdown 并返回。
+### 导出功能流程
+1. 用户选择单个或多个诊断记录
+2. 前端调用导出 API（单个或批量）
+3. 后端使用 `DiagnosisExporter` 类生成文件
+4. 支持格式：PDF、Word、Markdown、JSON
+5. 批量导出时打包为 ZIP 文件
 
-- `GET /api/cases/{case_id}/diagnoses`
-  - 获取指定病例的诊断历史记录。
+### 病例导入流程
+1. 用户上传 TXT 文件（单个或多个）
+2. 前端调用 `POST /api/cases/import`
+3. 后端使用 `txt_parser.py` 解析文件
+4. 批量创建病例记录
+5. 返回导入结果统计
 
-## 对未来 Claude Code 的注意事项
+## 开发注意事项
 
-1. 复用现有 LLM 逻辑
-   - 优先通过 `run_multi_agent_diagnosis` 来获取诊断结果，不要在新代码中重复写 prompt 或直接调用底层 LLM。
+### 1. LLM 集成
+- **必须**通过 `run_multi_agent_diagnosis()` 复用诊断逻辑
+- **禁止**在新代码中重复编写 prompt 或直接调用 LLM
+- 所有 Agent 类都支持 `model_name` 参数来动态切换模型
 
-2. 尊重提示词
-   - `Utils/Agents.py` 中的英文提示词对业务行为影响极大，仓库维护者明确要求"提示词不要修改"。如需调整，请在注释中说明意图并保持英文语义准确。
+### 2. 提示词管理
+- `Utils/Agents.py` 中的英文提示词**不要修改**
+- 这些提示词经过精心设计，直接影响诊断质量
+- 如需调整，必须在注释中说明意图并保持英文语义准确
 
-3. 国际化风格
-   - 源码注释和用户 facing 文本当前以中文为主，技术名词保留英文（如类名 / 函数名 / API 名称）。新增文案时建议延续这种风格。
+### 3. 配置管理
+- 切换账号时只需修改 `apikey.env` 和 `api/config/models.json`
+- 不要将实际配置文件提交到 Git（已在 `.gitignore` 中配置）
+- 参考 `CONFIG_GUIDE.md` 了解配置详情
 
-4. 数据库接入
-   - 已使用 SQLAlchemy ORM 实现数据库访问，通过 `api/models/case.py` 定义模型。
+### 4. 数据库操作
+- 使用 SQLAlchemy ORM 模型（`api/models/case.py`）
+- 字段名注意：`run_timestamp`（非 `timestamp`），`model_name`（非 `model`）
+- 修改模型后需要通过 Alembic 生成迁移
 
-5. 前端集成
-   - 前端通过 REST API 调用后端服务，不要直接在前端访问 LLM 或数据库。
+### 5. 前端开发
+- React 前端是主要开发目标（`frontend/`）
+- 所有状态管理使用 React Hooks
+- UI 使用 Tailwind CSS，保持一致的设计语言
+- 病例列表每页显示 9 个病例（分页功能）
+- 用户偏好（如选择的模型）使用 `localStorage` 持久化
 
-6. 新功能开发建议
-   - 后端功能应通过 FastAPI 路由实现
-   - 前端功能应通过 Next.js App Router 实现
-   - 保持 API 接口的一致性和向后兼容性
+### 6. 导出功能
+- 使用 `DiagnosisExporter` 类处理所有导出逻辑
+- PDF 导出使用 ReportLab，注意中文字体支持
+- Markdown 格式转换注意粗体标记的正则匹配（使用 `re.sub`）
+- 批量导出使用 ZIP 打包

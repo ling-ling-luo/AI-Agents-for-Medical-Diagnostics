@@ -187,8 +187,8 @@ export const DiagnosisResult = ({ result, caseId }: DiagnosisResultProps) => {
       )}
 
       <div className="space-y-6 fade-in">
-        {/* 诊断完成提示 - 增强质感 */}
-        <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-6 shadow-sm">
+        {/* 诊断完成提示 - 矩形设计 */}
+        <div className="bg-white border border-gray-200 rounded-none p-6 shadow-lg">
           <div className="flex items-center gap-4">
             <CheckCircle className="w-8 h-8 text-green-600 flex-shrink-0" />
             <div>
@@ -198,10 +198,10 @@ export const DiagnosisResult = ({ result, caseId }: DiagnosisResultProps) => {
           </div>
         </div>
 
-      {/* 综合诊断摘要 - 增强质感 */}
+      {/* 综合诊断摘要 - 矩形设计 */}
       {summary && (
-        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-          <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-br from-blue-50 to-cyan-50">
+        <div className="bg-white rounded-none border border-gray-200 overflow-hidden shadow-lg">
+          <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex items-center gap-3">
               <FileText className="w-5 h-5 text-gray-700" />
               <h3 className="text-base font-semibold text-gray-800">综合诊断摘要</h3>
@@ -215,10 +215,10 @@ export const DiagnosisResult = ({ result, caseId }: DiagnosisResultProps) => {
         </div>
       )}
 
-      {/* 专科报告 - 增强质感和层级感 */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+      {/* 专科报告 - 矩形设计 */}
+      <div className="bg-white rounded-none border border-gray-200 overflow-hidden shadow-lg">
         <div
-          className="px-6 py-4 border-b border-gray-200 bg-gradient-to-br from-blue-50 to-cyan-50 cursor-pointer hover:from-blue-100 hover:to-cyan-100 transition-colors"
+          className="px-6 py-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
           onClick={() => setIsExpanded(!isExpanded)}
         >
           <div className="flex items-center justify-between">
@@ -240,19 +240,19 @@ export const DiagnosisResult = ({ result, caseId }: DiagnosisResultProps) => {
         </div>
 
         {isExpanded && (
-          <div className="p-6 space-y-5 bg-gradient-to-br from-gray-50 to-blue-50/30">
+          <div className="p-6 space-y-5">
             {specialistReports.map((report, index) => {
               const Icon = report.icon;
               return (
                 <div
                   key={index}
-                  className="bg-white border border-gray-200 rounded-xl overflow-hidden slide-in shadow-sm hover:shadow-lg hover:-translate-y-1 transform transition-all duration-300"
+                  className="bg-white border border-gray-200 rounded-none overflow-hidden slide-in shadow-sm hover:shadow-md transition-shadow duration-300"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  <div className="px-5 py-4 border-b border-gray-200 bg-gradient-to-br from-gray-50 to-white">
+                  <div className="px-5 py-4 border-b border-gray-200">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 bg-white border border-gray-200 rounded-lg flex items-center justify-center shadow-inner">
+                        <div className="w-9 h-9 bg-white border border-gray-200 rounded-none flex items-center justify-center">
                           <Icon className="w-4 h-4 text-gray-700" />
                         </div>
                         <h4 className="text-base font-semibold text-gray-800">
@@ -264,7 +264,7 @@ export const DiagnosisResult = ({ result, caseId }: DiagnosisResultProps) => {
                           e.stopPropagation();
                           handleAgentClick(report.agentKey);
                         }}
-                        className="p-2 hover:bg-blue-50 rounded-lg transition-colors group"
+                        className="p-2 hover:bg-blue-50 rounded transition-colors group"
                         title="查看智能体详情"
                       >
                         <Info className="w-4 h-4 text-gray-500 group-hover:text-blue-600 transition-colors" />
@@ -290,11 +290,11 @@ export const DiagnosisResult = ({ result, caseId }: DiagnosisResultProps) => {
         )}
       </div>
 
-      {/* 导出报告 - 增强质感 */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+      {/* 导出报告 - 矩形设计 */}
+      <div className="bg-white rounded-none border border-gray-200 p-6 shadow-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-11 h-11 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-xl flex items-center justify-center shadow-inner">
+            <div className="w-11 h-11 bg-white border border-gray-200 rounded-none flex items-center justify-center">
               <FileText className="w-5 h-5 text-blue-600" />
             </div>
             <div>
@@ -306,7 +306,7 @@ export const DiagnosisResult = ({ result, caseId }: DiagnosisResultProps) => {
             trigger={
               <button
                 disabled={exporting || !caseId}
-                className="px-4 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-semibold rounded-xl transition-all flex items-center gap-2 shadow hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-semibold rounded-none transition-all flex items-center gap-2 shadow hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Download className="w-4 h-4 flex-shrink-0" />
                 <span>{exporting ? '导出中...' : '导出报告'}</span>

@@ -23,7 +23,7 @@ export const ModelSelector = ({ selectedModel, onModelChange, models }: ModelSel
       {/* 触发按钮 */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="px-4 py-2.5 bg-white border-2 border-gray-300 hover:border-blue-400 rounded-xl text-sm font-medium text-gray-700 transition-all flex items-center gap-2 shadow-sm hover:shadow min-w-[200px]"
+        className="px-4 py-2.5 bg-white border-2 border-gray-300 hover:border-blue-400 text-sm font-medium text-gray-700 transition-all flex items-center gap-2 shadow-sm hover:shadow min-w-[200px]"
       >
         <Cpu className="w-4 h-4 text-blue-600" />
         <div className="flex-1 text-left">
@@ -55,7 +55,7 @@ export const ModelSelector = ({ selectedModel, onModelChange, models }: ModelSel
           />
 
           {/* 菜单内容 */}
-          <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-200 z-20 max-h-96 overflow-y-auto">
+          <div className="absolute top-full left-0 mt-2 w-72 bg-white shadow-xl border border-gray-200 z-20 max-h-96 overflow-y-auto">
             <div className="p-2">
               <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 选择 AI 模型
@@ -67,7 +67,7 @@ export const ModelSelector = ({ selectedModel, onModelChange, models }: ModelSel
                     onModelChange(model.id);
                     setIsOpen(false);
                   }}
-                  className={`w-full text-left px-3 py-2.5 rounded-lg transition-colors flex items-center justify-between ${
+                  className={`w-full text-left px-3 py-2.5 transition-colors flex items-center justify-between ${
                     selectedModel === model.id
                       ? 'bg-blue-50 text-blue-700'
                       : 'hover:bg-gray-50 text-gray-700'
