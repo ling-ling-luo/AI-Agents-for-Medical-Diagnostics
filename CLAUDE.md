@@ -137,13 +137,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - 专科报告：点击卡片弹窗查看单个报告，或使用"全览报告"按钮查看所有报告
   - 综合诊断：始终完整展开显示
 
-### Next.js 前端 (`frontend-next/`)
-- **技术**: Next.js 16.0.3 + TypeScript + Tailwind CSS
-- **端口**: 3000
-- **架构**: App Router + React Server Components
-- **主要页面**:
-  - `src/app/page.tsx`: 首页（病例搜索）
-  - `src/app/case/[id]/page.tsx`: 病例详情页
 
 **前后端通信**：
 - 前端通过 REST API 调用后端，不直接访问 LLM 或数据库

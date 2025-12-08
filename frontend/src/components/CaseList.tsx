@@ -9,7 +9,11 @@ import '../styles/hide-scrollbar.css'; // 引入样式文件以隐藏数字输�
 
 const ITEMS_PER_PAGE = 9; // 每页显示9个病例
 
-export const CaseList = () => {
+interface CaseListProps {
+  embedded?: boolean; // 是否为嵌入模式（在标签页中使用）
+}
+
+export const CaseList = ({ embedded = false }: CaseListProps) => {
   const [cases, setCases] = useState<Case[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -105,7 +109,7 @@ export const CaseList = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className={`${embedded ? 'py-8' : 'min-h-screen'} bg-${embedded ? 'transparent' : 'gray-50'} flex items-center justify-center`}>
         <Loading size="lg" text="正在加载病例数据..." />
       </div>
     );
@@ -113,7 +117,7 @@ export const CaseList = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className={`${embedded ? 'py-8' : 'min-h-screen bg-gray-50'} flex items-center justify-center p-4`}>
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center border border-red-200">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Activity className="w-8 h-8 text-red-600" />
@@ -133,65 +137,92 @@ export const CaseList = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-white">
-      {/* 顶部导航栏 + 搜索栏 - 固定置顶 */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
-        <div className="container-custom py-5">
-          {/* 标题行和搜索栏 */}
-          <div className="flex items-center justify-between gap-6">
-            {/* 左侧：标题 */}
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow">
-                <Stethoscope className="w-5 h-5 text-white" />
+    <div className={embedded ? '' : 'min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-white'}>
+      {/* 顶部导航栏 + 搜索栏 - 非嵌入模式才显示 */}
+      {!embedded && (
+        <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
+          <div className="container-custom py-5">
+            {/* 标题行和搜索栏 */}
+            <div className="flex items-center justify-between gap-6">
+              {/* 左侧：标题 */}
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow">
+                  <Stethoscope className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-lg font-semibold text-gray-800">AI 医疗诊断系统</h1>
+                  <p className="text-xs text-gray-500 mt-0.5">共 {cases.length} 个病例</p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-lg font-semibold text-gray-800">AI 医疗诊断系统</h1>
-                <p className="text-xs text-gray-500 mt-0.5">共 {cases.length} 个病例</p>
+
+              {/* 中间：搜索栏 */}
+              <div className="flex-1 max-w-2xl">
+                <div className="flex items-center border border-gray-300 rounded-full px-4 py-1.5 focus-within:border-blue-500 transition-colors">
+                  <Search className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" />
+                  <input
+                    type="text"
+                    placeholder="搜索患者姓名、病历号或主诉"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 focus:outline-none py-0.5"
+                  />
+                </div>
+                {searchTerm && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    找到 {filteredCases.length} 个匹配结果
+                  </p>
+                )}
+              </div>
+
+              {/* 右侧：操作按钮 */}
+              <div className="flex items-center gap-3 flex-shrink-0">
+                {/* 导入病例按钮 */}
+                <button
+                  onClick={handleImportClick}
+                  className="px-5 py-2.5 bg-transparent hover:bg-gray-50 text-blue-600 hover:text-blue-700 text-sm font-semibold transition-all whitespace-nowrap min-w-[100px]"
+                >
+                  <span>导入病例</span>
+                </button>
+
+                {/* 新增病例按钮 */}
+                <button
+                  onClick={() => navigate('/create')}
+                  className="px-5 py-2.5 bg-transparent hover:bg-gray-50 text-blue-600 hover:text-blue-700 text-sm font-semibold transition-all whitespace-nowrap min-w-[100px]"
+                >
+                  <span>新增病例</span>
+                </button>
               </div>
             </div>
+          </div>
+        </header>
+      )}
 
-            {/* 中间：搜索栏 */}
-            <div className="flex-1 max-w-2xl">
-              <div className="flex items-center border border-gray-300 rounded-full px-4 py-1.5 focus-within:border-blue-500 transition-colors">
+      {/* 嵌入模式的搜索栏 */}
+      {embedded && (
+        <div className="pt-8 pb-6">
+          <div className="flex items-center justify-center">
+            <div className="w-full max-w-2xl">
+              <div className="flex items-center border border-gray-300 rounded-full px-4 py-2.5 focus-within:border-blue-500 transition-colors bg-white shadow-sm">
                 <Search className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" />
                 <input
                   type="text"
                   placeholder="搜索患者姓名、病历号或主诉"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 focus:outline-none py-0.5"
+                  className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 focus:outline-none"
                 />
               </div>
               {searchTerm && (
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-gray-500 mt-2 text-center">
                   找到 {filteredCases.length} 个匹配结果
                 </p>
               )}
             </div>
-
-            {/* 右侧：操作按钮 */}
-            <div className="flex items-center gap-3 flex-shrink-0">
-              {/* 导入病例按钮 */}
-              <button
-                onClick={handleImportClick}
-                className="px-5 py-2.5 bg-transparent hover:bg-gray-50 text-blue-600 hover:text-blue-700 text-sm font-semibold transition-all whitespace-nowrap min-w-[100px]"
-              >
-                <span>导入病例</span>
-              </button>
-
-              {/* 新增病例按钮 */}
-              <button
-                onClick={() => navigate('/create')}
-                className="px-5 py-2.5 bg-transparent hover:bg-gray-50 text-blue-600 hover:text-blue-700 text-sm font-semibold transition-all whitespace-nowrap min-w-[100px]"
-              >
-                <span>新增病例</span>
-              </button>
-            </div>
           </div>
         </div>
-      </header>
+      )}
 
-      <main className="container-custom py-8 min-h-[calc(100vh-120px)] flex flex-col">
+      <main className={`${embedded ? 'py-2' : 'container-custom py-8'} min-h-[calc(100vh-120px)] flex flex-col`}>
         {/* 病例列表 - 增强卡片质感 */}
         <div className="relative z-0 flex-1 flex flex-col">
           {filteredCases.length === 0 ? (
@@ -318,88 +349,98 @@ export const CaseList = () => {
           </div>
               </div>
 
-          {/* 分页控件 - 简化版 */}
+          {/* 分页控件 - 移到底部 */}
           {totalPages > 1 && (
-            <div className="mt-8 pt-6 border-t border-gray-200 flex items-center justify-center gap-2 flex-wrap">
-              {/* 上一页按钮 */}
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="px-3 py-1.5 bg-transparent text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                <span className="text-sm font-medium">上一页</span>
-              </button>
-
-              {/* 页码按钮 */}
-              <div className="flex items-center gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                  // 显示逻辑：始终显示第1页、最后1页、当前页及其前后各1页
-                  const showPage =
-                    page === 1 ||
-                    page === totalPages ||
-                    (page >= currentPage - 1 && page <= currentPage + 1);
-
-                  // 显示省略号
-                  const showEllipsisBefore = page === currentPage - 2 && currentPage > 3;
-                  const showEllipsisAfter = page === currentPage + 2 && currentPage < totalPages - 2;
-
-                  if (showEllipsisBefore || showEllipsisAfter) {
-                    return (
-                      <span key={page} className="px-2 text-gray-400">
-                        ...
-                      </span>
-                    );
-                  }
-
-                  if (!showPage) return null;
-
-                  return (
-                    <button
-                      key={page}
-                      onClick={() => handlePageChange(page)}
-                      className={`min-w-[32px] h-8 text-sm font-medium transition-all ${
-                        currentPage === page
-                          ? 'text-blue-700 font-bold'
-                          : 'text-blue-600 hover:text-blue-800'
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  );
-                })}
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <div className="text-sm text-gray-500">
+                  共 {cases.length} 个病例 {searchTerm && `· ${filteredCases.length} 个匹配`}
+                </div>
+                <div className="text-sm text-gray-500">
+                  第 {currentPage} / {totalPages} 页
+                </div>
               </div>
+              <div className="flex items-center justify-center gap-2 flex-wrap">
+                {/* 上一页按钮 */}
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 bg-transparent text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span className="text-sm font-medium">上一页</span>
+                </button>
 
-              {/* 下一页按钮 */}
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="px-3 py-1.5 bg-transparent text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1"
-              >
-                <span className="text-sm font-medium">下一页</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
+                {/* 页码按钮 */}
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                    // 显示逻辑：始终显示第1页、最后1页、当前页及其前后各1页
+                    const showPage =
+                      page === 1 ||
+                      page === totalPages ||
+                      (page >= currentPage - 1 && page <= currentPage + 1);
 
-              {/* 页码信息与跳转 */}
-              <div className="flex items-center gap-1 ml-4 text-sm text-gray-600">
-                <span>第</span>
-                <input
-                  type="number"
-                  min="1"
-                  max={totalPages}
-                  value={jumpToPage || ''}
-                  onChange={(e) => setJumpToPage(e.target.value)}
-                  onKeyPress={handleJumpInputKeyPress}
-                  onFocus={() => setJumpToPage('')}
-                  onBlur={() => {
-                    if (jumpToPage) {
-                      handleJumpToPage();
+                    // 显示省略号
+                    const showEllipsisBefore = page === currentPage - 2 && currentPage > 3;
+                    const showEllipsisAfter = page === currentPage + 2 && currentPage < totalPages - 2;
+
+                    if (showEllipsisBefore || showEllipsisAfter) {
+                      return (
+                        <span key={page} className="px-2 text-gray-400">
+                          ...
+                        </span>
+                      );
                     }
-                  }}
-                  placeholder={String(currentPage)}
-                  className="w-8 text-center border-b border-gray-300 focus:border-blue-500 focus:outline-none bg-transparent px-0 py-0 transition-colors mx-1 hide-spin-buttons text-gray-600"
-                />
-                <span>/ {totalPages} 页</span>
+
+                    if (!showPage) return null;
+
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`min-w-[32px] h-8 text-sm font-medium transition-all ${
+                          currentPage === page
+                            ? 'text-blue-700 font-bold'
+                            : 'text-blue-600 hover:text-blue-800'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* 下一页按钮 */}
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1.5 bg-transparent text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1"
+                >
+                  <span className="text-sm font-medium">下一页</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+
+                {/* 页码跳转 */}
+                <div className="flex items-center gap-1 ml-4 text-sm text-gray-600">
+                  <span>跳至</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max={totalPages}
+                    value={jumpToPage || ''}
+                    onChange={(e) => setJumpToPage(e.target.value)}
+                    onKeyPress={handleJumpInputKeyPress}
+                    onFocus={() => setJumpToPage('')}
+                    onBlur={() => {
+                      if (jumpToPage) {
+                        handleJumpToPage();
+                      }
+                    }}
+                    placeholder={String(currentPage)}
+                    className="w-12 text-center border border-gray-300 rounded px-2 py-1 focus:border-blue-500 focus:outline-none bg-white transition-colors hide-spin-buttons text-gray-600"
+                  />
+                  <span>页</span>
+                </div>
               </div>
             </div>
           )}

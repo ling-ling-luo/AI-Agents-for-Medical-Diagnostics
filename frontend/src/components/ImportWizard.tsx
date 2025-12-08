@@ -18,9 +18,10 @@ type ImportStepType = typeof ImportStep[keyof typeof ImportStep];
 
 interface ImportWizardProps {
   onComplete?: () => void;
+  embedded?: boolean; // 是否为嵌入模式（在标签页中使用）
 }
 
-export const ImportWizard = ({ onComplete }: ImportWizardProps) => {
+export const ImportWizard = ({ onComplete, embedded = false }: ImportWizardProps) => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -175,7 +176,7 @@ Respiratory Exam: Prolonged expiration, wheezing on auscultation.`;
   };
 
   const renderStepIndicator = () => (
-    <div className="flex items-center justify-center mb-12">
+    <div className="flex items-center justify-center mb-8 pb-8 border-b border-gray-200">
       {[
         { step: ImportStep.SELECT_FILE, label: '选择文件', icon: Upload },
         { step: ImportStep.VALIDATE, label: '文件验证', icon: FileCheck },
@@ -190,29 +191,29 @@ Respiratory Exam: Prolonged expiration, wheezing on auscultation.`;
           <div key={item.step} className="flex items-center">
             <div className="flex flex-col items-center">
               <div
-                className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-all duration-500 ${
+                className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
                   isActive
-                    ? 'bg-gradient-to-br from-blue-500 to-cyan-500 text-white scale-110 shadow-blue-200'
+                    ? 'bg-blue-500 border-blue-500 text-white scale-110'
                     : isCompleted
-                    ? 'bg-gradient-to-br from-green-500 to-emerald-500 text-white shadow-green-200'
-                    : 'bg-white border-2 border-gray-200 text-gray-400'
+                    ? 'bg-green-500 border-green-500 text-white'
+                    : 'bg-white border-gray-300 text-gray-400'
                 }`}
               >
-                <StepIcon className="w-6 h-6" />
+                <StepIcon className="w-5 h-5" />
               </div>
               <span
-                className={`mt-3 text-sm font-medium transition-colors ${
-                  isActive ? 'text-blue-600 font-semibold' : isCompleted ? 'text-green-600' : 'text-gray-400'
+                className={`mt-2 text-xs font-medium transition-colors ${
+                  isActive ? 'text-blue-600 font-semibold' : isCompleted ? 'text-green-600' : 'text-gray-500'
                 }`}
               >
                 {item.label}
               </span>
             </div>
             {index < 3 && (
-              <div className="relative flex items-center mx-4">
+              <div className="flex items-center mx-6">
                 <div
-                  className={`w-24 h-1 rounded-full transition-all duration-500 ${
-                    isCompleted ? 'bg-gradient-to-r from-green-400 to-emerald-400' : 'bg-gray-200'
+                  className={`w-16 h-px transition-all duration-300 ${
+                    isCompleted ? 'bg-green-500' : 'bg-gray-300'
                   }`}
                 />
               </div>
@@ -227,7 +228,7 @@ Respiratory Exam: Prolonged expiration, wheezing on auscultation.`;
     switch (currentStep) {
       case ImportStep.SELECT_FILE:
         return (
-          <div className="text-center space-y-8">
+          <div className="space-y-6">
             <input
               ref={fileInputRef}
               type="file"
@@ -236,16 +237,16 @@ Respiratory Exam: Prolonged expiration, wheezing on auscultation.`;
               className="hidden"
             />
 
+            {/* 上传区域 */}
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="group border-3 border-dashed border-gray-300 rounded-3xl p-16 hover:border-blue-400 hover:bg-gradient-to-br hover:from-blue-50 hover:to-cyan-50 transition-all duration-300 cursor-pointer relative overflow-hidden"
+              className="group border-2 border-dashed border-gray-300 rounded-lg p-12 hover:border-blue-500 hover:bg-blue-50/30 transition-all cursor-pointer"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-400/0 to-cyan-400/0 group-hover:from-blue-400/5 group-hover:to-cyan-400/5 transition-all duration-300" />
-              <div className="relative">
-                <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-3xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                  <Upload className="w-10 h-10 text-blue-600" />
+              <div className="flex flex-col items-center">
+                <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <Upload className="w-8 h-8 text-white" />
                 </div>
-                <p className="text-2xl font-bold text-gray-800 mb-3">
+                <p className="text-lg font-semibold text-gray-800 mb-2">
                   点击上传或拖拽文件到此处
                 </p>
                 <p className="text-sm text-gray-500">
@@ -254,92 +255,109 @@ Respiratory Exam: Prolonged expiration, wheezing on auscultation.`;
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {Object.entries(formatGuide).map(([key, guide]) => {
-                const GuideIcon = guide.icon;
-                return (
-                  <div
-                    key={key}
-                    className={`${guide.bgColor} border border-gray-200 rounded-2xl p-6 text-left hover:shadow-xl hover:-translate-y-1 transition-all duration-300`}
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 bg-gradient-to-br ${guide.color} rounded-xl flex items-center justify-center shadow-md`}>
-                          <GuideIcon className="w-5 h-5 text-white" />
-                        </div>
-                        <h4 className="text-lg font-bold text-gray-800">
-                          {guide.name}
-                        </h4>
-                      </div>
-                      <button
-                        onClick={() => downloadExample(key as 'json' | 'txt')}
-                        className="px-3 py-1.5 bg-white hover:bg-gray-50 text-blue-600 text-sm font-semibold rounded-lg flex items-center gap-2 shadow-sm hover:shadow transition-all"
-                      >
-                        <Download className="w-4 h-4" />
-                        下载示例
-                      </button>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-4">{guide.description}</p>
-                    <pre className="bg-white/70 backdrop-blur-sm p-4 rounded-xl text-xs text-gray-700 overflow-x-auto border border-gray-200">
-                      {guide.example}
-                    </pre>
+            {/* 格式说明 - 简化为文字 */}
+            <div className="border-t border-gray-200 pt-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between py-2">
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">JSON 格式</p>
+                    <p className="text-xs text-gray-500 mt-0.5">适合批量导入多个结构化病例</p>
                   </div>
-                );
-              })}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      downloadExample('json');
+                    }}
+                    className="px-4 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded flex items-center gap-1.5 transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    下载示例
+                  </button>
+                </div>
+                <div className="border-t border-gray-200"></div>
+                <div className="flex items-center justify-between py-2">
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">TXT 格式</p>
+                    <p className="text-xs text-gray-500 mt-0.5">适合导入标准病例模板</p>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      downloadExample('txt');
+                    }}
+                    className="px-4 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded flex items-center gap-1.5 transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    下载示例
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         );
 
       case ImportStep.VALIDATE:
         return (
-          <div className="text-center space-y-6">
-            <div className="w-24 h-24 bg-gradient-to-br from-green-100 to-emerald-100 rounded-3xl flex items-center justify-center mx-auto shadow-lg">
-              <CheckCircle className="w-12 h-12 text-green-600" />
+          <div className="space-y-6">
+            {/* 验证成功提示 */}
+            <div className="flex items-center justify-center py-8">
+              <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-10 h-10 text-white" />
+              </div>
             </div>
-            <div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-3">
+            <div className="text-center">
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">
                 文件验证通过 ✓
               </h3>
-              <div className="inline-block bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 rounded-xl px-6 py-3">
-                <p className="text-sm text-gray-600 mb-1">文件名</p>
-                <p className="text-base font-semibold text-gray-800">{selectedFile?.name}</p>
-                <p className="text-xs text-gray-500 mt-2">
-                  大小: {((selectedFile?.size || 0) / 1024).toFixed(2)} KB
-                </p>
+            </div>
+
+            {/* 文件信息 - 使用细线分隔 */}
+            <div className="border border-gray-200 rounded-lg p-4 bg-white">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm text-gray-600">文件名</span>
+                  <span className="text-sm font-medium text-gray-800">{selectedFile?.name}</span>
+                </div>
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-sm text-gray-600">文件大小</span>
+                  <span className="text-sm font-medium text-gray-800">
+                    {((selectedFile?.size || 0) / 1024).toFixed(2)} KB
+                  </span>
+                </div>
               </div>
             </div>
 
+            {/* 错误提示 */}
             {error && (
-              <div className="bg-gradient-to-br from-red-50 to-pink-50 border-2 border-red-200 rounded-2xl p-6 text-left shadow-lg">
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <AlertCircle className="w-5 h-5 text-red-600" />
-                  </div>
+              <div className="border-l-4 border-red-500 bg-red-50 p-4 rounded">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-base font-bold text-red-800 mb-1">验证失败</p>
-                    <p className="text-sm text-red-700">{error}</p>
+                    <p className="text-sm font-semibold text-red-800">验证失败</p>
+                    <p className="text-sm text-red-700 mt-1">{error}</p>
                   </div>
                 </div>
               </div>
             )}
 
-            <div className="flex items-center justify-center gap-4 pt-4">
+            {/* 操作按钮 */}
+            <div className="flex items-center justify-center gap-6 pt-4 border-t border-gray-200">
               <button
                 onClick={() => {
                   setSelectedFile(null);
                   setCurrentStep(ImportStep.SELECT_FILE);
                 }}
-                className="px-8 py-3 bg-white border-2 border-gray-300 hover:border-gray-400 text-gray-700 rounded-xl font-semibold shadow-sm hover:shadow transition-all"
+                className="px-4 py-2 text-gray-600 hover:text-gray-900 font-medium transition-all hover:drop-shadow-sm"
               >
                 重新选择
               </button>
               <button
                 onClick={handleImport}
-                className="px-8 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+                className="px-4 py-2 text-blue-500 hover:text-blue-700 font-medium flex items-center gap-2 transition-all hover:drop-shadow-sm"
               >
-                <Sparkles className="w-5 h-5" />
+                <Sparkles className="w-4 h-4" />
                 开始导入
-                <ArrowRight className="w-5 h-5" />
+                <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -347,97 +365,114 @@ Respiratory Exam: Prolonged expiration, wheezing on auscultation.`;
 
       case ImportStep.UPLOAD:
         return (
-          <div className="text-center py-12">
-            <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-3xl flex items-center justify-center mx-auto mb-6 animate-pulse">
-              <Sparkles className="w-12 h-12 text-blue-600" />
+          <div className="py-12">
+            <div className="flex flex-col items-center">
+              <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mb-6 animate-pulse">
+                <Sparkles className="w-10 h-10 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                正在导入病例数据...
+              </h3>
+              <p className="text-sm text-gray-500 mb-8">智能解析中，请稍候</p>
+              <Loading size="lg" text="" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-800 mb-3">
-              正在导入病例数据...
-            </h3>
-            <p className="text-gray-500 mb-8">智能解析中，请稍候</p>
-            <Loading size="lg" text="" />
           </div>
         );
 
       case ImportStep.RESULT:
         return (
-          <div className="text-center space-y-6">
+          <div className="space-y-6">
             {result && (
               <>
-                <div className={`w-24 h-24 rounded-3xl flex items-center justify-center mx-auto shadow-lg ${
-                  result.failed_count === 0
-                    ? 'bg-gradient-to-br from-green-100 to-emerald-100'
-                    : result.success_count === 0
-                    ? 'bg-gradient-to-br from-red-100 to-pink-100'
-                    : 'bg-gradient-to-br from-yellow-100 to-orange-100'
-                }`}>
-                  {result.failed_count === 0 ? (
-                    <CheckCircle className="w-12 h-12 text-green-600" />
-                  ) : result.success_count === 0 ? (
-                    <AlertCircle className="w-12 h-12 text-red-600" />
-                  ) : (
-                    <Info className="w-12 h-12 text-yellow-600" />
-                  )}
+                {/* 结果图标 */}
+                <div className="flex items-center justify-center py-8">
+                  <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                    result.failed_count === 0
+                      ? 'bg-green-500'
+                      : result.success_count === 0
+                      ? 'bg-red-500'
+                      : 'bg-yellow-500'
+                  }`}>
+                    {result.failed_count === 0 ? (
+                      <CheckCircle className="w-10 h-10 text-white" />
+                    ) : result.success_count === 0 ? (
+                      <AlertCircle className="w-10 h-10 text-white" />
+                    ) : (
+                      <Info className="w-10 h-10 text-white" />
+                    )}
+                  </div>
                 </div>
 
-                <div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-3">
+                {/* 结果消息 */}
+                <div className="text-center">
+                  <h3 className="text-xl font-semibold text-gray-800 mb-2">
                     {result.message}
                   </h3>
-                  <div className="inline-flex items-center gap-6 bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 rounded-xl px-8 py-4">
-                    <div>
+                </div>
+
+                {/* 统计信息 - 使用细线分隔 */}
+                <div className="border border-gray-200 rounded-lg p-6 bg-white">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center py-3 border-r border-gray-200">
                       <p className="text-xs text-gray-500 mb-1">总计</p>
                       <p className="text-2xl font-bold text-gray-800">{result.total_count}</p>
                     </div>
-                    <div className="w-px h-12 bg-gray-300" />
-                    <div>
+                    <div className="text-center py-3 border-r border-gray-200">
                       <p className="text-xs text-green-600 mb-1">成功</p>
                       <p className="text-2xl font-bold text-green-600">{result.success_count}</p>
                     </div>
-                    <div className="w-px h-12 bg-gray-300" />
-                    <div>
+                    <div className="text-center py-3">
                       <p className="text-xs text-red-600 mb-1">失败</p>
                       <p className="text-2xl font-bold text-red-600">{result.failed_count}</p>
                     </div>
                   </div>
                 </div>
 
+                {/* 失败详情 */}
                 {result.failed_cases.length > 0 && (
-                  <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-2xl p-6 text-left max-h-64 overflow-y-auto shadow-lg">
+                  <div className="border-l-4 border-yellow-500 bg-yellow-50 p-4 rounded max-h-64 overflow-y-auto">
                     <div className="flex items-center gap-2 mb-3">
                       <AlertCircle className="w-5 h-5 text-yellow-600" />
-                      <p className="text-base font-bold text-yellow-800">失败详情</p>
+                      <p className="text-sm font-semibold text-yellow-800">失败详情</p>
                     </div>
-                    <ul className="text-sm text-yellow-800 space-y-2">
+                    <ul className="space-y-2">
                       {result.failed_cases.map((failed, idx) => (
-                        <li key={idx} className="flex items-start gap-2">
-                          <span className="text-yellow-600 font-bold">•</span>
-                          <span>病历号 <span className="font-semibold">{failed.patient_id}</span>: {failed.error}</span>
+                        <li key={idx} className="text-sm text-yellow-800 flex items-start gap-2 py-2 border-b border-yellow-100 last:border-0">
+                          <span className="text-yellow-600">•</span>
+                          <span>
+                            病历号 <span className="font-semibold">{failed.patient_id}</span>: {failed.error}
+                          </span>
                         </li>
                       ))}
                     </ul>
                   </div>
                 )}
 
-                <div className="flex items-center justify-center gap-4 pt-4">
+                {/* 操作按钮 */}
+                <div className="flex items-center justify-center gap-6 pt-4 border-t border-gray-200">
                   <button
                     onClick={() => {
                       setSelectedFile(null);
                       setResult(null);
                       setCurrentStep(ImportStep.SELECT_FILE);
                     }}
-                    className="px-8 py-3 bg-white border-2 border-gray-300 hover:border-gray-400 text-gray-700 rounded-xl font-semibold shadow-sm hover:shadow transition-all"
+                    className="px-4 py-2 text-gray-600 hover:text-gray-900 font-medium transition-all hover:drop-shadow-sm"
                   >
                     继续导入
                   </button>
                   <button
                     onClick={() => {
-                      onComplete?.();
-                      navigate('/');
+                      if (embedded) {
+                        // 嵌入模式：通过回调切换标签页
+                        onComplete?.();
+                      } else {
+                        // 独立模式：导航到首页
+                        navigate('/');
+                      }
                     }}
-                    className="px-8 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+                    className="px-4 py-2 text-blue-500 hover:text-blue-700 font-medium transition-all hover:drop-shadow-sm"
                   >
-                    返回首页
+                    返回病例列表
                   </button>
                 </div>
               </>
@@ -451,32 +486,34 @@ Respiratory Exam: Prolonged expiration, wheezing on auscultation.`;
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-white">
-      <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-30 shadow-sm">
-        <div className="container-custom py-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
-                <Upload className="w-6 h-6 text-white" />
+    <div className={embedded ? '' : 'min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-white'}>
+      {!embedded && (
+        <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-30 shadow-sm">
+          <div className="container-custom py-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <Upload className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-gray-800">导入病例向导</h1>
+                  <p className="text-sm text-gray-500 mt-0.5">批量导入病例数据</p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-800">导入病例向导</h1>
-                <p className="text-sm text-gray-500 mt-0.5">批量导入病例数据</p>
-              </div>
+              <button
+                onClick={() => navigate('/')}
+                className="px-5 py-2.5 bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 rounded-xl font-semibold flex items-center gap-2 shadow-sm hover:shadow transition-all"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                返回首页
+              </button>
             </div>
-            <button
-              onClick={() => navigate('/')}
-              className="px-5 py-2.5 bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 rounded-xl font-semibold flex items-center gap-2 shadow-sm hover:shadow transition-all"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              返回首页
-            </button>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
-      <main className="container-custom py-10">
-        <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-xl border border-gray-200 p-10">
+      <main className={embedded ? 'py-6' : 'container-custom py-10'}>
+        <div className={`${embedded ? 'bg-white border' : 'bg-white'} border-gray-200 rounded-lg p-8`}>
           {renderStepIndicator()}
           {renderStepContent()}
         </div>
