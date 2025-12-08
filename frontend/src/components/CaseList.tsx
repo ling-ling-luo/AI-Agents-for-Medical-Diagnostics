@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, User, Stethoscope, Activity, Search, RefreshCw, Plus, Upload, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileText, User, Stethoscope, Activity, Search, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Case } from '../types';
 import { caseApi } from '../services/api';
 import { Loading } from './Loading';
@@ -34,10 +34,6 @@ export const CaseList = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleRunDiagnosis = (caseId: number) => {
-    navigate(`/case/${caseId}`);
   };
 
   const handleEditCase = (caseId: number) => {
@@ -221,7 +217,7 @@ export const CaseList = () => {
                   className="bg-white rounded-2xl border border-gray-200 transition-all duration-300 overflow-hidden group shadow-lg hover:shadow-xl hover:-translate-y-1 transform"
                   onClick={(e) => {
                     // 检查点击事件是否来自下拉菜单或其子元素
-                    if (!e.target.closest('.dropdown-container')) {
+                    if (!(e.target as HTMLElement).closest('.dropdown-container')) {
                       navigate(`/case/${case_.id}`);
                     }
                   }}

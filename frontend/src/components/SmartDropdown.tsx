@@ -132,7 +132,7 @@ export const SmartDropdown = ({
   const getMenuStyle = (): React.CSSProperties => {
     const style: React.CSSProperties = {
       position: 'absolute',
-      zIndex: 50,
+      zIndex: 1000,
       minWidth,
       maxHeight: `${maxHeight}px`,
       overflowY: 'auto',

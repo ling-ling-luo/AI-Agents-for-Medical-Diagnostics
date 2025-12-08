@@ -1,17 +1,78 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play, RefreshCw, AlertCircle, Stethoscope, Brain, Heart, Wind, Loader, User, Calendar, FileText } from 'lucide-react';
+import { ArrowLeft, RefreshCw, AlertCircle, Brain, Heart, Wind, Loader, User, Calendar } from 'lucide-react';
 import { caseApi } from '../services/api';
 import type { CaseDetail as CaseDetailType, DiagnosisResponse } from '../types';
 import { Loading } from './Loading';
 import { DiagnosisResult } from './DiagnosisResult';
 import { ModelSelector } from './ModelSelector';
+import { AgentInfoModal } from './AgentInfoModal';
 
 interface Model {
   id: string;
   name: string;
   provider: string;
 }
+
+interface AgentInfo {
+  name: string;
+  role: string;
+  description: string;
+  focus: string;
+  task: string;
+  prompt: string;
+  icon: any;
+  color: string;
+}
+
+// 智能体信息配置
+const agentsInfo: Record<string, AgentInfo> = {
+  cardiologist: {
+    name: '心脏科智能体',
+    role: 'Cardiologist',
+    description: '心脏科智能体专注于心血管系统的评估和诊断，能够分析心电图、血液检测、Holter监测结果和超声心动图等数据。',
+    task: '审查患者的心脏检查结果，包括ECG、血液检测、Holter监测结果和超声心动图，识别可能解释患者症状的心脏问题迹象。',
+    focus: '确定是否存在可能在常规检测中被遗漏的心脏问题的微妙迹象，排除任何潜在的心脏疾病，如心律失常或结构异常。',
+    prompt: `Act like a cardiologist. You will receive a medical report of a patient.
+Task: Review the patient's cardiac workup, including ECG, blood tests, Holter monitor results, and echocardiogram.
+Focus: Determine if there are any subtle signs of cardiac issues that could explain the patient's symptoms. Rule out any underlying heart conditions, such as arrhythmias or structural abnormalities, that might be missed on routine testing.
+Recommendation: Provide guidance on any further cardiac testing or monitoring needed to ensure there are no hidden heart-related concerns. Suggest potential management strategies if a cardiac issue is identified.
+Please only return the possible causes of the patient's symptoms and the recommended next steps.
+Medical Report: {medical_report}`,
+    icon: Heart,
+    color: 'bg-gradient-to-br from-red-50 to-pink-50'
+  },
+  psychologist: {
+    name: '心理学智能体',
+    role: 'Psychologist',
+    description: '心理学智能体专注于心理健康评估，能够识别焦虑、抑郁、创伤等心理问题，并提供相应的干预建议。',
+    task: '审查患者报告并提供心理评估，识别可能影响患者福祉的潜在心理健康问题。',
+    focus: '识别任何可能影响患者福祉的潜在心理健康问题，如焦虑、抑郁或创伤，提供应对这些心理健康问题的指导。',
+    prompt: `Act like a psychologist. You will receive a patient's report.
+Task: Review the patient's report and provide a psychological assessment.
+Focus: Identify any potential mental health issues, such as anxiety, depression, or trauma, that may be affecting the patient's well-being.
+Recommendation: Offer guidance on how to address these mental health concerns, including therapy, counseling, or other interventions.
+Please only return the possible mental health issues and the recommended next steps.
+Patient's Report: {medical_report}`,
+    icon: Brain,
+    color: 'bg-gradient-to-br from-purple-50 to-indigo-50'
+  },
+  pulmonologist: {
+    name: '呼吸科智能体',
+    role: 'Pulmonologist',
+    description: '呼吸科智能体专注于呼吸系统疾病的诊断和评估，能够识别哮喘、COPD、肺部感染等呼吸问题。',
+    task: '审查患者报告并提供肺部评估，识别可能影响患者呼吸的潜在呼吸问题。',
+    focus: '识别任何可能影响患者呼吸的潜在呼吸问题，如哮喘、COPD或肺部感染，提供应对这些呼吸问题的指导。',
+    prompt: `Act like a pulmonologist. You will receive a patient's report.
+Task: Review the patient's report and provide a pulmonary assessment.
+Focus: Identify any potential respiratory issues, such as asthma, COPD, or lung infections, that may be affecting the patient's breathing.
+Recommendation: Offer guidance on how to address these respiratory concerns, including pulmonary function tests, imaging studies, or other interventions.
+Please only return the possible respiratory issues and the recommended next steps.
+Patient's Report: {medical_report}`,
+    icon: Wind,
+    color: 'bg-gradient-to-br from-cyan-50 to-blue-50'
+  }
+};
 
 export const CaseDetail = () => {
   const { caseId } = useParams<{ caseId: string }>();
@@ -23,6 +84,19 @@ export const CaseDetail = () => {
   const [error, setError] = useState<string | null>(null);
   const [availableModels, setAvailableModels] = useState<Model[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>('');
+  const [selectedAgent, setSelectedAgent] = useState<AgentInfo | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 处理智能体卡片点击
+  const handleAgentClick = (agentKey: string) => {
+    setSelectedAgent(agentsInfo[agentKey]);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setTimeout(() => setSelectedAgent(null), 300);
+  };
 
   // 加载模型列表
   useEffect(() => {
@@ -49,7 +123,7 @@ export const CaseDetail = () => {
     loadModels();
   }, []);
 
-  // 加载病例详情
+  // 加载病例详情和最新诊断
   useEffect(() => {
     const loadCaseDetail = async () => {
       if (!caseId) return;
@@ -58,6 +132,24 @@ export const CaseDetail = () => {
         setLoadingCase(true);
         const data = await caseApi.getCaseDetail(parseInt(caseId));
         setCaseDetail(data);
+
+        // 加载最新的诊断历史
+        try {
+          const historyData = await caseApi.getDiagnosisHistory(parseInt(caseId), true);
+          if (historyData.history && historyData.history.length > 0) {
+            // 获取最新的诊断（数组第一个）
+            const latestDiagnosis = historyData.history[0];
+            if (latestDiagnosis.diagnosis_full) {
+              setDiagnosis({
+                case_id: parseInt(caseId),
+                diagnosis_markdown: latestDiagnosis.diagnosis_full
+              });
+            }
+          }
+        } catch (diagErr) {
+          // 如果没有诊断历史，不显示错误，只是不加载诊断结果
+          console.log('No diagnosis history available');
+        }
       } catch (err) {
         setError('无法加载病例详情，请检查后端服务');
         console.error('Error loading case detail:', err);
@@ -141,6 +233,15 @@ export const CaseDetail = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-white">
+      {/* 智能体信息模态框 */}
+      {selectedAgent && (
+        <AgentInfoModal
+          agent={selectedAgent}
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+        />
+      )}
+
       {/* 顶部导航栏 - 增强质感 */}
       <header className="bg-white border-b border-gray-200">
         <div className="container-custom py-5">
@@ -259,44 +360,74 @@ export const CaseDetail = () => {
             </div>
           </div>
         )}
-        {/* 专家智能体列表 - 增强质感 */}
+        {/* 专家智能体列表 - 增强质感，可点击查看详情 */}
         <div className="mb-7 mt-2">
-          <h2 className="text-sm font-semibold text-gray-700 mb-4">专科智能体</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-gray-700">专科智能体</h2>
+            <p className="text-xs text-gray-500">点击卡片查看智能体详情</p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div className="bg-white rounded-none p-5 border border-gray-200 transition-all shadow-lg hover:shadow-xl">
-              <div className="flex items-center gap-3.5 mb-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center">
-                  <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
-                    <Heart className="w-5 h-5 text-red-600" />
+            <div
+              className="bg-white rounded-none border border-gray-200 transition-all shadow-lg hover:shadow-xl cursor-pointer hover:bg-gray-50 flex flex-col"
+              onClick={() => handleAgentClick('cardiologist')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && handleAgentClick('cardiologist')}
+            >
+              <div className="p-5 flex-1">
+                <div className="flex items-center gap-3.5 mb-3">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                      <Heart className="w-5 h-5 text-red-600" />
+                    </div>
                   </div>
+                  <h3 className="font-semibold text-gray-800">心脏科</h3>
                 </div>
-                <h3 className="font-semibold text-gray-800">心脏科</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">分析心血管系统相关症状</p>
               </div>
-              <p className="text-sm text-gray-600 leading-relaxed">分析心血管系统相关症状</p>
+              <div className="h-1 bg-gradient-to-r from-red-500 to-pink-500"></div>
             </div>
 
-            <div className="bg-white rounded-none p-5 border border-gray-200 transition-all shadow-lg hover:shadow-xl">
-              <div className="flex items-center gap-3.5 mb-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center">
-                  <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-                    <Brain className="w-5 h-5 text-purple-600" />
+            <div
+              className="bg-white rounded-none border border-gray-200 transition-all shadow-lg hover:shadow-xl cursor-pointer hover:bg-gray-50 flex flex-col"
+              onClick={() => handleAgentClick('psychologist')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && handleAgentClick('psychologist')}
+            >
+              <div className="p-5 flex-1">
+                <div className="flex items-center gap-3.5 mb-3">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                      <Brain className="w-5 h-5 text-purple-600" />
+                    </div>
                   </div>
+                  <h3 className="font-semibold text-gray-800">心理学</h3>
                 </div>
-                <h3 className="font-semibold text-gray-800">心理学</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">评估心理和精神健康状况</p>
               </div>
-              <p className="text-sm text-gray-600 leading-relaxed">评估心理和精神健康状况</p>
+              <div className="h-1 bg-gradient-to-r from-purple-500 to-indigo-500"></div>
             </div>
 
-            <div className="bg-white rounded-none p-5 border border-gray-200 transition-all shadow-lg hover:shadow-xl">
-              <div className="flex items-center gap-3.5 mb-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center">
-                  <div className="w-8 h-8 rounded-full bg-cyan-100 flex items-center justify-center">
-                    <Wind className="w-5 h-5 text-cyan-600" />
+            <div
+              className="bg-white rounded-none border border-gray-200 transition-all shadow-lg hover:shadow-xl cursor-pointer hover:bg-gray-50 flex flex-col"
+              onClick={() => handleAgentClick('pulmonologist')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && handleAgentClick('pulmonologist')}
+            >
+              <div className="p-5 flex-1">
+                <div className="flex items-center gap-3.5 mb-3">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-cyan-100 flex items-center justify-center">
+                      <Wind className="w-5 h-5 text-cyan-600" />
+                    </div>
                   </div>
+                  <h3 className="font-semibold text-gray-800">呼吸科</h3>
                 </div>
-                <h3 className="font-semibold text-gray-800">呼吸科</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">检查呼吸系统和肺部状况</p>
               </div>
-              <p className="text-sm text-gray-600 leading-relaxed">检查呼吸系统和肺部状况</p>
+              <div className="h-1 bg-gradient-to-r from-cyan-500 to-blue-500"></div>
             </div>
           </div>
         </div>

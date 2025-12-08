@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Cpu, Check } from 'lucide-react';
 
 interface Model {

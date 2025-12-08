@@ -7,12 +7,14 @@ import {
 import { caseApi, type ImportCasesResponse } from '../services/api';
 import { Loading } from './Loading';
 
-enum ImportStep {
-  SELECT_FILE,
-  VALIDATE,
-  UPLOAD,
-  RESULT,
-}
+const ImportStep = {
+  SELECT_FILE: 0,
+  VALIDATE: 1,
+  UPLOAD: 2,
+  RESULT: 3,
+} as const;
+
+type ImportStepType = typeof ImportStep[keyof typeof ImportStep];
 
 interface ImportWizardProps {
   onComplete?: () => void;
@@ -22,9 +24,9 @@ export const ImportWizard = ({ onComplete }: ImportWizardProps) => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [currentStep, setCurrentStep] = useState<ImportStep>(ImportStep.SELECT_FILE);
+  const [currentStep, setCurrentStep] = useState<ImportStepType>(ImportStep.SELECT_FILE);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [_uploading, setUploading] = useState(false);
   const [result, setResult] = useState<ImportCasesResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 

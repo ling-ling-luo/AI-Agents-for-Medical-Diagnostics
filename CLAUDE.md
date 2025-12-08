@@ -119,14 +119,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### React + Vite 前端 (`frontend/`)
 - **技术**: React 19.2.0 + TypeScript + Vite + Tailwind CSS 4.1.17
 - **端口**: 5173
+- **设计风格**: 简洁矩形设计，使用浅灰横线分隔模块，避免过度装饰
 - **主要组件**:
   - `CaseList.tsx`: 病例列表页（带分页、搜索、导入功能）
-  - `CaseDetail.tsx`: 病例详情页（AI 诊断、模型选择）
+  - `CaseDetail.tsx`: 病例详情页（AI 诊断、模型选择、智能体信息展示）
+  - `DiagnosisResult.tsx`: 诊断结果展示（综合诊断默认展开，专科报告点击弹窗）
   - `DiagnosisHistory.tsx`: 诊断历史记录（带导出功能）
+  - `AgentInfoModal.tsx`: 智能体详情弹窗（显示提示词和任务说明）
+  - `SpecialistReportModal.tsx`: 单个专科报告弹窗
+  - `AllReportsModal.tsx`: 全览所有专科报告弹窗
   - `ModelSelector.tsx`: AI 模型选择器
   - `ImportWizard.tsx`: 病例导入向导
   - `SmartDropdown.tsx`: 智能下拉菜单（视口检测）
 - **API 服务层**: `src/services/api.ts` (Axios 客户端)
+- **UI 交互模式**:
+  - 智能体信息：在 CaseDetail 页面点击智能体卡片查看详情和提示词
+  - 专科报告：点击卡片弹窗查看单个报告，或使用"全览报告"按钮查看所有报告
+  - 综合诊断：始终完整展开显示
 
 ### Next.js 前端 (`frontend-next/`)
 - **技术**: Next.js 16.0.3 + TypeScript + Tailwind CSS
@@ -189,6 +198,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   npm run dev
   ```
   - 访问地址：`http://localhost:5173`
+
+- 构建生产版本：
+  ```bash
+  npm run build
+  ```
+  - 输出目录：`dist/`
+
+- 代码检查：
+  ```bash
+  npm run lint
+  ```
+
+- 预览生产构建：
+  ```bash
+  npm run preview
+  ```
 
 ### 前端开发 (Next.js)
 
@@ -259,8 +284,41 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 病例列表每页显示 9 个病例（分页功能）
 - 用户偏好（如选择的模型）使用 `localStorage` 持久化
 
+**UI 设计原则**：
+- **简洁矩形设计**：使用 `rounded-none`，避免过度圆角
+- **浅灰分隔线**：使用 `border-gray-200` 分隔模块和内容区域
+- **减少层叠**：避免卡片套卡片、多层阴影等视觉堆砌
+- **弹窗交互**：详细内容使用弹窗展示，而非页内展开
+- **一致的按钮样式**：文本按钮为主，渐变色用于主要操作
+- **无多余装饰**：移除了 Sparkles 图标、彩色渐变条等装饰元素
+
 ### 6. 导出功能
 - 使用 `DiagnosisExporter` 类处理所有导出逻辑
 - PDF 导出使用 ReportLab，注意中文字体支持
 - Markdown 格式转换注意粗体标记的正则匹配（使用 `re.sub`）
 - 批量导出使用 ZIP 打包
+
+### 7. 模态框组件架构
+前端使用多个模态框组件展示详细信息：
+
+**AgentInfoModal** (智能体详情弹窗):
+- 展示智能体的简介、工作任务、分析重点、提示词模板
+- 在 CaseDetail 页面点击智能体卡片时触发
+- 提示词显示为浅灰背景的代码块
+
+**SpecialistReportModal** (单个专科报告弹窗):
+- 展示单个专科的完整诊断报告（Markdown 格式）
+- 在 DiagnosisResult 页面点击专科卡片时触发
+- 支持滚动查看长内容
+
+**AllReportsModal** (全览报告弹窗):
+- 垂直排列展示所有三个专科的报告
+- 使用浅灰横线分隔各专科内容
+- 在 DiagnosisResult 页面点击"全览报告"按钮时触发
+- 更大的弹窗尺寸 (`max-w-6xl`)
+
+**设计统一性**:
+- 所有模态框使用相同的结构：头部（标题+关闭按钮）、内容区、底部（操作按钮）
+- 统一使用 `rounded-none` 矩形设计
+- 统一使用 `border-gray-200` 作为分隔线颜色
+- 关闭按钮样式一致：`hover:bg-gray-100`

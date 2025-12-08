@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  FileText, User, Save, X, AlertCircle, ArrowLeft, Edit,
-  Heart, Activity, Stethoscope, Pill, FlaskConical, CheckCircle
+  FileText, User, Save, AlertCircle, ArrowLeft, Edit,
+  Heart, Activity, Pill, FlaskConical, Stethoscope
 } from 'lucide-react';
 import { caseApi } from '../services/api';
 import type { CaseDetail, UpdateCaseRequest } from '../types';

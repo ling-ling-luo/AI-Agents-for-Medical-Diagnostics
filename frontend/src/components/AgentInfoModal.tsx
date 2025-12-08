@@ -1,4 +1,4 @@
-import { X, Sparkles } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface AgentInfo {
   name: string;
@@ -28,97 +28,74 @@ export const AgentInfoModal = ({ agent, isOpen, onClose }: AgentInfoModalProps) 
       onClick={onClose}
     >
       <div
-        className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col slide-in border border-gray-200"
+        className="bg-white rounded-none shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col slide-in border border-gray-300"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* 模态框头部 - 增强质感 */}
-        <div className={`px-8 py-6 border-b border-gray-200 ${agent.color} relative overflow-hidden`}>
-          <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
-          <div className="relative flex items-center justify-between">
+        {/* 模态框头部 - 简洁设计 */}
+        <div className="px-8 py-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg">
-                <Icon className="w-8 h-8 text-gray-700" />
+              <div className="w-12 h-12 rounded-none flex items-center justify-center border border-gray-200">
+                <Icon className="w-6 h-6 text-gray-700" />
               </div>
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <h2 className="text-2xl font-bold text-gray-800">{agent.name}</h2>
-                  <Sparkles className="w-5 h-5 text-blue-500" />
-                </div>
-                <p className="text-sm font-semibold text-gray-600">{agent.role}</p>
+                <h2 className="text-xl font-semibold text-gray-800">{agent.name}</h2>
+                <p className="text-sm text-gray-500 mt-1">{agent.role}</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2.5 hover:bg-white/70 rounded-xl transition-all group"
+              className="p-2 hover:bg-gray-100 rounded-none transition-colors"
             >
-              <X className="w-6 h-6 text-gray-600 group-hover:text-gray-800 group-hover:rotate-90 transition-transform duration-300" />
+              <X className="w-5 h-5 text-gray-600" />
             </button>
           </div>
         </div>
 
-        {/* 模态框内容 - 增强质感 */}
-        <div className="flex-1 overflow-y-auto p-8 space-y-6 bg-gradient-to-br from-white to-blue-50/30">
-          {/* 智能体描述 */}
-          <div className="slide-in" style={{ animationDelay: '0.1s' }}>
-            <h3 className="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
-              <div className="w-1.5 h-6 bg-gradient-to-b from-blue-500 to-cyan-500 rounded-full shadow"></div>
-              智能体简介
-            </h3>
-            <div className="bg-white/80 backdrop-blur-sm p-5 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-              <p className="text-sm text-gray-700 leading-relaxed">
-                {agent.description}
-              </p>
-            </div>
+        {/* 模态框内容 - 简洁布局 */}
+        <div className="flex-1 overflow-y-auto p-8">
+          {/* 智能体简介 */}
+          <div className="pb-6 border-b border-gray-200">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">智能体简介</h3>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              {agent.description}
+            </p>
           </div>
 
           {/* 工作任务 */}
-          <div className="slide-in" style={{ animationDelay: '0.2s' }}>
-            <h3 className="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
-              <div className="w-1.5 h-6 bg-gradient-to-b from-green-500 to-emerald-500 rounded-full shadow"></div>
-              工作任务
-            </h3>
-            <div className="bg-white/80 backdrop-blur-sm p-5 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-              <p className="text-sm text-gray-700 leading-relaxed">
-                {agent.task}
-              </p>
-            </div>
+          <div className="py-6 border-b border-gray-200">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">工作任务</h3>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              {agent.task}
+            </p>
           </div>
 
           {/* 分析重点 */}
-          <div className="slide-in" style={{ animationDelay: '0.3s' }}>
-            <h3 className="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
-              <div className="w-1.5 h-6 bg-gradient-to-b from-purple-500 to-indigo-500 rounded-full shadow"></div>
-              分析重点
-            </h3>
-            <div className="bg-white/80 backdrop-blur-sm p-5 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-              <p className="text-sm text-gray-700 leading-relaxed">
-                {agent.focus}
-              </p>
-            </div>
+          <div className="py-6 border-b border-gray-200">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">分析重点</h3>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              {agent.focus}
+            </p>
           </div>
 
           {/* 提示词模板 */}
-          <div className="slide-in" style={{ animationDelay: '0.4s' }}>
-            <h3 className="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
-              <div className="w-1.5 h-6 bg-gradient-to-b from-orange-500 to-amber-500 rounded-full shadow"></div>
-              提示词模板
-            </h3>
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 overflow-x-auto shadow-lg border border-gray-700">
-              <pre className="text-xs text-gray-100 leading-relaxed whitespace-pre-wrap font-mono">
+          <div className="pt-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">提示词模板</h3>
+            <div className="bg-gray-50 border border-gray-200 rounded-none p-5 overflow-x-auto">
+              <pre className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap font-mono">
                 {agent.prompt}
               </pre>
             </div>
           </div>
         </div>
 
-        {/* 模态框底部 - 增强质感 */}
-        <div className="px-8 py-5 border-t border-gray-200 bg-gradient-to-br from-gray-50 to-blue-50/50 flex justify-end rounded-b-3xl">
+        {/* 模态框底部 - 简洁设计 */}
+        <div className="px-8 py-5 border-t border-gray-200 flex justify-end">
           <button
             onClick={onClose}
-            className="px-8 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-xl hover:scale-105 flex items-center gap-2"
+            className="px-6 py-2.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-none transition-colors text-sm font-medium"
           >
-            <span>关闭</span>
-            <X className="w-4 h-4" />
+            关闭
           </button>
         </div>
       </div>
