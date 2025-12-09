@@ -88,29 +88,59 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **核心文件**：
 - `api/main.py`: FastAPI 应用入口，定义所有路由
 - `api/models/case.py`: SQLAlchemy ORM 模型 (`MedicalCase`, `DiagnosisHistory`)
+- `api/models/user.py`: 用户权限 ORM 模型 (`User`, `Role`, `Permission`)
 - `api/db/database.py`: 数据库会话管理
 - `api/config_loader.py`: 配置加载工具类
 - `api/utils/export.py`: 诊断报告导出工具（支持 PDF、Word、Markdown、JSON）
 - `api/utils/case_formatter.py`: 病例格式化工具
 - `api/utils/txt_parser.py`: TXT 文件解析器
 
+**认证与权限**：
+- `api/auth/security.py`: JWT token 生成/验证，密码哈希
+- `api/auth/dependencies.py`: FastAPI 依赖注入（获取当前用户、验证权限）
+- `api/auth/permissions.py`: 权限检查装饰器和权限计算逻辑
+- `api/routes/auth.py`: 认证相关的 API 路由（注册、登录等）
+- `api/init_auth_db.py`: 初始化用户权限数据库，创建默认角色和测试账号
+
 **关键 API 路由**：
-- `GET /api/cases`: 获取病例列表（支持搜索）
-- `POST /api/cases`: 创建新病例
-- `GET /api/cases/{id}`: 获取病例详情
-- `PUT /api/cases/{id}`: 更新病例
-- `DELETE /api/cases/{id}`: 删除病例
-- `POST /api/cases/import`: 批量导入病例（TXT 文件）
-- `POST /api/cases/{id}/run-diagnosis`: 运行 AI 诊断（接受可选 `model` 参数）
-- `GET /api/cases/{id}/diagnoses`: 获取诊断历史
-- `GET /api/cases/{id}/diagnoses/{diagnosis_id}/export`: 导出诊断报告（支持多格式）
-- `POST /api/cases/{id}/diagnoses/export-multiple`: 批量导出诊断（ZIP 文件）
-- `GET /api/models`: 获取可用的 AI 模型列表
+- **认证相关** (`/api/auth`):
+  - `POST /api/auth/register`: 用户注册（邮箱可选，未提供时自动生成）
+  - `POST /api/auth/login`: 用户登录，返回 JWT token
+  - `GET /api/auth/me`: 获取当前用户信息
+  - `POST /api/auth/change-password`: 修改密码
+  - `POST /api/auth/logout`: 登出（客户端操作）
+
+- **病例管理** (`/api/cases`):
+  - `GET /api/cases`: 获取病例列表（支持搜索）
+  - `POST /api/cases`: 创建新病例
+  - `GET /api/cases/{id}`: 获取病例详情
+  - `PUT /api/cases/{id}`: 更新病例
+  - `DELETE /api/cases/{id}`: 删除病例
+  - `POST /api/cases/import`: 批量导入病例（TXT 文件）
+  - `POST /api/cases/{id}/run-diagnosis`: 运行 AI 诊断（接受可选 `model` 参数）
+  - `GET /api/cases/{id}/diagnoses`: 获取诊断历史
+  - `GET /api/cases/{id}/diagnoses/{diagnosis_id}/export`: 导出诊断报告（支持多格式）
+  - `POST /api/cases/{id}/diagnoses/export-multiple`: 批量导出诊断（ZIP 文件）
+
+- **系统配置**:
+  - `GET /api/models`: 获取可用的 AI 模型列表
 
 **数据库**：
 - SQLite 文件：`medical_diagnostics.db`
-- 表：`medical_cases`、`diagnosis_history`
-- 初始化：`python3 api/init_db.py`
+- 病例相关表：`medical_cases`、`diagnosis_history`
+- 用户权限表：`users`、`roles`、`permissions`、`user_roles`（关联表）
+- 初始化病例数据库：`python3 api/init_db.py`
+- 初始化用户权限：`python3 api/init_auth_db.py`（创建角色和默认账号）
+
+**权限系统架构**：
+- **RBAC 模型**：基于角色的访问控制（Role-Based Access Control）
+- **三个预定义角色**：
+  - `admin`（管理员）：拥有全部权限
+  - `doctor`（医生）：可创建/读取/更新病例，运行诊断，导出报告
+  - `viewer`（普通用户）：只读权限
+- **权限格式**：`resource:action`（如 `case:create`、`diagnosis:read`）
+- **权限检查**：在路由层通过 `@require_permission("case:read")` 装饰器验证
+- **超级管理员**：`is_superuser=True` 的用户自动拥有所有权限
 
 ## 前端架构
 
@@ -119,8 +149,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### React + Vite 前端 (`frontend/`)
 - **技术**: React 19.2.0 + TypeScript + Vite + Tailwind CSS 4.1.17
 - **端口**: 5173
-- **设计风格**: 简洁矩形设计，使用浅灰横线分隔模块，避免过度装饰
-- **主要组件**:
+- **设计风格**: Google 简约风格，简洁矩形设计，使用浅灰横线分隔模块，避免过度装饰
+
+**认证相关组件**:
+  - `Login.tsx`: Google 风格登录页（简约白色背景，蓝色按钮）
+  - `Register.tsx`: 用户注册页（无需邮箱，带密码强度提示）
+  - `AuthContext.tsx`: 全局认证状态管理（React Context）
+  - `ProtectedRoute.tsx`: 路由守卫，支持权限/角色检查
+  - `AccountSwitcher.tsx`: 账号切换器（记忆历史登录账号，快速切换）
+  - `authApi.ts`: 认证 API 服务层
+
+**业务功能组件**:
+  - `HomePage.tsx`: 主页（病例列表/导入/创建，集成账号切换）
   - `CaseList.tsx`: 病例列表页（带分页、搜索、导入功能）
   - `CaseDetail.tsx`: 病例详情页（AI 诊断、模型选择、智能体信息展示）
   - `DiagnosisResult.tsx`: 诊断结果展示（综合诊断默认展开，专科报告点击弹窗）
@@ -131,11 +171,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - `ModelSelector.tsx`: AI 模型选择器
   - `ImportWizard.tsx`: 病例导入向导
   - `SmartDropdown.tsx`: 智能下拉菜单（视口检测）
-- **API 服务层**: `src/services/api.ts` (Axios 客户端)
-- **UI 交互模式**:
+
+**API 服务层**:
+  - `src/services/api.ts`: 病例管理 API（Axios 客户端，自动注入 JWT token）
+  - `src/services/authApi.ts`: 认证 API（登录、注册、获取用户信息）
+
+**认证流程**:
+  - JWT token 存储在 `localStorage`（key: `access_token`）
+  - Axios 请求拦截器自动添加 `Authorization: Bearer {token}` 头
+  - 401 响应自动清除 token 并重定向到登录页
+  - 历史账号存储在 `localStorage`（key: `saved_accounts`，最多 5 个）
+
+**UI 交互模式**:
   - 智能体信息：在 CaseDetail 页面点击智能体卡片查看详情和提示词
   - 专科报告：点击卡片弹窗查看单个报告，或使用"全览报告"按钮查看所有报告
   - 综合诊断：始终完整展开显示
+  - 账号切换：点击右上角用户头像→选择历史账号→输入密码→确认切换
 
 
 **前后端通信**：
@@ -165,7 +216,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - 初始化数据库：
   ```bash
+  # 初始化病例数据库
   python3 api/init_db.py
+
+  # 初始化用户权限数据库（创建角色和默认测试账号）
+  python3 api/init_auth_db.py
   ```
 
 - 启动开发服务器：
@@ -177,6 +232,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 访问 API 文档：
   - Swagger UI: `http://localhost:8000/docs`
   - ReDoc: `http://localhost:8000/redoc`
+
+- 默认测试账号（由 `init_auth_db.py` 创建）：
+  - 管理员：`admin` / `admin123`（全部权限）
+  - 医生：`doctor` / `doctor123`（可读写病例、运行诊断）
+  - 普通用户：`viewer` / `viewer123`（只读权限）
 
 ### 前端开发 (React)
 
@@ -223,6 +283,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - 访问地址：`http://localhost:3000`
 
 ## 核心功能流程
+
+### 认证与授权流程
+1. 用户访问前端 → 自动跳转到登录页（如未登录）
+2. 用户输入用户名和密码 → 前端调用 `POST /api/auth/login`
+3. 后端验证用户身份 → 返回 JWT token 和用户信息（含角色和权限列表）
+4. 前端保存 token 到 localStorage → 保存用户信息到历史账号列表
+5. 后续所有 API 请求自动携带 `Authorization: Bearer {token}` 头
+6. 后端通过 `get_current_user` 依赖注入验证 token 并获取用户
+7. 路由层通过 `@require_permission` 装饰器检查用户权限
+8. 如 token 失效（401），前端自动清除本地数据并跳转登录页
 
 ### AI 诊断流程
 1. 用户在前端选择病例并点击"开始诊断"
@@ -291,7 +361,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Markdown 格式转换注意粗体标记的正则匹配（使用 `re.sub`）
 - 批量导出使用 ZIP 打包
 
-### 7. 模态框组件架构
+### 7. 认证系统开发
+- 使用 JWT (JSON Web Tokens) 进行无状态认证
+- 密码使用 bcrypt 哈希（通过 passlib 库）
+- **重要**：需要 `bcrypt==4.1.3`（不要使用 5.x 版本，存在与 passlib 的兼容性问题）
+- 认证依赖包：`python-jose[cryptography]`、`passlib[bcrypt]`、`email-validator`
+- 前端注册时邮箱为可选，未提供时自动生成 `{username}@local.user`
+- 账号切换功能通过 localStorage 存储历史登录记录，支持快速切换（需输入密码验证）
+
+### 8. 模态框组件架构
 前端使用多个模态框组件展示详细信息：
 
 **AgentInfoModal** (智能体详情弹窗):
