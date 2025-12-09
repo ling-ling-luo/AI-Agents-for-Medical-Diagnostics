@@ -1,94 +1,228 @@
-# AI-Agents-for-Medical-Diagnostics
+# AI 医疗诊断系统
 
 <img width="900" alt="image" src="https://github.com/user-attachments/assets/b7c87bf6-dfff-42fe-b8d1-9be9e6c7ce86">
 
-这是一个使用 Python 构建的项目，用于创建专业化的、基于大语言模型（LLM）的 **AI 医疗智能体**，以分析复杂的医疗病例。
-系统会综合不同专科医生视角下的分析结果，给出更全面的评估和潜在治疗方向，展示了 AI 在多学科协作医学中的应用潜力。
+基于多智能体架构的医疗病例分析系统，使用大语言模型（LLM）模拟多学科专家会诊，提供全面的诊断建议和治疗方案。
 
-⚠️ **免责声明（Disclaimer）**：本项目仅用于研究与教学目的。
-**严禁用于任何实际临床诊断或治疗决策场景。**
+⚠️ **免责声明**：本项目仅用于研究与教学目的，严禁用于任何实际临床诊断或治疗决策场景。
 
 ---
 
-## ✨ 最新更新内容（What’s New）
+## 🌟 核心特性
 
-- 新增 **MIT License** 授权协议
-- 修复若干已知问题，并更新 `requirements.txt` 依赖
-- 新增 `.gitignore` 配置，避免无关文件提交到仓库
-- 将核心大语言模型升级为 **GPT-5**
-
----
-
-## 🚀 工作原理（How It Works）
-
-在当前版本中，系统使用 **三个基于 GPT-5 的 AI 专科智能体**，分别对应不同的医学领域。
-一份医疗报告会被同时传入这三个智能体中，它们会 **并行（多线程）** 进行分析并返回各自的结论。
-之后，系统会将这些结论进行整合，总结出 **三个可能的健康问题**，并给出相应的理由。
-
-### AI 专科智能体（AI Agents）
-
-**1. 心脏科智能体（Cardiologist Agent）**
-- *关注点（Focus）*：识别心律失常、结构性心脏病等潜在心脏问题。
-- *建议（Recommendations）*：给出进一步心血管检查、监测及管理策略的建议。
-
-**2. 心理学智能体（Psychologist Agent）**
-- *关注点（Focus）*：识别如惊恐障碍、焦虑等心理/精神方面的问题。
-- *建议（Recommendations）*：给出心理治疗、压力管理或用药调整等建议。
-
-**3. 呼吸科智能体（Pulmonologist Agent）**
-- *关注点（Focus）*：评估可能的呼吸系统原因（如哮喘、呼吸功能异常等）。
-- *建议（Recommendations）*：给出肺功能检查、呼吸训练以及相关治疗建议。
+- **多智能体协作**：三个专科 AI 智能体（心脏科、心理学、呼吸科）并行分析病例
+- **Web 管理界面**：现代化的前端界面，支持病例管理、诊断历史、报告导出
+- **用户权限系统**：基于角色的访问控制（管理员、医生、普通用户）
+- **多模型支持**：可配置不同的 LLM 模型进行诊断
+- **报告导出**：支持 PDF、Word、Markdown、JSON 多种格式
+- **账号快速切换**：记忆历史登录账号，一键切换
 
 ---
 
-## 📂 仓库结构（Repository Structure）
+## 🚀 快速开始
 
-- `Medical Reports/` → 用于存放示例医疗报告（合成/匿名化病例）
-- `Results/` → 存放各智能体及最终诊断生成的结果文件
+### 环境要求
 
----
+- Python 3.10+
+- Node.js 18+
+- SQLite 3
 
-## ⚡ 快速上手（Quickstart）
+### 安装步骤
 
-1. **克隆仓库：**
+1. **克隆仓库**
    ```bash
    git clone https://github.com/ahmadvh/AI-Agents-for-Medical-Diagnostics.git
    cd AI-Agents-for-Medical-Diagnostics
    ```
-2. **创建虚拟环境并安装依赖：**
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # Windows 下为： venv\Scripts\activate
-    pip install -r requirements.txt
-    ```
-3. **配置 API 凭证：**
-    - 在项目根目录创建文件：`apikey.env`
-    - 写入你的 OpenAI（或其它 LLM 服务商）的密钥，例如：
-    ```bash
-    OPENAI_API_KEY=your_api_key_here
-    ```
-4. **运行系统：**
-    ```bash
-    python Main.py
-    ```
+
+2. **配置 API 密钥**
+   ```bash
+   # 复制配置模板
+   cp apikey.example.env apikey.env
+   cp api/config/models.example.json api/config/models.json
+
+   # 编辑 apikey.env，填入你的 API 密钥
+   # 编辑 models.json，配置可用的 AI 模型
+   ```
+
+3. **初始化后端**
+   ```bash
+   # 创建虚拟环境并安装依赖
+   python3 -m venv venv
+   source venv/bin/activate  # Windows: venv\Scripts\activate
+   pip install -r requirements.txt
+
+   # 初始化数据库
+   python3 api/init_db.py
+   python3 api/init_auth_db.py
+
+   # 启动后端服务（默认端口 8000）
+   python3 -m uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+   ```
+
+4. **启动前端**
+   ```bash
+   cd frontend
+   npm install
+   npm run dev  # 默认端口 5173
+   ```
+
+5. **访问系统**
+   - 前端：http://localhost:5173
+   - 后端 API 文档：http://localhost:8000/docs
+
+### 默认测试账号
+
+| 角色 | 用户名 | 密码 | 权限 |
+|------|--------|------|------|
+| 管理员 | admin | admin123 | 全部权限 |
+| 医生 | doctor | doctor123 | 病例读写、诊断 |
+| 普通用户 | viewer | viewer123 | 只读权限 |
+
 ---
 
-## 🔮 后续计划（Future Enhancements）
+## 📖 文档导航
 
-未来版本计划加入的改进包括：
+- **[快速上手指南](QUICKSTART.md)** - 详细的安装和使用教程
+- **[Claude Code 指南](CLAUDE.md)** - 开发者技术文档（面向 AI 助手）
+- **[配置指南](docs/development/CONFIG_GUIDE.md)** - 模型和环境配置
+- **[API 文档](docs/api/API_DOCUMENTATION.md)** - REST API 接口说明
+- **[认证系统](docs/auth/)** - 用户权限管理文档
 
-- **扩展更多专科智能体（Specialist Expansion）**：例如神经科、内分泌科、免疫科等领域。
-- **支持本地 LLM（Local LLM Support）**：通过 Ollama、vLLM 或 llama.cpp 集成如 **Llama 4** 等本地模型，并提供函数调用式能力及安全的代码执行机制。
-- **视觉诊断能力（Vision Capabilities）**：让智能体能够分析**影像学检查结果（如放射影像）**以及其他医学图像，实现多模态决策。
-- **实时数据工具（Live Data Tools）**：集成基于 LLM 的**实时检索**能力，并支持对结构化**医学数据集**进行查询。
-- **高级报告解析（Advanced Parsing）**：在复杂医疗报告解析方面提供更结构化的输出（例如符合 JSON Schema 的结构）。
-- **自动化测试（Automated Testing）**：增加评估管线和简单的 CI 冒烟测试（使用 mock LLM 调用），提升可复现性。
 ---
 
-## 📜 许可证（License）
+## 🏗️ 技术架构
 
-本仓库基于 **MIT License** 开源。
+### 后端
+- **框架**：FastAPI + Uvicorn
+- **数据库**：SQLite + SQLAlchemy ORM
+- **AI 框架**：LangChain + OpenAI API
+- **认证**：JWT + bcrypt
+- **文档导出**：ReportLab（PDF）、python-docx（Word）
 
-在遵守 [LICENSE](LICENSE) 文件中条款的前提下，你可以自由地使用、复制、修改、合并、发布、分发、再许可以及销售本软件的副本。
+### 前端
+- **框架**：React 19 + TypeScript + Vite
+- **样式**：Tailwind CSS 4
+- **路由**：React Router
+- **HTTP 客户端**：Axios
+- **状态管理**：React Context API
 
-本软件以 **“按原样”（as is）** 的形式提供，不附带任何形式的明示或暗示担保。
+### AI 智能体
+- **心脏科智能体**（Cardiologist）：识别心律失常、结构性心脏病
+- **心理学智能体**（Psychologist）：识别焦虑、惊恐障碍等心理问题
+- **呼吸科智能体**（Pulmonologist）：评估哮喘、呼吸功能异常
+- **多学科团队**（MultidisciplinaryTeam）：综合各专科意见
+
+---
+
+## 🎯 核心功能
+
+### 病例管理
+- 创建、编辑、删除病例
+- 批量导入病例（TXT 文件）
+- 病例搜索和分页浏览
+
+### AI 诊断
+- 选择不同 AI 模型进行诊断
+- 查看各专科智能体的分析报告
+- 综合诊断摘要
+
+### 诊断历史
+- 记录每次诊断的完整结果
+- 对比不同模型的诊断差异
+- 导出诊断报告（单个/批量）
+
+### 用户权限
+- 基于角色的权限控制（RBAC）
+- 支持自定义角色和权限
+- 账号快速切换功能
+
+---
+
+## 🛠️ 开发指南
+
+### 项目结构
+
+```
+AI-Agents-for-Medical-Diagnostics/
+├── api/                    # 后端 API
+│   ├── auth/              # 认证模块
+│   ├── config/            # 配置文件
+│   ├── db/                # 数据库
+│   ├── models/            # ORM 模型
+│   ├── routes/            # API 路由
+│   └── utils/             # 工具函数
+├── frontend/              # React 前端
+│   ├── src/
+│   │   ├── components/   # React 组件
+│   │   ├── context/      # Context API
+│   │   └── services/     # API 服务
+├── Utils/                 # AI 智能体核心逻辑
+│   └── Agents.py         # 智能体定义
+├── Main.py               # 命令行诊断入口
+├── docs/                 # 详细文档
+└── Medical Reports/      # 示例病历文件
+```
+
+### 常用命令
+
+```bash
+# 后端开发
+source venv/bin/activate
+python3 -m uvicorn api.main:app --reload
+
+# 前端开发
+cd frontend && npm run dev
+
+# 运行测试
+pytest
+
+# 代码格式化
+black api/ Utils/
+prettier --write frontend/src/
+
+# 数据库迁移
+alembic revision --autogenerate -m "描述"
+alembic upgrade head
+```
+
+### 添加新的智能体
+
+1. 在 `Utils/Agents.py` 中创建新的智能体类
+2. 继承 `Agent` 基类并实现 `run()` 方法
+3. 在 `Main.py` 的 `run_multi_agent_diagnosis()` 中注册
+4. 更新前端的 `AgentInfoModal` 展示智能体信息
+
+---
+
+## 🔮 未来计划
+
+- [ ] 扩展更多专科智能体（神经科、内分泌科等）
+- [ ] 支持本地 LLM（Ollama、llama.cpp）
+- [ ] 视觉诊断能力（分析医学影像）
+- [ ] 实时检索和医学数据集查询
+- [ ] 移动端适配
+- [ ] 多语言支持
+
+---
+
+## 🤝 贡献指南
+
+欢迎提交 Issue 和 Pull Request！请参阅 [CONTRIBUTING.md](docs/development/CONTRIBUTING.md)。
+
+---
+
+## 📄 许可证
+
+本项目基于 MIT License 开源。详见 [LICENSE](LICENSE) 文件。
+
+---
+
+## 📧 联系方式
+
+- GitHub Issues: [提交问题](https://github.com/ahmadvh/AI-Agents-for-Medical-Diagnostics/issues)
+- 原作者：Ahmad Vahidi
+
+---
+
+**注意**：本系统生成的所有诊断建议仅供参考，不能替代专业医生的诊断和治疗意见。

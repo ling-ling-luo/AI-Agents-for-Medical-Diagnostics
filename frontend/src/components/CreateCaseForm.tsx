@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Plus, Loader, CheckCircle, User, FileText,
@@ -9,11 +9,14 @@ import type { CreateCaseRequest } from '../types';
 
 interface CreateCaseFormProps {
   embedded?: boolean; // 是否为嵌入模式（在标签页中使用）
+  editMode?: boolean; // 是否为编辑模式
+  caseId?: number; // 编辑时的病例 ID
 }
 
-export const CreateCaseForm = ({ embedded = false }: CreateCaseFormProps) => {
+export const CreateCaseForm = ({ embedded = false, editMode = false, caseId }: CreateCaseFormProps) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(editMode); // 编辑模式需要加载数据
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,6 +36,44 @@ export const CreateCaseForm = ({ embedded = false }: CreateCaseFormProps) => {
     language: 'en',
   });
 
+  // 编辑模式：加载病例数据
+  useEffect(() => {
+    if (editMode && caseId) {
+      loadCaseData();
+    }
+  }, [editMode, caseId]);
+
+  const loadCaseData = async () => {
+    if (!caseId) return;
+
+    try {
+      setLoadingData(true);
+      const data = await caseApi.getCaseDetail(caseId);
+
+      // 填充表单数据
+      setFormData({
+        patient_id: data.patient_id || '',
+        patient_name: data.patient_name || '',
+        age: data.age || 0,
+        gender: data.gender || 'male',
+        chief_complaint: data.chief_complaint || '',
+        medical_history: '',
+        family_history: '',
+        lifestyle_factors: '',
+        medications: '',
+        lab_results: '',
+        physical_exam: '',
+        vital_signs: '',
+        language: 'en',
+      });
+    } catch (err: any) {
+      setError('加载病例数据失败');
+      console.error('Error loading case:', err);
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -44,16 +85,29 @@ export const CreateCaseForm = ({ embedded = false }: CreateCaseFormProps) => {
     try {
       setLoading(true);
       setError(null);
-      const result = await caseApi.createCase(formData);
-      setSuccess(true);
 
-      // 2秒后跳转到病例详情页
-      setTimeout(() => {
-        navigate(`/case/${result.id}`);
-      }, 2000);
+      if (editMode && caseId) {
+        // 编辑模式：更新病例
+        await caseApi.updateCase(caseId, formData);
+        setSuccess(true);
+
+        // 2秒后跳转到病例详情页
+        setTimeout(() => {
+          navigate(`/case/${caseId}`);
+        }, 2000);
+      } else {
+        // 新增模式：创建病例
+        const result = await caseApi.createCase(formData);
+        setSuccess(true);
+
+        // 2秒后跳转到病例详情页
+        setTimeout(() => {
+          navigate(`/case/${result.id}`);
+        }, 2000);
+      }
     } catch (err: any) {
-      setError(err.response?.data?.detail || '创建病例失败，请检查输入');
-      console.error('Error creating case:', err);
+      setError(err.response?.data?.detail || `${editMode ? '更新' : '创建'}病例失败，请检查输入`);
+      console.error(`Error ${editMode ? 'updating' : 'creating'} case:`, err);
     } finally {
       setLoading(false);
     }
@@ -67,6 +121,18 @@ export const CreateCaseForm = ({ embedded = false }: CreateCaseFormProps) => {
     }));
   };
 
+  // 加载数据中
+  if (loadingData) {
+    return (
+      <div className={`${embedded ? 'py-8' : 'min-h-screen'} ${embedded ? '' : 'bg-gradient-to-br from-blue-50 via-cyan-50 to-white'} flex items-center justify-center p-4`}>
+        <div className="text-center">
+          <Loader className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">正在加载病例数据...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (success) {
     return (
       <div className={`${embedded ? 'py-8' : 'min-h-screen'} ${embedded ? '' : 'bg-gradient-to-br from-blue-50 via-cyan-50 to-white'} flex items-center justify-center p-4`}>
@@ -74,7 +140,9 @@ export const CreateCaseForm = ({ embedded = false }: CreateCaseFormProps) => {
           <div className="w-24 h-24 bg-gradient-to-br from-green-100 to-emerald-100 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
             <CheckCircle className="w-12 h-12 text-green-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-3">病例创建成功！</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-3">
+            {editMode ? '病例更新成功！' : '病例创建成功！'}
+          </h2>
           <p className="text-base text-gray-600">正在跳转到病例详情页...</p>
           <div className="mt-6">
             <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -104,7 +172,9 @@ export const CreateCaseForm = ({ embedded = false }: CreateCaseFormProps) => {
                 <Plus className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-800">新增病例</h1>
+                <h1 className="text-xl font-bold text-gray-800">
+                  {editMode ? '编辑病例' : '新增病例'}
+                </h1>
                 <p className="text-sm text-gray-500 mt-0.5">填写患者的详细医疗信息</p>
               </div>
             </div>
@@ -379,12 +449,12 @@ export const CreateCaseForm = ({ embedded = false }: CreateCaseFormProps) => {
               {loading ? (
                 <>
                   <Loader className="w-4 h-4 animate-spin flex-shrink-0" />
-                  <span>创建中...</span>
+                  <span>{editMode ? '保存中...' : '创建中...'}</span>
                 </>
               ) : (
                 <>
                   <Plus className="w-4 h-4 flex-shrink-0" />
-                  <span>创建病例</span>
+                  <span>{editMode ? '保存更改' : '创建病例'}</span>
                 </>
               )}
             </button>

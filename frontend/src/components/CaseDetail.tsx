@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, RefreshCw, AlertCircle, Brain, Heart, Wind, Loader, User, Calendar } from 'lucide-react';
+import { ArrowLeft, RefreshCw, AlertCircle, Brain, Heart, Wind, Loader, User, Calendar, Edit2, Save, X } from 'lucide-react';
 import { caseApi } from '../services/api';
 import type { CaseDetail as CaseDetailType, DiagnosisResponse } from '../types';
 import { Loading } from './Loading';
@@ -87,6 +87,18 @@ export const CaseDetail = () => {
   const [selectedAgent, setSelectedAgent] = useState<AgentInfo | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // 编辑模式相关状态
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    patient_name: '',
+    patient_id: '',
+    age: '',
+    gender: '',
+    chief_complaint: '',
+    raw_report: ''
+  });
+  const [isSaving, setIsSaving] = useState(false);
+
   // 处理智能体卡片点击
   const handleAgentClick = (agentKey: string) => {
     setSelectedAgent(agentsInfo[agentKey]);
@@ -96,6 +108,62 @@ export const CaseDetail = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setTimeout(() => setSelectedAgent(null), 300);
+  };
+
+  // 进入编辑模式
+  const enterEditMode = () => {
+    if (caseDetail) {
+      setEditForm({
+        patient_name: caseDetail.patient_name || '',
+        patient_id: caseDetail.patient_id || '',
+        age: caseDetail.age?.toString() || '',
+        gender: caseDetail.gender || '',
+        chief_complaint: caseDetail.chief_complaint || '',
+        raw_report: caseDetail.raw_report || ''
+      });
+      setIsEditing(true);
+    }
+  };
+
+  // 取消编辑
+  const cancelEdit = () => {
+    setIsEditing(false);
+    setEditForm({
+      patient_name: '',
+      patient_id: '',
+      age: '',
+      gender: '',
+      chief_complaint: '',
+      raw_report: ''
+    });
+  };
+
+  // 保存编辑
+  const saveEdit = async () => {
+    if (!caseId) return;
+
+    try {
+      setIsSaving(true);
+      setError(null);
+
+      const updateData = {
+        patient_name: editForm.patient_name,
+        patient_id: editForm.patient_id,
+        age: editForm.age ? parseInt(editForm.age) : undefined,
+        gender: editForm.gender,
+        chief_complaint: editForm.chief_complaint,
+        raw_report: editForm.raw_report
+      };
+
+      const updatedCase = await caseApi.updateCase(parseInt(caseId), updateData);
+      setCaseDetail(updatedCase);
+      setIsEditing(false);
+    } catch (err) {
+      setError('保存失败，请检查输入并重试');
+      console.error('Error updating case:', err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // 加载模型列表
@@ -309,49 +377,150 @@ export const CaseDetail = () => {
         {/* 病例详情卡片 - 增强质感 */}
         {caseDetail && (
           <div className="mb-7 bg-white rounded-none border border-gray-200 overflow-hidden shadow-xl">
-            <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-br from-blue-50 to-cyan-50">
+            <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <User className="w-5 h-5 text-gray-700" />
                 <h3 className="text-base font-semibold text-gray-800">病例详情</h3>
               </div>
-            </div>
-            <div className="p-6 pb-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-6">
-                <div className="p-4">
-                  <p className="text-xs text-gray-500 mb-1.5">患者姓名</p>
-                  <p className="text-sm font-semibold text-gray-800">{caseDetail.patient_name || '-'}</p>
-                </div>
-                <div className="p-4">
-                  <p className="text-xs text-gray-500 mb-1.5">病历号</p>
-                  <p className="text-sm font-semibold text-gray-800">{caseDetail.patient_id || '-'}</p>
-                </div>
-                <div className="p-4">
-                  <p className="text-xs text-gray-500 mb-1.5">年龄</p>
-                  <p className="text-sm font-semibold text-gray-800">{caseDetail.age ? `${caseDetail.age} 岁` : '-'}</p>
-                </div>
-                <div className="p-4">
-                  <p className="text-xs text-gray-500 mb-1.5">性别</p>
-                  <p className="text-sm font-semibold text-gray-800">
-                    {caseDetail.gender === 'male' ? '男' : caseDetail.gender === 'female' ? '女' : '-'}
-                  </p>
-                </div>
-              </div>
-
-              {caseDetail.chief_complaint && (
-                <div className="mb-6 p-5 border-t border-gray-200">
-                  <p className="text-xs font-semibold text-gray-600 mb-2.5">主诉</p>
-                  <p className="text-sm text-gray-700 leading-relaxed">{caseDetail.chief_complaint}</p>
+              {!isEditing ? (
+                <button
+                  onClick={enterEditMode}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-white/50 transition-colors rounded-none"
+                >
+                  <Edit2 className="w-4 h-4" />
+                  编辑
+                </button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={cancelEdit}
+                    disabled={isSaving}
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-white/50 transition-colors rounded-none disabled:opacity-50"
+                  >
+                    <X className="w-4 h-4" />
+                    取消
+                  </button>
+                  <button
+                    onClick={saveEdit}
+                    disabled={isSaving}
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 transition-all rounded-none disabled:opacity-50"
+                  >
+                    <Save className="w-4 h-4" />
+                    {isSaving ? '保存中...' : '保存'}
+                  </button>
                 </div>
               )}
+            </div>
+            <div className="p-6 pb-4">
+              {!isEditing ? (
+                <>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-6">
+                    <div className="p-4">
+                      <p className="text-xs text-gray-500 mb-1.5">患者姓名</p>
+                      <p className="text-sm font-semibold text-gray-800">{caseDetail.patient_name || '-'}</p>
+                    </div>
+                    <div className="p-4">
+                      <p className="text-xs text-gray-500 mb-1.5">病历号</p>
+                      <p className="text-sm font-semibold text-gray-800">{caseDetail.patient_id || '-'}</p>
+                    </div>
+                    <div className="p-4">
+                      <p className="text-xs text-gray-500 mb-1.5">年龄</p>
+                      <p className="text-sm font-semibold text-gray-800">{caseDetail.age ? `${caseDetail.age} 岁` : '-'}</p>
+                    </div>
+                    <div className="p-4">
+                      <p className="text-xs text-gray-500 mb-1.5">性别</p>
+                      <p className="text-sm font-semibold text-gray-800">
+                        {caseDetail.gender === 'male' ? '男' : caseDetail.gender === 'female' ? '女' : '-'}
+                      </p>
+                    </div>
+                  </div>
 
-              <div>
-                <p className="text-sm font-semibold text-gray-700 mb-3">完整病历</p>
-                <div className="p-5 bg-gray-50 rounded-none border border-gray-200 max-h-80 overflow-y-auto">
-                  <pre className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap font-sans">
-                    {caseDetail.raw_report}
-                  </pre>
-                </div>
-              </div>
+                  {caseDetail.chief_complaint && (
+                    <div className="mb-6 p-5 border-t border-gray-200">
+                      <p className="text-xs font-semibold text-gray-600 mb-2.5">主诉</p>
+                      <p className="text-sm text-gray-700 leading-relaxed">{caseDetail.chief_complaint}</p>
+                    </div>
+                  )}
+
+                  <div>
+                    <p className="text-sm font-semibold text-gray-700 mb-3">完整病历</p>
+                    <div className="p-5 bg-gray-50 rounded-none border border-gray-200 max-h-80 overflow-y-auto">
+                      <pre className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap font-sans">
+                        {caseDetail.raw_report}
+                      </pre>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-6">
+                    <div className="p-4">
+                      <label className="block text-xs font-semibold text-gray-600 mb-2">患者姓名</label>
+                      <input
+                        type="text"
+                        value={editForm.patient_name}
+                        onChange={(e) => setEditForm({ ...editForm, patient_name: e.target.value })}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-none focus:outline-none focus:border-blue-500"
+                        placeholder="输入患者姓名"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <label className="block text-xs font-semibold text-gray-600 mb-2">病历号</label>
+                      <input
+                        type="text"
+                        value={editForm.patient_id}
+                        onChange={(e) => setEditForm({ ...editForm, patient_id: e.target.value })}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-none focus:outline-none focus:border-blue-500"
+                        placeholder="输入病历号"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <label className="block text-xs font-semibold text-gray-600 mb-2">年龄</label>
+                      <input
+                        type="number"
+                        value={editForm.age}
+                        onChange={(e) => setEditForm({ ...editForm, age: e.target.value })}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-none focus:outline-none focus:border-blue-500"
+                        placeholder="输入年龄"
+                        min="0"
+                        max="150"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <label className="block text-xs font-semibold text-gray-600 mb-2">性别</label>
+                      <select
+                        value={editForm.gender}
+                        onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-none focus:outline-none focus:border-blue-500"
+                      >
+                        <option value="">请选择</option>
+                        <option value="male">男</option>
+                        <option value="female">女</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="mb-6 p-5 border-t border-gray-200">
+                    <label className="block text-xs font-semibold text-gray-600 mb-2.5">主诉</label>
+                    <textarea
+                      value={editForm.chief_complaint}
+                      onChange={(e) => setEditForm({ ...editForm, chief_complaint: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-none focus:outline-none focus:border-blue-500 min-h-[80px]"
+                      placeholder="输入主诉"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">完整病历</label>
+                    <textarea
+                      value={editForm.raw_report}
+                      onChange={(e) => setEditForm({ ...editForm, raw_report: e.target.value })}
+                      className="w-full p-5 text-sm border border-gray-300 rounded-none focus:outline-none focus:border-blue-500 font-sans min-h-[320px]"
+                      placeholder="输入完整病历"
+                    />
+                  </div>
+                </>
+              )}
 
               <div className="mt-4 pt-4 border-t border-gray-200 flex items-center gap-2 text-xs text-gray-500">
                 <Calendar className="w-4 h-4" />

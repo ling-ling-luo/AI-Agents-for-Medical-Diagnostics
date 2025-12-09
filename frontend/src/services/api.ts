@@ -11,6 +11,37 @@ const api = axios.create({
   },
 });
 
+// 请求拦截器 - 自动添加JWT令牌
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// 响应拦截器 - 处理401错误（令牌过期或无效）
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // 令牌过期或无效，清除令牌并跳转到登录页
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user');
+      // 只在非登录页面时跳转
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export interface ImportCasesResponse {
   success_count: number;
   failed_count: number;
@@ -62,12 +93,14 @@ export const caseApi = {
     const formData = new FormData();
     formData.append('file', file);
 
+    const token = localStorage.getItem('access_token');
     const response = await axios.post<ImportCasesResponse>(
       `${API_BASE_URL}/api/cases/import`,
       formData,
       {
         headers: {
           'Content-Type': 'multipart/form-data',
+          ...(token && { Authorization: `Bearer ${token}` }),
         },
       }
     );
@@ -103,11 +136,15 @@ export const caseApi = {
 
   // 导出最新诊断报告
   exportDiagnosis: async (caseId: number, format: string): Promise<Blob> => {
+    const token = localStorage.getItem('access_token');
     const response = await axios.get(
       `${API_BASE_URL}/api/cases/${caseId}/export`,
       {
         params: { format },
         responseType: 'blob',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
       }
     );
     return response.data;
@@ -115,11 +152,15 @@ export const caseApi = {
 
   // 导出指定诊断报告
   exportDiagnosisById: async (caseId: number, diagnosisId: number, format: string): Promise<Blob> => {
+    const token = localStorage.getItem('access_token');
     const response = await axios.get(
       `${API_BASE_URL}/api/cases/${caseId}/diagnoses/${diagnosisId}/export`,
       {
         params: { format },
         responseType: 'blob',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
       }
     );
     return response.data;
@@ -127,10 +168,16 @@ export const caseApi = {
 
   // 批量导出诊断报告
   exportDiagnosisBatch: async (caseId: number, diagnosisIds: number[], format: string): Promise<Blob> => {
+    const token = localStorage.getItem('access_token');
     const response = await axios.post(
       `${API_BASE_URL}/api/cases/${caseId}/export-batch`,
       { diagnosis_ids: diagnosisIds, format },
-      { responseType: 'blob' }
+      {
+        responseType: 'blob',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      }
     );
     return response.data;
   },

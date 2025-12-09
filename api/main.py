@@ -15,12 +15,23 @@ import io
 from Main import run_multi_agent_diagnosis
 from api.db.database import get_db
 from api.models.case import MedicalCase, DiagnosisHistory
+from api.models.user import User
 from api.utils.case_formatter import CaseFormatter
 from api.utils.txt_parser import parse_txt_file
 from api.utils.export import DiagnosisExporter
 from api.config_loader import ConfigLoader
+from api.auth.permissions import (
+    require_case_create, require_case_read, require_case_update, require_case_delete,
+    require_diagnosis_create, require_diagnosis_read, require_diagnosis_execute
+)
+from api.routes import auth, users, roles
 
 app = FastAPI(title="AI Medical Diagnostics API")
+
+# 注册认证相关路由
+app.include_router(auth.router)
+app.include_router(users.router)
+app.include_router(roles.router)
 
 # 从配置文件加载支持的AI模型列表
 AVAILABLE_MODELS = ConfigLoader.load_models()
@@ -58,8 +69,11 @@ async def get_available_models():
 
 
 @app.get("/api/cases", response_model=List[Case])
-async def list_cases(db: Session = Depends(get_db)) -> List[Case]:
-    """获取病例列表（从数据库查询）"""
+async def list_cases(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_case_read)
+) -> List[Case]:
+    """获取病例列表（需要 case:read 权限）"""
     cases = db.query(MedicalCase).order_by(MedicalCase.created_at.desc()).all()
     return cases
 
@@ -79,8 +93,12 @@ class CaseDetail(BaseModel):
 
 
 @app.get("/api/cases/{case_id}", response_model=CaseDetail)
-async def get_case_detail(case_id: int, db: Session = Depends(get_db)) -> CaseDetail:
-    """获取单个病例的详细信息"""
+async def get_case_detail(
+    case_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_case_read)
+) -> CaseDetail:
+    """获取单个病例的详细信息（需要 case:read 权限）"""
     case = db.query(MedicalCase).filter(MedicalCase.id == case_id).first()
     if not case:
         raise HTTPException(status_code=404, detail=f"病例 ID {case_id} 不存在")
@@ -113,9 +131,13 @@ class CreateCaseResponse(BaseModel):
 
 
 @app.post("/api/cases", response_model=CreateCaseResponse)
-async def create_case(request: CreateCaseRequest, db: Session = Depends(get_db)) -> CreateCaseResponse:
+async def create_case(
+    request: CreateCaseRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_case_create)
+) -> CreateCaseResponse:
     """
-    新增病例
+    新增病例（需要 case:create 权限）
 
     将用户输入的结构化信息转换为标准病例报告格式并保存到数据库
     支持中文、英文和双语格式
@@ -183,9 +205,10 @@ class RunDiagnosisRequest(BaseModel):
 async def run_diagnosis(
     case_id: int,
     request: RunDiagnosisRequest = RunDiagnosisRequest(),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_diagnosis_execute)
 ) -> DiagnosisResponse:
-    """对指定病例运行多智能体 AI 诊断，并保存到数据库
+    """对指定病例运行多智能体 AI 诊断（需要 diagnosis:execute 权限）
 
     流程：
     1. 从数据库读取病例的 raw_report
@@ -253,10 +276,11 @@ class DiagnosisHistoryResponse(BaseModel):
 async def get_diagnosis_history(
     case_id: int,
     include_full: bool = False,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_diagnosis_read)
 ) -> DiagnosisHistoryResponse:
     """
-    获取指定病例的诊断历史记录
+    获取指定病例的诊断历史记录（需要 diagnosis:read 权限）
 
     参数:
     - case_id: 病例ID
@@ -293,8 +317,13 @@ async def get_diagnosis_history(
 
 
 @app.get("/api/cases/{case_id}/diagnoses/{diagnosis_id}")
-async def get_diagnosis_detail(case_id: int, diagnosis_id: int, db: Session = Depends(get_db)):
-    """获取单个诊断的完整详情"""
+async def get_diagnosis_detail(
+    case_id: int,
+    diagnosis_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_diagnosis_read)
+):
+    """获取单个诊断的完整详情（需要 diagnosis:read 权限）"""
     diagnosis = db.query(DiagnosisHistory).filter(
         DiagnosisHistory.id == diagnosis_id,
         DiagnosisHistory.case_id == case_id
@@ -323,9 +352,13 @@ class ImportCasesResponse(BaseModel):
 
 
 @app.post("/api/cases/import", response_model=ImportCasesResponse)
-async def import_cases(file: UploadFile = File(...), db: Session = Depends(get_db)) -> ImportCasesResponse:
+async def import_cases(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_case_create)
+) -> ImportCasesResponse:
     """
-    批量导入病例
+    批量导入病例（需要 case:create 权限）
 
     支持的文件格式：
     - JSON 文件：包含病例数组，每个病例需包含必要字段
@@ -536,9 +569,14 @@ class UpdateCaseRequest(BaseModel):
 
 
 @app.put("/api/cases/{case_id}", response_model=CaseDetail)
-async def update_case(case_id: int, request: UpdateCaseRequest, db: Session = Depends(get_db)) -> CaseDetail:
+async def update_case(
+    case_id: int,
+    request: UpdateCaseRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_case_update)
+) -> CaseDetail:
     """
-    更新病例信息
+    更新病例信息（需要 case:update 权限）
 
     可以更新病例的任何字段，未提供的字段保持不变
     如果更新了基本信息，会重新生成格式化的病历报告
@@ -613,8 +651,12 @@ async def update_case(case_id: int, request: UpdateCaseRequest, db: Session = De
 
 
 @app.delete("/api/cases/{case_id}")
-async def delete_case(case_id: int, db: Session = Depends(get_db)):
-    """删除指定病例及其所有诊断历史"""
+async def delete_case(
+    case_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_case_delete)
+):
+    """删除指定病例及其所有诊断历史（需要 case:delete 权限）"""
     case = db.query(MedicalCase).filter(MedicalCase.id == case_id).first()
     if not case:
         raise HTTPException(status_code=404, detail=f"病例 ID {case_id} 不存在")
@@ -635,10 +677,11 @@ async def delete_case(case_id: int, db: Session = Depends(get_db)):
 async def export_latest_diagnosis(
     case_id: int,
     format: str = "pdf",
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_diagnosis_read)
 ):
     """
-    导出病例的最新诊断报告
+    导出病例的最新诊断报告（需要 diagnosis:read 权限）
 
     支持格式：pdf, docx, markdown, json
     """
@@ -725,10 +768,11 @@ async def export_specific_diagnosis(
     case_id: int,
     diagnosis_id: int,
     format: str = "pdf",
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_diagnosis_read)
 ):
     """
-    导出指定的诊断记录
+    导出指定的诊断记录（需要 diagnosis:read 权限）
 
     支持格式：pdf, docx, markdown, json
     """
@@ -821,10 +865,11 @@ class BatchExportRequest(BaseModel):
 async def export_diagnoses_batch(
     case_id: int,
     request: BatchExportRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_diagnosis_read)
 ):
     """
-    批量导出诊断记录为ZIP压缩包
+    批量导出诊断记录为ZIP压缩包（需要 diagnosis:read 权限）
 
     支持格式：pdf, docx, markdown, json
     """

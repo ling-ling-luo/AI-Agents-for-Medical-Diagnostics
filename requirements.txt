@@ -14,3 +14,7 @@ pydantic
 sqlalchemy
 alembic
 python-multipart
+# 认证相关依赖
+python-jose[cryptography]
+passlib[bcrypt]
+email-validator
