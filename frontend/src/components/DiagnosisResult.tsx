@@ -136,7 +136,7 @@ export const DiagnosisResult = ({ result, caseId }: DiagnosisResultProps) => {
 
       {/* 综合诊断摘要 - 矩形设计 */}
       {summary && (
-        <div className="bg-white rounded-none border border-gray-200 overflow-hidden shadow-lg">
+        <div className="bg-white rounded-none border border-gray-200 overflow-hidden shadow-lg diagnosis-result-section">
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex items-center gap-3">
               <FileText className="w-5 h-5 text-gray-700" />
@@ -152,7 +152,7 @@ export const DiagnosisResult = ({ result, caseId }: DiagnosisResultProps) => {
       )}
 
       {/* 专科报告 - 卡片式点击弹窗 */}
-      <div className="bg-white rounded-none border border-gray-200 shadow-lg relative z-10">
+      <div className="bg-white rounded-none border border-gray-200 shadow-lg relative z-10 specialist-reports-section">
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -172,7 +172,7 @@ export const DiagnosisResult = ({ result, caseId }: DiagnosisResultProps) => {
                 <Eye className="w-4 h-4" />
                 全览报告
               </button>
-              <div className="relative z-30">
+              <div className="relative z-30 export-button">
                 <SmartDropdown
                 trigger={
                   <button

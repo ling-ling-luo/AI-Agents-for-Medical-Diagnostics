@@ -4,7 +4,7 @@
  */
 import { useState } from 'react';
 import { useAuth, type SavedAccount } from '../context/AuthContext';
-import { User, X, LogOut, ChevronDown, Loader } from 'lucide-react';
+import { User, X, LogOut, ChevronDown, Loader, HelpCircle } from 'lucide-react';
 
 export const AccountSwitcher = () => {
   const { user, savedAccounts, switchAccount, removeAccount, logout } = useAuth();
@@ -52,6 +52,17 @@ export const AccountSwitcher = () => {
       setPassword('');
       setError(null);
     }
+  };
+
+  // 重新观看引导
+  const handleRestartTour = () => {
+    // 清除所有引导完成标记
+    localStorage.removeItem('onboarding_home_completed');
+    localStorage.removeItem('onboarding_detail_completed');
+    localStorage.setItem('should_show_detail_tour', 'true');
+    setIsOpen(false);
+    // 刷新页面重新触发引导
+    window.location.reload();
   };
 
   const formatLastLogin = (isoString: string) => {
@@ -214,6 +225,13 @@ export const AccountSwitcher = () => {
 
             {/* 登出按钮 */}
             <div className="border-t border-gray-200">
+              <button
+                onClick={handleRestartTour}
+                className="w-full px-4 py-3 hover:bg-gray-50 transition-colors flex items-center gap-2 text-gray-700"
+              >
+                <HelpCircle className="w-4 h-4" />
+                <span className="text-sm">重新观看引导</span>
+              </button>
               <button
                 onClick={() => {
                   logout();

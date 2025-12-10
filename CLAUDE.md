@@ -171,6 +171,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - `ModelSelector.tsx`: AI 模型选择器
   - `ImportWizard.tsx`: 病例导入向导
   - `SmartDropdown.tsx`: 智能下拉菜单（视口检测）
+  - `OnboardingTour.tsx`: 首页引导组件（首次登录引导）
+  - `CaseDetailTour.tsx`: 病例详情页引导组件（分有诊断和无诊断两种流程）
 
 **API 服务层**:
   - `src/services/api.ts`: 病例管理 API（Axios 客户端，自动注入 JWT token）
@@ -187,6 +189,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - 专科报告：点击卡片弹窗查看单个报告，或使用"全览报告"按钮查看所有报告
   - 综合诊断：始终完整展开显示
   - 账号切换：点击右上角用户头像→选择历史账号→输入密码→确认切换
+
+**首次登录引导系统**:
+  - **分阶段引导**：系统采用两阶段引导设计，确保用户在对应页面才能看到相关功能介绍
+  - **首页引导** (`OnboardingTour.tsx`)：
+    - 触发条件：用户首次登录时自动触发
+    - 引导内容：介绍病例列表、创建病例、导入病例、账号管理等首页功能
+    - 完成标记：`localStorage` 中的 `onboarding_home_completed` 键
+    - 完成后行为：设置 `should_show_detail_tour` 标记，提示用户进入详情页继续引导
+  - **详情页引导** (`CaseDetailTour.tsx`)：
+    - 触发条件：用户从首页完成引导后，首次进入任意病例详情页时触发
+    - 两种流程：
+      - **无诊断流程**：介绍病例信息、模型选择、运行诊断功能（4 步）
+      - **有诊断流程**：介绍综合诊断、专科报告、导出功能（4 步）
+    - 完成标记：`localStorage` 中的 `onboarding_detail_completed` 键
+  - **重新观看引导**：
+    - 位置：账号切换器下拉菜单中的"重新观看引导"按钮
+    - 行为：清除所有引导完成标记，刷新页面重新触发首页引导
+  - **LocalStorage 键说明**：
+    - `onboarding_home_completed`: 标记用户是否完成首页引导
+    - `onboarding_detail_completed`: 标记用户是否完成详情页引导
+    - `should_show_detail_tour`: 临时标记，指示下次进入详情页时应显示引导
+  - **技术实现**：使用 `react-joyride` 库实现交互式引导，支持进度显示、跳过、前后翻页等功能
+
 
 
 **前后端通信**：

@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Upload, FileText, CheckCircle, AlertCircle,
+  Upload, CheckCircle, AlertCircle,
   Download, ArrowLeft, ArrowRight, Info, Sparkles, FileCheck
 } from 'lucide-react';
 import { caseApi, type ImportCasesResponse } from '../services/api';
@@ -30,40 +30,6 @@ export const ImportWizard = ({ onComplete, embedded = false }: ImportWizardProps
   const [_uploading, setUploading] = useState(false);
   const [result, setResult] = useState<ImportCasesResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const formatGuide = {
-    json: {
-      name: 'JSON 格式',
-      icon: FileText,
-      color: 'from-blue-500 to-indigo-500',
-      bgColor: 'bg-gradient-to-br from-blue-50 to-indigo-50',
-      description: '适合批量导入多个结构化病例',
-      example: `[
-  {
-    "patient_id": "100231",
-    "patient_name": "Robert Miller",
-    "age": 63,
-    "gender": "male",
-    "chief_complaint": "persistent cough..."
-  }
-]`,
-    },
-    txt: {
-      name: 'TXT 格式',
-      icon: FileCheck,
-      color: 'from-green-500 to-emerald-500',
-      bgColor: 'bg-gradient-to-br from-green-50 to-emerald-50',
-      description: '适合导入标准病例模板',
-      example: `Medical Case Report
-Patient ID: 100231
-Name: Robert Miller
-Age: 63
-Gender: Male
-
-Chief Complaint:
-The patient complains of...`,
-    },
-  };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

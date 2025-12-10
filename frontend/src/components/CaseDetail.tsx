@@ -7,6 +7,7 @@ import { Loading } from './Loading';
 import { DiagnosisResult } from './DiagnosisResult';
 import { ModelSelector } from './ModelSelector';
 import { AgentInfoModal } from './AgentInfoModal';
+import { CaseDetailTour } from './CaseDetailTour';
 
 interface Model {
   id: string;
@@ -86,6 +87,9 @@ export const CaseDetail = () => {
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [selectedAgent, setSelectedAgent] = useState<AgentInfo | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 引导相关状态
+  const [runTour, setRunTour] = useState(false);
 
   // 编辑模式相关状态
   const [isEditing, setIsEditing] = useState(false);
@@ -229,6 +233,30 @@ export const CaseDetail = () => {
     loadCaseDetail();
   }, [caseId]);
 
+  // 检查是否需要显示详情页引导
+  useEffect(() => {
+    if (!loadingCase && caseDetail) {
+      const shouldShowTour = localStorage.getItem('should_show_detail_tour');
+      const hasSeenDetailTour = localStorage.getItem('onboarding_detail_completed');
+
+      // 如果标记了需要显示引导，且用户还没看过详情页引导
+      if (shouldShowTour === 'true' && !hasSeenDetailTour) {
+        // 延迟 800ms 显示引导，确保页面元素已渲染
+        const timer = setTimeout(() => {
+          setRunTour(true);
+        }, 800);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [loadingCase, caseDetail]);
+
+  // 引导完成回调
+  const handleTourComplete = () => {
+    setRunTour(false);
+    localStorage.setItem('onboarding_detail_completed', 'true');
+    localStorage.removeItem('should_show_detail_tour');
+  };
+
   // 处理模型选择变化
   const handleModelChange = (modelId: string) => {
     setSelectedModel(modelId);
@@ -350,17 +378,19 @@ export const CaseDetail = () => {
             </div>
             <div className="flex items-center gap-3">
               {/* 模型选择器 */}
-              <ModelSelector
-                selectedModel={selectedModel}
-                onModelChange={handleModelChange}
-                models={availableModels}
-              />
+              <div className="model-selector">
+                <ModelSelector
+                  selectedModel={selectedModel}
+                  onModelChange={handleModelChange}
+                  models={availableModels}
+                />
+              </div>
 
               {/* 开始诊断按钮 */}
               <button
                 onClick={runDiagnosis}
                 disabled={loading || !selectedModel}
-                className="px-6 py-2.5 bg-transparent hover:bg-gray-50 text-blue-600 hover:text-blue-700 text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap min-w-[100px]"
+                className="px-6 py-2.5 bg-transparent hover:bg-gray-50 text-blue-600 hover:text-blue-700 text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap min-w-[100px] run-diagnosis-button"
               >
                 {loading ? (
                   <span className="truncate">分析中...</span>
@@ -376,7 +406,7 @@ export const CaseDetail = () => {
       <main className="container-custom py-8">
         {/* 病例详情卡片 - 增强质感 */}
         {caseDetail && (
-          <div className="mb-7 bg-white rounded-none border border-gray-200 overflow-hidden shadow-xl">
+          <div className="mb-7 bg-white rounded-none border border-gray-200 overflow-hidden shadow-xl case-info-section">
             <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <User className="w-5 h-5 text-gray-700" />
@@ -662,6 +692,13 @@ export const CaseDetail = () => {
           />
         )}
       </main>
+
+      {/* 详情页引导 */}
+      <CaseDetailTour
+        run={runTour}
+        onComplete={handleTourComplete}
+        hasDiagnosis={!!diagnosis}
+      />
     </div>
   );
 };

@@ -2,7 +2,7 @@
  * 认证上下文
  * 提供全局的用户认证状态管理
  */
-import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, useContext, type ReactNode } from 'react';
 import { authApi, type User } from '../services/authApi';
 
 // 历史账号类型

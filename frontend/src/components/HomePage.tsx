@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Stethoscope, FileText, Upload, Plus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { CaseList } from './CaseList';
 import { ImportWizard } from './ImportWizard';
 import { CreateCaseForm } from './CreateCaseForm';
 import { AccountSwitcher } from './AccountSwitcher';
+import { OnboardingTour } from './OnboardingTour';
 
 type TabType = 'list' | 'import' | 'create';
 
@@ -23,7 +24,30 @@ const tabs: TabConfig[] = [
 
 export const HomePage = () => {
   const [activeTab, setActiveTab] = useState<TabType>('list');
-  const { hasPermission } = useAuth();
+  const { hasPermission, user } = useAuth();
+  const [runTour, setRunTour] = useState(false);
+
+  // 检查是否需要显示首页引导
+  useEffect(() => {
+    if (user) {
+      const hasSeenHomeTour = localStorage.getItem('onboarding_home_completed');
+      if (!hasSeenHomeTour) {
+        // 延迟 500ms 显示引导，确保页面元素已渲染
+        const timer = setTimeout(() => {
+          setRunTour(true);
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [user]);
+
+  // 引导完成回调
+  const handleTourComplete = () => {
+    setRunTour(false);
+    localStorage.setItem('onboarding_home_completed', 'true');
+    // 标记需要在详情页显示引导
+    localStorage.setItem('should_show_detail_tour', 'true');
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-white">
@@ -42,8 +66,10 @@ export const HomePage = () => {
               </div>
             </div>
 
-            {/* 账号切换器 */}
-            <AccountSwitcher />
+            {/*账号切换器 */}
+            <div className="account-switcher">
+              <AccountSwitcher />
+            </div>
           </div>
         </div>
 
@@ -62,7 +88,7 @@ export const HomePage = () => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`relative flex items-center gap-2 px-6 py-3 text-sm font-medium transition-all ${
+                    className={`create-case-tab relative flex items-center gap-2 px-6 py-3 text-sm font-medium transition-all ${
                       isActive
                         ? 'text-blue-600'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
@@ -82,7 +108,7 @@ export const HomePage = () => {
       </header>
 
       {/* 内容区域 */}
-      <main className="container-custom">
+      <main className="container-custom case-list">
         {activeTab === 'list' && <CaseList embedded />}
         {activeTab === 'import' && (
           <ImportWizard
@@ -92,6 +118,9 @@ export const HomePage = () => {
         )}
         {activeTab === 'create' && <CreateCaseForm embedded />}
       </main>
+
+      {/* 引导组件 */}
+      <OnboardingTour run={runTour} onComplete={handleTourComplete} />
     </div>
   );
 };
