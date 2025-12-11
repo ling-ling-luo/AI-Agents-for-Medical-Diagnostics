@@ -19,6 +19,7 @@ from api.models.user import User
 from api.utils.case_formatter import CaseFormatter
 from api.utils.txt_parser import parse_txt_file
 from api.utils.export import DiagnosisExporter
+from api.utils.case_id_generator import generate_case_id
 from api.config_loader import ConfigLoader
 from api.auth.permissions import (
     require_case_create, require_case_read, require_case_update, require_case_delete,
@@ -145,11 +146,10 @@ async def get_case_detail(
 
 
 class CreateCaseRequest(BaseModel):
-    """新增病例请求"""
-    patient_id: str
+    """新增病例请求（病例编号将自动生成）"""
     patient_name: str
     age: int
-    gender: str  # male/female/other
+    gender: str  # male/female/男/女
     chief_complaint: str
     medical_history: Optional[str] = None
     family_history: Optional[str] = None
@@ -178,17 +178,25 @@ async def create_case(
     """
     新增病例（需要 case:create 权限）
 
-    将用户输入的结构化信息转换为标准病例报告格式并保存到数据库
+    病例编号将自动生成：年月日时分(12位) + 性别(男1女0) + 年龄(2位)
     支持中文、英文和双语格式
     """
-    # 检查 patient_id 是否已存在
-    existing_case = db.query(MedicalCase).filter(MedicalCase.patient_id == request.patient_id).first()
+    # 生成病例编号（基于当前时间、性别和年龄）
+    current_time = datetime.now()
+    patient_id = generate_case_id(request.gender, request.age, current_time)
+
+    # 检查生成的 patient_id 是否已存在（理论上不会冲突，除非同一秒创建相同性别年龄的病例）
+    existing_case = db.query(MedicalCase).filter(MedicalCase.patient_id == patient_id).first()
     if existing_case:
-        raise HTTPException(status_code=400, detail=f"病历号 {request.patient_id} 已存在")
+        # 如果冲突，等待1秒后重新生成
+        import time
+        time.sleep(1)
+        current_time = datetime.now()
+        patient_id = generate_case_id(request.gender, request.age, current_time)
 
     # 使用格式化器生成标准病例报告
     raw_report = CaseFormatter.format_case_report(
-        patient_id=request.patient_id,
+        patient_id=patient_id,
         patient_name=request.patient_name,
         age=request.age,
         gender=request.gender,
@@ -205,7 +213,7 @@ async def create_case(
 
     # 创建病例记录
     new_case = MedicalCase(
-        patient_id=request.patient_id,
+        patient_id=patient_id,
         patient_name=request.patient_name,
         age=request.age,
         gender=request.gender,
@@ -452,37 +460,46 @@ async def import_cases(
 
                 for idx, case_data in enumerate(cases_data):
                     try:
-                        # 验证必填字段
-                        required_fields = ['patient_id', 'patient_name', 'age', 'gender', 'chief_complaint']
+                        # 验证必填字段（patient_id 不再必填，将自动生成）
+                        required_fields = ['patient_name', 'age', 'gender', 'chief_complaint']
                         missing_fields = [f for f in required_fields if f not in case_data]
                         if missing_fields:
                             failed_cases.append({
                                 "index": idx,
-                                "patient_id": case_data.get('patient_id', 'unknown'),
+                                "patient_name": case_data.get('patient_name', 'unknown'),
                                 "error": f"缺少必填字段: {', '.join(missing_fields)}"
                             })
                             failed_count += 1
                             continue
 
+                        # 生成病例编号（如果未提供）
+                        if 'patient_id' not in case_data or not case_data['patient_id']:
+                            patient_id = generate_case_id(
+                                case_data['gender'],
+                                case_data['age'],
+                                datetime.now()
+                            )
+                        else:
+                            patient_id = case_data['patient_id']
+
                         # 检查是否已存在
                         existing = db.query(MedicalCase).filter(
-                            MedicalCase.patient_id == case_data['patient_id']
+                            MedicalCase.patient_id == patient_id
                         ).first()
                         if existing:
-                            failed_cases.append({
-                                "index": idx,
-                                "patient_id": case_data['patient_id'],
-                                "error": "病历号已存在"
-                            })
-                            failed_count += 1
-                            continue
+                            # 如果冲突，重新生成
+                            patient_id = generate_case_id(
+                                case_data['gender'],
+                                case_data['age'],
+                                datetime.now()
+                            )
 
                         # 使用格式化器生成报告（如果提供了 raw_report 则直接使用）
                         if 'raw_report' in case_data and case_data['raw_report']:
                             raw_report = case_data['raw_report']
                         else:
                             raw_report = CaseFormatter.format_case_report(
-                                patient_id=case_data['patient_id'],
+                                patient_id=patient_id,
                                 patient_name=case_data['patient_name'],
                                 age=case_data['age'],
                                 gender=case_data['gender'],
@@ -499,7 +516,7 @@ async def import_cases(
 
                         # 创建病例
                         new_case = MedicalCase(
-                            patient_id=case_data['patient_id'],
+                            patient_id=patient_id,
                             patient_name=case_data['patient_name'],
                             age=case_data['age'],
                             gender=case_data['gender'],
@@ -515,7 +532,7 @@ async def import_cases(
                         db.rollback()
                         failed_cases.append({
                             "index": idx,
-                            "patient_id": case_data.get('patient_id', 'unknown'),
+                            "patient_name": case_data.get('patient_name', 'unknown'),
                             "error": str(e)
                         })
                         failed_count += 1
@@ -540,50 +557,56 @@ async def import_cases(
                     })
                     failed_count = 1
                 else:
-                    # 检查重复
-                    patient_id = parse_result.data.get('patient_id')
+                    # 生成病例编号（忽略TXT中可能存在的patient_id）
+                    patient_id = generate_case_id(
+                        parse_result.data['gender'],
+                        parse_result.data['age'],
+                        datetime.now()
+                    )
+
+                    # 检查是否冲突
                     existing = db.query(MedicalCase).filter(
                         MedicalCase.patient_id == patient_id
                     ).first()
 
                     if existing:
-                        failed_cases.append({
-                            "index": 0,
-                            "patient_id": patient_id,
-                            "error": "病历号已存在"
-                        })
-                        failed_count = 1
-                    else:
-                        # 生成格式化报告
-                        raw_report = CaseFormatter.format_case_report(
-                            patient_id=parse_result.data['patient_id'],
-                            patient_name=parse_result.data['patient_name'],
-                            age=parse_result.data['age'],
-                            gender=parse_result.data['gender'],
-                            chief_complaint=parse_result.data['chief_complaint'],
-                            medical_history=parse_result.data.get('medical_history'),
-                            family_history=parse_result.data.get('family_history'),
-                            lifestyle_factors=parse_result.data.get('lifestyle_factors'),
-                            medications=parse_result.data.get('medications'),
-                            lab_results=parse_result.data.get('lab_results'),
-                            physical_exam=parse_result.data.get('physical_exam'),
-                            vital_signs=parse_result.data.get('vital_signs'),
-                            language='en'  # 根据检测的格式决定
+                        # 冲突时重新生成
+                        patient_id = generate_case_id(
+                            parse_result.data['gender'],
+                            parse_result.data['age'],
+                            datetime.now()
                         )
 
-                        # 创建病例
-                        new_case = MedicalCase(
-                            patient_id=parse_result.data['patient_id'],
-                            patient_name=parse_result.data['patient_name'],
-                            age=parse_result.data['age'],
-                            gender=parse_result.data['gender'],
-                            chief_complaint=parse_result.data['chief_complaint'],
-                            raw_report=raw_report,
-                            created_by=current_user.id  # 记录创建者ID
-                        )
-                        db.add(new_case)
-                        db.commit()
-                        success_count = 1
+                    # 生成格式化报告
+                    raw_report = CaseFormatter.format_case_report(
+                        patient_id=patient_id,
+                        patient_name=parse_result.data['patient_name'],
+                        age=parse_result.data['age'],
+                        gender=parse_result.data['gender'],
+                        chief_complaint=parse_result.data['chief_complaint'],
+                        medical_history=parse_result.data.get('medical_history'),
+                        family_history=parse_result.data.get('family_history'),
+                        lifestyle_factors=parse_result.data.get('lifestyle_factors'),
+                        medications=parse_result.data.get('medications'),
+                        lab_results=parse_result.data.get('lab_results'),
+                        physical_exam=parse_result.data.get('physical_exam'),
+                        vital_signs=parse_result.data.get('vital_signs'),
+                        language='en'  # 根据检测的格式决定
+                    )
+
+                    # 创建病例
+                    new_case = MedicalCase(
+                        patient_id=patient_id,
+                        patient_name=parse_result.data['patient_name'],
+                        age=parse_result.data['age'],
+                        gender=parse_result.data['gender'],
+                        chief_complaint=parse_result.data['chief_complaint'],
+                        raw_report=raw_report,
+                        created_by=current_user.id  # 记录创建者ID
+                    )
+                    db.add(new_case)
+                    db.commit()
+                    success_count = 1
 
             except UnicodeDecodeError:
                 # 尝试其他编码

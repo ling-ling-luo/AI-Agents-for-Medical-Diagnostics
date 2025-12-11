@@ -77,8 +77,8 @@ export const CreateCaseForm = ({ embedded = false, editMode = false, caseId }: C
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.patient_id || !formData.patient_name || !formData.chief_complaint) {
-      setError('请填写必填项：病历号、姓名和主诉');
+    if (!formData.patient_name || !formData.chief_complaint) {
+      setError('请填写必填项：姓名和主诉');
       return;
     }
 
@@ -96,8 +96,9 @@ export const CreateCaseForm = ({ embedded = false, editMode = false, caseId }: C
           navigate(`/case/${caseId}`);
         }, 2000);
       } else {
-        // 新增模式：创建病例
-        const result = await caseApi.createCase(formData);
+        // 新增模式：创建病例（patient_id由后端自动生成，不发送）
+        const { patient_id, ...createData } = formData;
+        const result = await caseApi.createCase(createData);
         setSuccess(true);
 
         // 2秒后跳转到病例详情页
@@ -194,17 +195,23 @@ export const CreateCaseForm = ({ embedded = false, editMode = false, caseId }: C
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    病历号 <span className="text-red-500">*</span>
+                    病历号 {editMode && <span className="text-red-500">*</span>}
                   </label>
                   <input
                     type="text"
                     name="patient_id"
                     value={formData.patient_id}
                     onChange={handleChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-500 transition-colors"
-                    placeholder="例如: P123456"
+                    disabled={!editMode}
+                    required={editMode}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-500 transition-colors bg-gray-100 text-gray-500 cursor-not-allowed"
+                    placeholder={editMode ? "例如: P123456" : "自动生成"}
                   />
+                  {!editMode && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      病历号将根据创建时间、性别和年龄自动生成（格式：年月日时分+性别+年龄）
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">

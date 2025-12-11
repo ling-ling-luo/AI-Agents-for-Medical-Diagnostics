@@ -24,7 +24,7 @@ export interface DiagnosisResponse {
 }
 
 export interface CreateCaseRequest {
-  patient_id: string;
+  patient_id?: string; // 可选：由后端自动生成
   patient_name: string;
   age: number;
   gender: string;
