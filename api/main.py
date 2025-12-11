@@ -73,8 +73,30 @@ async def list_cases(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_case_read)
 ) -> List[Case]:
-    """获取病例列表（需要 case:read 权限）"""
-    cases = db.query(MedicalCase).order_by(MedicalCase.created_at.desc()).all()
+    """
+    获取病例列表（需要 case:read 权限）
+    - 管理员(admin)和医生(doctor)：可以看到所有病例
+    - 普通用户(viewer)：只能看到自己创建的病例
+    """
+    # 检查用户角色
+    is_admin_or_doctor = False
+    if current_user.is_superuser:
+        is_admin_or_doctor = True
+    else:
+        # 获取用户角色
+        user_role_names = [role.name for role in current_user.roles]
+        is_admin_or_doctor = 'admin' in user_role_names or 'doctor' in user_role_names
+
+    # 根据角色过滤病例
+    if is_admin_or_doctor:
+        # 管理员和医生可以看到所有病例
+        cases = db.query(MedicalCase).order_by(MedicalCase.created_at.desc()).all()
+    else:
+        # 普通用户只能看到自己创建的病例
+        cases = db.query(MedicalCase).filter(
+            MedicalCase.created_by == current_user.id
+        ).order_by(MedicalCase.created_at.desc()).all()
+
     return cases
 
 
@@ -171,7 +193,8 @@ async def create_case(
         age=request.age,
         gender=request.gender,
         chief_complaint=request.chief_complaint,
-        raw_report=raw_report
+        raw_report=raw_report,
+        created_by=current_user.id  # 记录创建者ID
     )
 
     try:
@@ -435,7 +458,8 @@ async def import_cases(
                             age=case_data['age'],
                             gender=case_data['gender'],
                             chief_complaint=case_data['chief_complaint'],
-                            raw_report=raw_report
+                            raw_report=raw_report,
+                            created_by=current_user.id  # 记录创建者ID
                         )
                         db.add(new_case)
                         db.commit()
@@ -508,7 +532,8 @@ async def import_cases(
                             age=parse_result.data['age'],
                             gender=parse_result.data['gender'],
                             chief_complaint=parse_result.data['chief_complaint'],
-                            raw_report=raw_report
+                            raw_report=raw_report,
+                            created_by=current_user.id  # 记录创建者ID
                         )
                         db.add(new_case)
                         db.commit()

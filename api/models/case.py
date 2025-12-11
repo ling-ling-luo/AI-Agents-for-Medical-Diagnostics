@@ -16,11 +16,15 @@ class MedicalCase(Base):
     gender = Column(String(10), comment="性别: male/female/other")
     chief_complaint = Column(Text, comment="主诉")
     raw_report = Column(Text, nullable=False, comment="原始病历全文")
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True, index=True, comment="创建者用户ID")
     created_at = Column(DateTime, default=datetime.utcnow, comment="创建时间")
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, comment="更新时间")
 
     # 关联诊断历史（一对多）
     diagnoses = relationship("DiagnosisHistory", back_populates="case", cascade="all, delete-orphan")
+
+    # 关联创建者（多对一）
+    creator = relationship("User", foreign_keys=[created_by])
 
     def __repr__(self):
         return f"<MedicalCase(id={self.id}, patient_name='{self.patient_name}', patient_id='{self.patient_id}')>"
