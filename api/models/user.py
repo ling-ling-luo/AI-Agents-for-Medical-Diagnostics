@@ -95,11 +95,14 @@ ROLE_PERMISSIONS = {
         ]
     },
     "viewer": {
-        "display_name": "普通用户（只读）",
-        "description": "只能查看病例和诊断结果",
+        "display_name": "普通用户",
+        "description": "可以创建病例，查看自己的病例和诊断结果",
         "permissions": [
+            ("case", "create"),  # 可以创建病例
             ("case", "read"),
+            ("diagnosis", "create"),
             ("diagnosis", "read"),
+            ("diagnosis", "execute"),  # 可以运行诊断
         ]
     }
 }

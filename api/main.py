@@ -120,10 +120,27 @@ async def get_case_detail(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_case_read)
 ) -> CaseDetail:
-    """获取单个病例的详细信息（需要 case:read 权限）"""
+    """
+    获取单个病例的详细信息（需要 case:read 权限）
+    - 管理员和医生：可以查看所有病例
+    - 普通用户：只能查看自己创建的病例
+    """
     case = db.query(MedicalCase).filter(MedicalCase.id == case_id).first()
     if not case:
         raise HTTPException(status_code=404, detail=f"病例 ID {case_id} 不存在")
+
+    # 检查访问权限
+    is_admin_or_doctor = False
+    if current_user.is_superuser:
+        is_admin_or_doctor = True
+    else:
+        user_role_names = [role.name for role in current_user.roles]
+        is_admin_or_doctor = 'admin' in user_role_names or 'doctor' in user_role_names
+
+    # 如果不是管理员或医生，检查是否是创建者
+    if not is_admin_or_doctor and case.created_by != current_user.id:
+        raise HTTPException(status_code=403, detail="无权访问此病例")
+
     return case
 
 
@@ -231,7 +248,10 @@ async def run_diagnosis(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_diagnosis_execute)
 ) -> DiagnosisResponse:
-    """对指定病例运行多智能体 AI 诊断（需要 diagnosis:execute 权限）
+    """
+    对指定病例运行多智能体 AI 诊断（需要 diagnosis:execute 权限）
+    - 管理员和医生：可以对所有病例运行诊断
+    - 普通用户：只能对自己创建的病例运行诊断
 
     流程：
     1. 从数据库读取病例的 raw_report
@@ -243,6 +263,18 @@ async def run_diagnosis(
     case = db.query(MedicalCase).filter(MedicalCase.id == case_id).first()
     if not case:
         raise HTTPException(status_code=404, detail=f"病例 ID {case_id} 不存在")
+
+    # 检查访问权限
+    is_admin_or_doctor = False
+    if current_user.is_superuser:
+        is_admin_or_doctor = True
+    else:
+        user_role_names = [role.name for role in current_user.roles]
+        is_admin_or_doctor = 'admin' in user_role_names or 'doctor' in user_role_names
+
+    # 如果不是管理员或医生，检查是否是创建者
+    if not is_admin_or_doctor and case.created_by != current_user.id:
+        raise HTTPException(status_code=403, detail="无权对此病例进行诊断")
 
     # 2. 确定使用的模型
     model_name = request.model if request.model else os.getenv("LLM_MODEL", "gemini-2.5-flash")
@@ -304,6 +336,8 @@ async def get_diagnosis_history(
 ) -> DiagnosisHistoryResponse:
     """
     获取指定病例的诊断历史记录（需要 diagnosis:read 权限）
+    - 管理员和医生：可以查看所有病例的诊断历史
+    - 普通用户：只能查看自己创建的病例的诊断历史
 
     参数:
     - case_id: 病例ID
@@ -312,6 +346,18 @@ async def get_diagnosis_history(
     case = db.query(MedicalCase).filter(MedicalCase.id == case_id).first()
     if not case:
         raise HTTPException(status_code=404, detail=f"病例 ID {case_id} 不存在")
+
+    # 检查访问权限
+    is_admin_or_doctor = False
+    if current_user.is_superuser:
+        is_admin_or_doctor = True
+    else:
+        user_role_names = [role.name for role in current_user.roles]
+        is_admin_or_doctor = 'admin' in user_role_names or 'doctor' in user_role_names
+
+    # 如果不是管理员或医生，检查是否是创建者
+    if not is_admin_or_doctor and case.created_by != current_user.id:
+        raise HTTPException(status_code=403, detail="无权查看此病例的诊断历史")
 
     diagnoses = db.query(DiagnosisHistory).filter(
         DiagnosisHistory.case_id == case_id
@@ -602,6 +648,8 @@ async def update_case(
 ) -> CaseDetail:
     """
     更新病例信息（需要 case:update 权限）
+    - 管理员和医生：可以更新所有病例
+    - 普通用户：只能更新自己创建的病例
 
     可以更新病例的任何字段，未提供的字段保持不变
     如果更新了基本信息，会重新生成格式化的病历报告
@@ -609,6 +657,18 @@ async def update_case(
     case = db.query(MedicalCase).filter(MedicalCase.id == case_id).first()
     if not case:
         raise HTTPException(status_code=404, detail=f"病例 ID {case_id} 不存在")
+
+    # 检查访问权限
+    is_admin_or_doctor = False
+    if current_user.is_superuser:
+        is_admin_or_doctor = True
+    else:
+        user_role_names = [role.name for role in current_user.roles]
+        is_admin_or_doctor = 'admin' in user_role_names or 'doctor' in user_role_names
+
+    # 如果不是管理员或医生，检查是否是创建者
+    if not is_admin_or_doctor and case.created_by != current_user.id:
+        raise HTTPException(status_code=403, detail="无权修改此病例")
 
     # 检查 patient_id 是否与其他病例冲突
     if request.patient_id and request.patient_id != case.patient_id:
@@ -681,10 +741,18 @@ async def delete_case(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_case_delete)
 ):
-    """删除指定病例及其所有诊断历史（需要 case:delete 权限）"""
+    """
+    删除指定病例及其所有诊断历史（需要 case:delete 权限）
+    - 只有管理员可以删除病例
+    """
     case = db.query(MedicalCase).filter(MedicalCase.id == case_id).first()
     if not case:
         raise HTTPException(status_code=404, detail=f"病例 ID {case_id} 不存在")
+
+    # 只有管理员可以删除
+    is_admin = current_user.is_superuser or any(role.name == 'admin' for role in current_user.roles)
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="只有管理员可以删除病例")
 
     # 删除相关的诊断历史
     db.query(DiagnosisHistory).filter(DiagnosisHistory.case_id == case_id).delete()

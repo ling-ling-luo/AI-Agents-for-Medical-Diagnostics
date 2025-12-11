@@ -53,9 +53,29 @@ def create_case(token, patient_id, patient_name):
         print(f"❌ 创建病例失败: {response.text}")
         return None
 
+def test_case_access(viewer_token, doctor_token, viewer_case_id, doctor_case_id):
+    """测试跨用户访问病例"""
+    print("\n⏳ 测试跨用户访问...")
+
+    # Viewer 尝试访问 Doctor 的病例
+    headers = {"Authorization": f"Bearer {viewer_token}"}
+    response = requests.get(f"{BASE_URL}/api/cases/{doctor_case_id}", headers=headers)
+    if response.status_code == 403:
+        print("✅ Viewer 无法访问 Doctor 的病例 (403)")
+    else:
+        print(f"❌ Viewer 可以访问 Doctor 的病例 ({response.status_code})")
+
+    # Doctor 尝试访问 Viewer 的病例
+    headers = {"Authorization": f"Bearer {doctor_token}"}
+    response = requests.get(f"{BASE_URL}/api/cases/{viewer_case_id}", headers=headers)
+    if response.status_code == 200:
+        print("✅ Doctor 可以访问 Viewer 的病例")
+    else:
+        print(f"❌ Doctor 无法访问 Viewer 的病例 ({response.status_code})")
+
 def main():
     print("=" * 70)
-    print("测试用户权限系统")
+    print("测试用户权限系统（新版本）")
     print("=" * 70)
 
     # 登录三个账号
@@ -72,19 +92,25 @@ def main():
 
     # Viewer 创建一个病例
     print("\n⏳ Viewer 创建病例...")
-    viewer_case = create_case(viewer_token, "TEST-VIEWER-001", "Viewer的患者")
+    viewer_case = create_case(viewer_token, "TEST-VIEWER-002", "Viewer的患者2")
+    viewer_case_id = None
     if viewer_case:
-        print(f"✅ Viewer 创建了病例: {viewer_case['id']}")
+        viewer_case_id = viewer_case['id']
+        print(f"✅ Viewer 创建了病例: {viewer_case_id}")
+    else:
+        print("❌ Viewer 创建病例失败")
 
     # Doctor 创建一个病例
     print("\n⏳ Doctor 创建病例...")
-    doctor_case = create_case(doctor_token, "TEST-DOCTOR-001", "Doctor的患者")
+    doctor_case = create_case(doctor_token, "TEST-DOCTOR-002", "Doctor的患者2")
+    doctor_case_id = None
     if doctor_case:
-        print(f"✅ Doctor 创建了病例: {doctor_case['id']}")
+        doctor_case_id = doctor_case['id']
+        print(f"✅ Doctor 创建了病例: {doctor_case_id}")
 
     # 查看各个用户能看到的病例
     print("\n" + "=" * 70)
-    print("验证权限")
+    print("验证病例列表权限")
     print("=" * 70)
 
     print("\n1. Admin 看到的病例列表:")
@@ -105,6 +131,10 @@ def main():
     for case in viewer_cases:
         print(f"   - {case['patient_name']} ({case['patient_id']})")
 
+    # 测试跨用户访问
+    if viewer_case_id and doctor_case_id:
+        test_case_access(viewer_token, doctor_token, viewer_case_id, doctor_case_id)
+
     # 验证结果
     print("\n" + "=" * 70)
     print("验证结果")
@@ -115,13 +145,16 @@ def main():
     else:
         print("❌ Admin 或 Doctor 无法看到所有病例")
 
-    viewer_only_own = all(
-        case['patient_id'].startswith('TEST-VIEWER') for case in viewer_cases
-    )
-    if viewer_only_own and len(viewer_cases) >= 1:
-        print("✅ Viewer 只能看到自己创建的病例")
+    if len(viewer_cases) >= 1:
+        viewer_only_own = all(
+            case['patient_id'].startswith('TEST-VIEWER') for case in viewer_cases
+        )
+        if viewer_only_own:
+            print("✅ Viewer 只能看到自己创建的病例")
+        else:
+            print("❌ Viewer 可以看到其他人的病例")
     else:
-        print("❌ Viewer 权限验证失败")
+        print("⚠️  Viewer 没有病例")
 
     print("\n测试完成！")
 
