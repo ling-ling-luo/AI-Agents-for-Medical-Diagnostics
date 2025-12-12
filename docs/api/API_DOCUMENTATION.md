@@ -262,7 +262,6 @@ GET /api/cases/{case_id}/diagnoses/{diagnosis_id}
 
 **CORS：** 已配置，支持以下源：
 - `http://localhost:5173` (Vite React)
-- `http://localhost:3000` (Next.js)
 - 其他开发端口
 
 **API 文档：**

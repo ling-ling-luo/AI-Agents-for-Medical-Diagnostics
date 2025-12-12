@@ -13,7 +13,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **前端**:
   - React 19.2.0 + TypeScript + Vite (`frontend/`)
-  - Next.js 16.0.3 + TypeScript (`frontend-next/`)
   - Tailwind CSS 4.1.17
   - Axios (API 客户端)
 
@@ -268,19 +267,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   npm run preview
   ```
 
-### 前端开发 (Next.js)
-
-- 安装依赖：
-  ```bash
-  cd frontend-next
-  npm install
-  ```
-
-- 启动开发服务器：
-  ```bash
-  npm run dev
-  ```
-  - 访问地址：`http://localhost:3000`
 
 ## 核心功能流程
 

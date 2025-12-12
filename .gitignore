@@ -127,10 +127,6 @@ package-lock.json
 frontend/dist/
 frontend/build/
 frontend/.vite/
-frontend-next/dist/
-frontend-next/build/
-frontend-next/.next/
-frontend-next/.vite/
 
 # Database
 *.db
