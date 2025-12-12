@@ -87,8 +87,9 @@ export const CreateCaseForm = ({ embedded = false, editMode = false, caseId }: C
       setError(null);
 
       if (editMode && caseId) {
-        // 编辑模式：更新病例
-        await caseApi.updateCase(caseId, formData);
+        // 编辑模式：更新病例（patient_id由后端自动更新，不发送）
+        const { patient_id, ...updateData } = formData;
+        await caseApi.updateCase(caseId, updateData);
         setSuccess(true);
 
         // 2秒后跳转到病例详情页

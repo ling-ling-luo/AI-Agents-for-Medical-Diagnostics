@@ -647,7 +647,7 @@ async def import_cases(
 
 class UpdateCaseRequest(BaseModel):
     """更新病例请求"""
-    patient_id: Optional[str] = None
+    # 病历号将根据更新时间+性别+年龄自动更新，不允许客户端传入/修改
     patient_name: Optional[str] = None
     age: Optional[int] = None
     gender: Optional[str] = None
@@ -693,23 +693,11 @@ async def update_case(
     if not is_admin_or_doctor and case.created_by != current_user.id:
         raise HTTPException(status_code=403, detail="无权修改此病例")
 
-    # 检查 patient_id 是否与其他病例冲突
-    if request.patient_id and request.patient_id != case.patient_id:
-        existing = db.query(MedicalCase).filter(
-            MedicalCase.patient_id == request.patient_id,
-            MedicalCase.id != case_id
-        ).first()
-        if existing:
-            raise HTTPException(status_code=400, detail=f"病历号 {request.patient_id} 已被其他病例使用")
-
     # 记录是否需要重新生成报告
     need_regenerate = False
     update_data = {}
 
     # 更新基本信息字段
-    if request.patient_id is not None:
-        update_data['patient_id'] = request.patient_id
-        need_regenerate = True
     if request.patient_name is not None:
         update_data['patient_name'] = request.patient_name
         need_regenerate = True
@@ -723,13 +711,46 @@ async def update_case(
         update_data['chief_complaint'] = request.chief_complaint
         need_regenerate = True
 
+    # 只要发起修改，就按“更新时间 + 修改后的性别/年龄”自动更新病例号
+    has_any_update = need_regenerate or any([
+        request.medical_history is not None,
+        request.family_history is not None,
+        request.lifestyle_factors is not None,
+        request.medications is not None,
+        request.lab_results is not None,
+        request.physical_exam is not None,
+        request.vital_signs is not None,
+        request.language is not None,
+    ])
+
+    if has_any_update:
+        effective_age = request.age if request.age is not None else case.age
+        effective_gender = request.gender if request.gender is not None else case.gender
+
+        # 生成新的病例号（基于更新时间）
+        current_time = datetime.now()
+        new_patient_id = generate_case_id(effective_gender or "", int(effective_age or 0), current_time)
+
+        # 极低概率冲突：等待1秒后重试一次
+        existing_case = db.query(MedicalCase).filter(
+            MedicalCase.patient_id == new_patient_id,
+            MedicalCase.id != case_id
+        ).first()
+        if existing_case:
+            time.sleep(1)
+            current_time = datetime.now()
+            new_patient_id = generate_case_id(effective_gender or "", int(effective_age or 0), current_time)
+
+        update_data['patient_id'] = new_patient_id
+        need_regenerate = True
+
     # 如果有任何字段更新，重新生成报告
     if need_regenerate or any([
         request.medical_history, request.family_history, request.lifestyle_factors,
         request.medications, request.lab_results, request.physical_exam, request.vital_signs
     ]):
         raw_report = CaseFormatter.format_case_report(
-            patient_id=request.patient_id or case.patient_id,
+            patient_id=update_data.get('patient_id') or case.patient_id,
             patient_name=request.patient_name or case.patient_name,
             age=request.age if request.age is not None else case.age,
             gender=request.gender or case.gender,

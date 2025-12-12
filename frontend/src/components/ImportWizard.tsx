@@ -40,7 +40,6 @@ export const ImportWizard = ({ onComplete, embedded = false }: ImportWizardProps
       description: '适合批量导入多个结构化病例',
       example: `[
   {
-    "patient_id": "100231",
     "patient_name": "Robert Miller",
     "age": 63,
     "gender": "male",
@@ -55,7 +54,6 @@ export const ImportWizard = ({ onComplete, embedded = false }: ImportWizardProps
       bgColor: 'bg-gradient-to-br from-green-50 to-emerald-50',
       description: '适合导入标准病例模板',
       example: `Medical Case Report
-Patient ID: 100231
 Name: Robert Miller
 Age: 63
 Gender: Male
@@ -64,6 +62,9 @@ Chief Complaint:
 The patient complains of...`,
     },
   };
+
+  // 用于展示导入格式示例（避免未使用变量）
+  void formatGuide;
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

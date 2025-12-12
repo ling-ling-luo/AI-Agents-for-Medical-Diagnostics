@@ -148,7 +148,6 @@ export const CaseDetail = () => {
 
       const updateData = {
         patient_name: editForm.patient_name,
-        patient_id: editForm.patient_id,
         age: editForm.age ? parseInt(editForm.age) : undefined,
         gender: editForm.gender,
         chief_complaint: editForm.chief_complaint,
