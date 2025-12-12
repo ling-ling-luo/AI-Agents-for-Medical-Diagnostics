@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, RefreshCw, AlertCircle, Brain, Heart, Wind, Loader, User, Calendar, Edit2, Save, X } from 'lucide-react';
 import { caseApi } from '../services/api';
 import type { CaseDetail as CaseDetailType, DiagnosisResponse } from '../types';
@@ -77,6 +78,7 @@ Patient's Report: {medical_report}`,
 export const CaseDetail = () => {
   const { caseId } = useParams<{ caseId: string }>();
   const navigate = useNavigate();
+  const { token } = useAuth();
   const [caseDetail, setCaseDetail] = useState<CaseDetailType | null>(null);
   const [diagnosis, setDiagnosis] = useState<DiagnosisResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -197,6 +199,7 @@ export const CaseDetail = () => {
 
       try {
         setLoadingCase(true);
+        setError(null);
         const data = await caseApi.getCaseDetail(parseInt(caseId));
         setCaseDetail(data);
 
@@ -212,10 +215,12 @@ export const CaseDetail = () => {
                 diagnosis_markdown: latestDiagnosis.diagnosis_full
               });
             }
+          } else {
+            setDiagnosis(null);
           }
         } catch (diagErr) {
           // 如果没有诊断历史，不显示错误，只是不加载诊断结果
-          console.log('No diagnosis history available');
+          setDiagnosis(null);
         }
       } catch (err) {
         setError('无法加载病例详情，请检查后端服务');
@@ -225,8 +230,9 @@ export const CaseDetail = () => {
       }
     };
 
+    // token 变化通常意味着切换账号：重新拉取病例详情/诊断
     loadCaseDetail();
-  }, [caseId]);
+  }, [caseId, token]);
 
   // 处理模型选择变化
   const handleModelChange = (modelId: string) => {

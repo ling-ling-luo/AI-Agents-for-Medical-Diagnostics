@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, User, Stethoscope, Activity, Search, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileText, User, Stethoscope, Activity, Filter, RefreshCw, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import type { Case } from '../types';
 import { caseApi } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { Loading } from './Loading';
 import { Dropdown } from './Dropdown';
+import { DateRangeFilter } from './DateRangeFilter';
 import '../styles/hide-scrollbar.css'; // 引入样式文件以隐藏数字输入框的箭头
 
 const ITEMS_PER_PAGE = 9; // 每页显示9个病例
@@ -17,14 +19,42 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
   const [cases, setCases] = useState<Case[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    patient_name: '',
+    patient_id: '',
+    chief_complaint: '',
+    gender: '', // male/female
+    diagnosed: '', // yes/no
+    created_from: '', // YYYY-MM-DD
+    created_to: '', // YYYY-MM-DD
+    creator_username: '',
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [jumpToPage, setJumpToPage] = useState('');
-  const navigate = useNavigate();
 
+  const hasActiveFilters = Object.values(filters).some(v => v.trim() !== '');
+  const updateFilter = (key: keyof typeof filters, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+  const navigate = useNavigate();
+  const { token, hasRole } = useAuth();
+
+  // 账号切换后 token 变化时，自动重新拉取病例列表
   useEffect(() => {
     loadCases();
-  }, []);
+    setFilters({
+      patient_name: '',
+      patient_id: '',
+      chief_complaint: '',
+      gender: '',
+      diagnosed: '',
+      created_from: '',
+      created_to: '',
+      creator_username: '',
+    });
+  }, [token]);
+
+  // 首次进入页面时会执行一次 loadCases()（token effect 已覆盖初次加载）
 
   const loadCases = async () => {
     try {
@@ -66,12 +96,30 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
   };
 
   const filteredCases = cases.filter(case_ => {
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      case_.patient_name?.toLowerCase().includes(searchLower) ||
-      case_.patient_id?.toLowerCase().includes(searchLower) ||
-      case_.chief_complaint?.toLowerCase().includes(searchLower)
-    );
+    const patientNameOk = !filters.patient_name.trim()
+      || (case_.patient_name || '').toLowerCase().includes(filters.patient_name.trim().toLowerCase());
+    const patientIdOk = !filters.patient_id.trim()
+      || (case_.patient_id || '').toLowerCase().includes(filters.patient_id.trim().toLowerCase());
+    const chiefComplaintOk = !filters.chief_complaint.trim()
+      || (case_.chief_complaint || '').toLowerCase().includes(filters.chief_complaint.trim().toLowerCase());
+
+    const genderOk = !filters.gender.trim() || (case_.gender || '') === filters.gender;
+
+    const diagnosedFlag = (case_.has_diagnosis ?? ((case_.diagnosis_count ?? 0) > 0));
+    const diagnosedOk = !filters.diagnosed.trim()
+      || (filters.diagnosed === 'yes' ? diagnosedFlag : !diagnosedFlag);
+
+    const createdAtMs = case_.created_at ? Date.parse(case_.created_at) : NaN;
+    const fromMs = filters.created_from ? Date.parse(`${filters.created_from}T00:00:00`) : NaN;
+    const toMs = filters.created_to ? Date.parse(`${filters.created_to}T23:59:59.999`) : NaN;
+    const createdFromOk = !filters.created_from.trim() || (!Number.isNaN(createdAtMs) && createdAtMs >= fromMs);
+    const createdToOk = !filters.created_to.trim() || (!Number.isNaN(createdAtMs) && createdAtMs <= toMs);
+
+    const creatorOk = !filters.creator_username.trim()
+      || (case_.creator?.username || '').toLowerCase().includes(filters.creator_username.trim().toLowerCase());
+
+    // AND 联合筛选：所有非空筛选项都需要同时满足
+    return patientNameOk && patientIdOk && chiefComplaintOk && genderOk && diagnosedOk && createdFromOk && createdToOk && creatorOk;
   });
 
   // 计算分页
@@ -80,10 +128,43 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentCases = filteredCases.slice(startIndex, endIndex);
 
-  // 当搜索词改变时，重置到第一页
+  // 当筛选条件改变时，重置到第一页
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [
+    filters.patient_name,
+    filters.patient_id,
+    filters.chief_complaint,
+    filters.gender,
+    filters.diagnosed,
+    filters.created_from,
+    filters.created_to,
+    filters.creator_username,
+  ]);
+
+  const showCreatorFilter = hasRole('admin') || hasRole('doctor');
+  const creatorFilterLabel = hasRole('admin') ? '创建者：全部' : '创建者（只读）';
+
+  const uniqueCreatorUsernames = Array.from(
+    new Set(
+      cases
+        .map(c => c.creator?.username)
+        .filter((v): v is string => !!v)
+    )
+  ).sort((a, b) => a.localeCompare(b));
+
+  const clearFilters = () => {
+    setFilters({
+      patient_name: '',
+      patient_id: '',
+      chief_complaint: '',
+      gender: '',
+      diagnosed: '',
+      created_from: '',
+      created_to: '',
+      creator_username: '',
+    });
+  };
 
   // 翻页函数
   const handlePageChange = (page: number) => {
@@ -138,14 +219,14 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
 
   return (
     <div className={embedded ? '' : 'min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-white'}>
-      {/* 顶部导航栏 + 搜索栏 - 非嵌入模式才显示 */}
+      {/* 顶部导航栏 - 非嵌入模式才显示 */}
       {!embedded && (
         <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
-          <div className="container-custom py-5">
-            {/* 标题行和搜索栏 */}
-            <div className="flex items-center justify-between gap-6">
+          {/* 第一行：标题和操作按钮 */}
+          <div className="container-custom py-4">
+            <div className="flex items-center justify-between">
               {/* 左侧：标题 */}
-              <div className="flex items-center gap-3 flex-shrink-0">
+              <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow">
                   <Stethoscope className="w-5 h-5 text-white" />
                 </div>
@@ -155,68 +236,215 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                 </div>
               </div>
 
-              {/* 中间：搜索栏 */}
-              <div className="flex-1 max-w-2xl">
-                <div className="flex items-center border border-gray-300 rounded-full px-4 py-1.5 focus-within:border-blue-500 transition-colors">
-                  <Search className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" />
-                  <input
-                    type="text"
-                    placeholder="搜索患者姓名、病历号或主诉"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 focus:outline-none py-0.5"
-                  />
-                </div>
-                {searchTerm && (
-                  <p className="text-xs text-gray-500 mt-2">
-                    找到 {filteredCases.length} 个匹配结果
-                  </p>
-                )}
-              </div>
-
               {/* 右侧：操作按钮 */}
-              <div className="flex items-center gap-3 flex-shrink-0">
-                {/* 导入病例按钮 */}
+              <div className="flex items-center gap-3">
                 <button
                   onClick={handleImportClick}
-                  className="px-5 py-2.5 bg-transparent hover:bg-gray-50 text-blue-600 hover:text-blue-700 text-sm font-semibold transition-all whitespace-nowrap min-w-[100px]"
+                  className="px-5 py-2.5 bg-transparent hover:bg-gray-50 text-blue-600 hover:text-blue-700 text-sm font-semibold transition-all whitespace-nowrap"
                 >
-                  <span>导入病例</span>
+                  导入病例
                 </button>
-
-                {/* 新增病例按钮 */}
                 <button
                   onClick={() => navigate('/create')}
-                  className="px-5 py-2.5 bg-transparent hover:bg-gray-50 text-blue-600 hover:text-blue-700 text-sm font-semibold transition-all whitespace-nowrap min-w-[100px]"
+                  className="px-5 py-2.5 bg-transparent hover:bg-gray-50 text-blue-600 hover:text-blue-700 text-sm font-semibold transition-all whitespace-nowrap"
                 >
-                  <span>新增病例</span>
+                  新增病例
                 </button>
+              </div>
+            </div>
+          </div>
+
+          {/* 第二行：筛选区域 - 全宽 */}
+          <div className="w-full bg-gray-50 border-t border-gray-200">
+            <div className="container-custom py-3">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-gray-400" />
+                  <span className="text-xs font-medium text-gray-700">筛选条件</span>
+                  {hasActiveFilters && (
+                    <span className="text-xs text-blue-600">({filteredCases.length} 条匹配)</span>
+                  )}
+                </div>
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="flex items-center gap-1 text-xs text-gray-600 hover:text-gray-900"
+                  >
+                    <X className="w-3 h-3" />
+                    <span>清空</span>
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                <input
+                  type="text"
+                  placeholder="患者姓名"
+                  value={filters.patient_name}
+                  onChange={(e) => updateFilter('patient_name', e.target.value)}
+                  className="w-full px-3 py-1.5 border border-gray-200 text-sm focus:outline-none focus:border-blue-400 bg-white"
+                />
+                <input
+                  type="text"
+                  placeholder="病历号"
+                  value={filters.patient_id}
+                  onChange={(e) => updateFilter('patient_id', e.target.value)}
+                  className="w-full px-3 py-1.5 border border-gray-200 text-sm focus:outline-none focus:border-blue-400 bg-white"
+                />
+                <input
+                  type="text"
+                  placeholder="主诉"
+                  value={filters.chief_complaint}
+                  onChange={(e) => updateFilter('chief_complaint', e.target.value)}
+                  className="w-full px-3 py-1.5 border border-gray-200 text-sm focus:outline-none focus:border-blue-400 bg-white"
+                />
+
+                <select
+                  value={filters.gender}
+                  onChange={(e) => updateFilter('gender', e.target.value)}
+                  className="w-full px-3 py-1.5 border border-gray-200 text-sm focus:outline-none focus:border-blue-400 bg-white"
+                >
+                  <option value="">性别：全部</option>
+                  <option value="male">男</option>
+                  <option value="female">女</option>
+                </select>
+
+                <select
+                  value={filters.diagnosed}
+                  onChange={(e) => updateFilter('diagnosed', e.target.value)}
+                  className="w-full px-3 py-1.5 border border-gray-200 text-sm focus:outline-none focus:border-blue-400 bg-white"
+                >
+                  <option value="">诊断状态：全部</option>
+                  <option value="yes">已诊断</option>
+                  <option value="no">未诊断</option>
+                </select>
+
+                {showCreatorFilter && (
+                  <select
+                    value={filters.creator_username}
+                    onChange={(e) => updateFilter('creator_username', e.target.value)}
+                    disabled={!hasRole('admin')}
+                    className="w-full px-3 py-1.5 border border-gray-200 text-sm focus:outline-none focus:border-blue-400 bg-white disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                  >
+                    <option value="">{creatorFilterLabel}</option>
+                    {uniqueCreatorUsernames.map((u) => (
+                      <option key={u} value={u}>{u}</option>
+                    ))}
+                  </select>
+                )}
+
+                {/* 日期范围筛选器 - 占两列 */}
+                <DateRangeFilter
+                  value={{ from: filters.created_from, to: filters.created_to }}
+                  onChange={(range) => {
+                    setFilters(prev => ({
+                      ...prev,
+                      created_from: range.from,
+                      created_to: range.to,
+                    }));
+                  }}
+                />
               </div>
             </div>
           </div>
         </header>
       )}
 
-      {/* 嵌入模式的搜索栏 */}
+      {/* 嵌入模式的筛选栏 - 简洁扁平设计 */}
       {embedded && (
         <div className="pt-8 pb-6">
           <div className="flex items-center justify-center">
-            <div className="w-full max-w-2xl">
-              <div className="flex items-center border border-gray-300 rounded-full px-4 py-2.5 focus-within:border-blue-500 transition-colors bg-white shadow-sm">
-                <Search className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" />
-                <input
-                  type="text"
-                  placeholder="搜索患者姓名、病历号或主诉"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 focus:outline-none"
-                />
+            <div className="w-full max-w-6xl">
+              <div className="bg-gray-50 border border-gray-200 px-4 py-3">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Filter className="w-4 h-4 text-gray-400" />
+                    <span className="text-xs font-medium text-gray-700">筛选条件</span>
+                    {hasActiveFilters && (
+                      <span className="text-xs text-blue-600">({filteredCases.length} 条匹配)</span>
+                    )}
+                  </div>
+                  {hasActiveFilters && (
+                    <button
+                      type="button"
+                      onClick={clearFilters}
+                      className="flex items-center gap-1 text-xs text-gray-600 hover:text-gray-900"
+                    >
+                      <X className="w-3 h-3" />
+                      <span>清空</span>
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                  <input
+                    type="text"
+                    placeholder="患者姓名"
+                    value={filters.patient_name}
+                    onChange={(e) => updateFilter('patient_name', e.target.value)}
+                    className="w-full px-3 py-1.5 border border-gray-200 text-sm focus:outline-none focus:border-blue-400 bg-white"
+                  />
+                  <input
+                    type="text"
+                    placeholder="病历号"
+                    value={filters.patient_id}
+                    onChange={(e) => updateFilter('patient_id', e.target.value)}
+                    className="w-full px-3 py-1.5 border border-gray-200 text-sm focus:outline-none focus:border-blue-400 bg-white"
+                  />
+                  <input
+                    type="text"
+                    placeholder="主诉"
+                    value={filters.chief_complaint}
+                    onChange={(e) => updateFilter('chief_complaint', e.target.value)}
+                    className="w-full px-3 py-1.5 border border-gray-200 text-sm focus:outline-none focus:border-blue-400 bg-white"
+                  />
+
+                  <select
+                    value={filters.gender}
+                    onChange={(e) => updateFilter('gender', e.target.value)}
+                    className="w-full px-3 py-1.5 border border-gray-200 text-sm focus:outline-none focus:border-blue-400 bg-white"
+                  >
+                    <option value="">性别：全部</option>
+                    <option value="male">男</option>
+                    <option value="female">女</option>
+                  </select>
+
+                  <select
+                    value={filters.diagnosed}
+                    onChange={(e) => updateFilter('diagnosed', e.target.value)}
+                    className="w-full px-3 py-1.5 border border-gray-200 text-sm focus:outline-none focus:border-blue-400 bg-white"
+                  >
+                    <option value="">诊断状态：全部</option>
+                    <option value="yes">已诊断</option>
+                    <option value="no">未诊断</option>
+                  </select>
+
+                  {showCreatorFilter && (
+                    <select
+                      value={filters.creator_username}
+                      onChange={(e) => updateFilter('creator_username', e.target.value)}
+                      disabled={!hasRole('admin')}
+                      className="w-full px-3 py-1.5 border border-gray-200 text-sm focus:outline-none focus:border-blue-400 bg-white disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                    >
+                      <option value="">{creatorFilterLabel}</option>
+                      {uniqueCreatorUsernames.map((u) => (
+                        <option key={u} value={u}>{u}</option>
+                      ))}
+                    </select>
+                  )}
+
+                  {/* 日期范围筛选器 - 占两列 */}
+                  <DateRangeFilter
+                    value={{ from: filters.created_from, to: filters.created_to }}
+                    onChange={(range) => {
+                      setFilters(prev => ({
+                        ...prev,
+                        created_from: range.from,
+                        created_to: range.to,
+                      }));
+                    }}
+                  />
+                </div>
               </div>
-              {searchTerm && (
-                <p className="text-xs text-gray-500 mt-2 text-center">
-                  找到 {filteredCases.length} 个匹配结果
-                </p>
-              )}
             </div>
           </div>
         </div>
@@ -230,10 +458,10 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
               <div className="text-center">
                 <FileText className="w-14 h-14 text-gray-300 mx-auto mb-3" />
                 <h3 className="text-base font-medium text-gray-700 mb-1.5">
-                  {searchTerm ? '未找到匹配的病例' : '暂无病例数据'}
+                  {hasActiveFilters ? '未找到匹配的病例' : '暂无病例数据'}
                 </h3>
                 <p className="text-sm text-gray-500">
-                  {searchTerm ? '请尝试其他搜索关键词' : '请先导入医疗病历文件'}
+                  {hasActiveFilters ? '请调整筛选条件' : '请先导入医疗病历文件'}
                 </p>
               </div>
             </div>
@@ -354,7 +582,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
             <div className="mt-8 pt-6 border-t border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <div className="text-sm text-gray-500">
-                  共 {cases.length} 个病例 {searchTerm && `· ${filteredCases.length} 个匹配`}
+                  共 {cases.length} 个病例 {hasActiveFilters && `· ${filteredCases.length} 个匹配`}
                 </div>
                 <div className="text-sm text-gray-500">
                   第 {currentPage} / {totalPages} 页

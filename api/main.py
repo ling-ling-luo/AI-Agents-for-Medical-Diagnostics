@@ -3,8 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel
 from typing import List, Optional
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func
 from datetime import datetime
 import time
 import os
@@ -49,6 +50,16 @@ app.add_middleware(
 
 # ---- Pydantic 响应模型 ----
 
+class CaseCreatorInfo(BaseModel):
+    """病例创建者信息（列表页展示用）"""
+    id: int
+    username: str
+    full_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
 class Case(BaseModel):
     id: int
     patient_name: Optional[str] = None
@@ -56,6 +67,10 @@ class Case(BaseModel):
     age: Optional[int] = None
     gender: Optional[str] = None
     chief_complaint: Optional[str] = None
+    created_at: datetime
+    creator: Optional[CaseCreatorInfo] = None
+    diagnosis_count: int = 0
+    has_diagnosis: bool = False
 
     class Config:
         from_attributes = True  # 允许从 ORM 模型转换
@@ -78,27 +93,77 @@ async def list_cases(
     获取病例列表（需要 case:read 权限）
     - 管理员(admin)和医生(doctor)：可以看到所有病例
     - 普通用户(viewer)：只能看到自己创建的病例
+
+    列表增强字段（供前端筛选使用）：
+    - created_at: 创建时间
+    - creator: 创建者信息（id/username/full_name）
+    - diagnosis_count: 诊断记录数量
+    - has_diagnosis: 是否已有诊断记录
     """
     # 检查用户角色
     is_admin_or_doctor = False
     if current_user.is_superuser:
         is_admin_or_doctor = True
     else:
-        # 获取用户角色
         user_role_names = [role.name for role in current_user.roles]
         is_admin_or_doctor = 'admin' in user_role_names or 'doctor' in user_role_names
 
+    diagnosis_count_subq = (
+        db.query(
+            DiagnosisHistory.case_id,
+            func.count(DiagnosisHistory.id).label("diagnosis_count")
+        )
+        .group_by(DiagnosisHistory.case_id)
+        .subquery()
+    )
+
+    base_query = (
+        db.query(
+            MedicalCase,
+            func.coalesce(diagnosis_count_subq.c.diagnosis_count, 0).label("diagnosis_count")
+        )
+        .outerjoin(diagnosis_count_subq, MedicalCase.id == diagnosis_count_subq.c.case_id)
+        .options(joinedload(MedicalCase.creator))
+    )
+
     # 根据角色过滤病例
     if is_admin_or_doctor:
-        # 管理员和医生可以看到所有病例
-        cases = db.query(MedicalCase).order_by(MedicalCase.created_at.desc()).all()
+        query = base_query
     else:
-        # 普通用户只能看到自己创建的病例
-        cases = db.query(MedicalCase).filter(
-            MedicalCase.created_by == current_user.id
-        ).order_by(MedicalCase.created_at.desc()).all()
+        query = base_query.filter(MedicalCase.created_by == current_user.id)
 
-    return cases
+    results = query.order_by(MedicalCase.created_at.desc()).all()
+
+    cases_response: List[Case] = []
+    for medical_case, diagnosis_count in results:
+        creator_info: Optional[CaseCreatorInfo] = None
+        if medical_case.creator:
+            creator_info = CaseCreatorInfo(
+                id=medical_case.creator.id,
+                username=medical_case.creator.username,
+                full_name=medical_case.creator.full_name,
+            )
+
+        cases_response.append(
+            Case(
+                id=medical_case.id,
+                patient_name=medical_case.patient_name,
+                patient_id=medical_case.patient_id,
+                age=medical_case.age,
+                gender=medical_case.gender,
+                chief_complaint=medical_case.chief_complaint,
+                created_at=medical_case.created_at,
+                creator=creator_info,
+                diagnosis_count=int(diagnosis_count or 0),
+                has_diagnosis=bool((diagnosis_count or 0) > 0),
+            )
+        )
+
+    return cases_response
+
+# TODO: 后续如需支持后端分页/筛选，可在此处扩展 query 条件
+
+
 
 
 class CaseDetail(BaseModel):

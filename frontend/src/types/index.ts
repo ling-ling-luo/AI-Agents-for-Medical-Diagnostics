@@ -1,3 +1,9 @@
+export interface CaseCreatorInfo {
+  id: number;
+  username: string;
+  full_name?: string | null;
+}
+
 export interface Case {
   id: number;
   patient_name: string | null;
@@ -5,6 +11,10 @@ export interface Case {
   age: number | null;
   gender: string | null;
   chief_complaint: string | null;
+  created_at?: string;
+  creator?: CaseCreatorInfo | null;
+  diagnosis_count?: number;
+  has_diagnosis?: boolean;
 }
 
 export interface CaseDetail {
@@ -47,7 +57,6 @@ export interface CreateCaseResponse {
 }
 
 export interface UpdateCaseRequest {
-  patient_id?: string;
   patient_name?: string;
   age?: number;
   gender?: string;
