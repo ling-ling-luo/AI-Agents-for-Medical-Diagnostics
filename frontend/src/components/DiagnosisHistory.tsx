@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Clock, FileText, ArrowLeft, Eye, Zap, AlertCircle, X, Sparkles, Calendar, Download, ChevronDown, CheckSquare, Square, Package } from 'lucide-react';
+import { Clock, FileText, ArrowLeft, Eye, Zap, AlertCircle, Calendar, Download, ChevronDown, CheckSquare, Square, Package, Sparkles } from 'lucide-react';
 import { caseApi } from '../services/api';
 import type { DiagnosisHistoryResponse, DiagnosisDetail } from '../types';
 import { Loading } from './Loading';
 import ReactMarkdown from 'react-markdown';
 import { SmartDropdown, DropdownItem } from './SmartDropdown';
+import { downloadBlob } from '../utils/download';
+import { BaseModal } from './BaseModal';
 
 export const DiagnosisHistory = () => {
   const { caseId } = useParams<{ caseId: string }>();
@@ -19,11 +21,7 @@ export const DiagnosisHistory = () => {
   const [showExportMenu, setShowExportMenu] = useState<number | null>(null);
   const [exporting, setExporting] = useState(false);
 
-  useEffect(() => {
-    loadHistory();
-  }, [caseId]);
-
-  const loadHistory = async () => {
+  const loadHistory = useCallback(async () => {
     if (!caseId) return;
 
     try {
@@ -31,13 +29,18 @@ export const DiagnosisHistory = () => {
       setError(null);
       const data = await caseApi.getDiagnosisHistory(parseInt(caseId), false);
       setHistoryData(data);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || '加载诊断历史失败');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || '加载诊断历史失败');
       console.error('Error loading diagnosis history:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [caseId]);
+
+  useEffect(() => {
+    loadHistory();
+  }, [caseId, loadHistory]);
 
   const handleViewDetail = async (diagnosisId: number) => {
     if (!caseId) return;
@@ -46,8 +49,9 @@ export const DiagnosisHistory = () => {
       setLoadingDetail(true);
       const detail = await caseApi.getDiagnosisDetail(parseInt(caseId), diagnosisId);
       setSelectedDiagnosis(detail);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || '加载诊断详情失败');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || '加载诊断详情失败');
       console.error('Error loading diagnosis detail:', err);
     } finally {
       setLoadingDetail(false);
@@ -101,14 +105,10 @@ export const DiagnosisHistory = () => {
 
       const blob = await caseApi.exportDiagnosisById(parseInt(caseId), diagnosisId, format);
 
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `diagnosis-${diagnosisId}.${format === 'markdown' ? 'md' : format}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      downloadBlob(
+        blob,
+        `diagnosis-${diagnosisId}.${format === 'markdown' ? 'md' : format}`
+      );
     } catch (error) {
       console.error('Export failed:', error);
       alert('导出失败，请稍后重试');
@@ -133,14 +133,7 @@ export const DiagnosisHistory = () => {
         format
       );
 
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `diagnosis-batch-${caseId}.zip`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, `diagnosis-batch-${caseId}.zip`);
     } catch (error) {
       console.error('Batch export failed:', error);
       alert('批量导出失败，请稍后重试');
@@ -167,7 +160,7 @@ export const DiagnosisHistory = () => {
           <h3 className="text-2xl font-bold text-gray-800 mb-3">加载失败</h3>
           <p className="text-base text-gray-600 mb-8">{error}</p>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/cases')}
             className="px-8 py-3.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-base font-bold rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
           >
             返回列表
@@ -182,7 +175,7 @@ export const DiagnosisHistory = () => {
       <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-30 shadow-sm">
         <div className="container-custom py-5">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/cases')}
             className="inline-flex items-center text-gray-600 hover:text-blue-600 mb-4 transition-colors text-sm font-medium group"
           >
             <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
@@ -279,73 +272,33 @@ export const DiagnosisHistory = () => {
           </div>
         )}
 
-        {/* 诊断详情模态框 - 增强质感 */}
-        {selectedDiagnosis && (
-          <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 fade-in"
-            onClick={() => setSelectedDiagnosis(null)}
-          >
-            <div
-              className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col slide-in border border-gray-200"
-              onClick={(e) => e.stopPropagation()}
+        {/* 诊断详情模态框 */}
+        <BaseModal
+          isOpen={!!selectedDiagnosis}
+          onClose={() => setSelectedDiagnosis(null)}
+          title="诊断详情"
+          subtitle={
+            selectedDiagnosis
+              ? `${formatDate(selectedDiagnosis.timestamp)} · ${selectedDiagnosis.model} · ${formatExecutionTime(selectedDiagnosis.execution_time_ms)}`
+              : undefined
+          }
+          headerIcon={<FileText className="w-4 h-4 text-blue-600" />}
+          maxWidthClass="max-w-5xl"
+          footer={
+            <button
+              onClick={() => setSelectedDiagnosis(null)}
+              className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded transition-colors"
             >
-              {/* 模态框头部 */}
-              <div className="px-8 py-6 border-b border-gray-200 bg-gradient-to-br from-blue-50 to-cyan-50 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
-                <div className="relative flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-lg">
-                      <FileText className="w-7 h-7 text-blue-600" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <h2 className="text-2xl font-bold text-gray-800">诊断详情</h2>
-                        <Sparkles className="w-5 h-5 text-blue-500" />
-                      </div>
-                      <div className="flex items-center gap-3 text-sm text-gray-600">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          {formatDate(selectedDiagnosis.timestamp)}
-                        </span>
-                        <span>·</span>
-                        <span className="font-semibold">{selectedDiagnosis.model}</span>
-                        <span>·</span>
-                        <span className="flex items-center gap-1">
-                          <Zap className="w-4 h-4" />
-                          {formatExecutionTime(selectedDiagnosis.execution_time_ms)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setSelectedDiagnosis(null)}
-                    className="p-2.5 hover:bg-white/70 rounded-xl transition-all group"
-                  >
-                    <X className="w-6 h-6 text-gray-600 group-hover:text-gray-800 group-hover:rotate-90 transition-transform duration-300" />
-                  </button>
-                </div>
-              </div>
-
-              {/* 模态框内容 */}
-              <div className="flex-1 overflow-y-auto p-8 bg-gradient-to-br from-white to-blue-50/30">
-                <div className="prose prose-base max-w-none text-gray-700">
-                  <ReactMarkdown>{selectedDiagnosis.diagnosis_markdown}</ReactMarkdown>
-                </div>
-              </div>
-
-              {/* 模态框底部 */}
-              <div className="px-8 py-5 border-t border-gray-200 bg-gradient-to-br from-gray-50 to-blue-50/50 flex justify-end rounded-b-3xl">
-                <button
-                  onClick={() => setSelectedDiagnosis(null)}
-                  className="px-8 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-xl hover:scale-105 flex items-center gap-2"
-                >
-                  <span>关闭</span>
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+              关闭
+            </button>
+          }
+        >
+          {selectedDiagnosis && (
+            <div className="prose prose-base max-w-none text-gray-700">
+              <ReactMarkdown>{selectedDiagnosis.diagnosis_markdown}</ReactMarkdown>
             </div>
-          </div>
-        )}
+          )}
+        </BaseModal>
 
         {/* 诊断历史列表 */}
         {historyData && historyData.history.length === 0 ? (

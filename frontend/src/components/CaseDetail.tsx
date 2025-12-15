@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import type React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { ArrowLeft, RefreshCw, AlertCircle, Brain, Heart, Wind, Loader, User, Calendar, Edit2, Save, X } from 'lucide-react';
 import { caseApi } from '../services/api';
 import type { CaseDetail as CaseDetailType, DiagnosisResponse } from '../types';
@@ -22,7 +23,7 @@ interface AgentInfo {
   focus: string;
   task: string;
   prompt: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
 }
 
@@ -218,7 +219,7 @@ export const CaseDetail = () => {
           } else {
             setDiagnosis(null);
           }
-        } catch (diagErr) {
+        } catch {
           // 如果没有诊断历史，不显示错误，只是不加载诊断结果
           setDiagnosis(null);
         }
@@ -240,6 +241,22 @@ export const CaseDetail = () => {
     localStorage.setItem('selectedModel', modelId);
   };
 
+  const runDiagnosis = useCallback(async () => {
+    if (!caseId) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await caseApi.runDiagnosis(parseInt(caseId), selectedModel);
+      setDiagnosis(result);
+    } catch (err) {
+      setError('诊断失败，请检查后端服务并稍后重试');
+      console.error('Error running diagnosis:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [caseId, selectedModel]);
+
   // 检查是否需要自动触发诊断
   useEffect(() => {
     // 通过URL参数传递autoDiagnose=true来触发自动诊断
@@ -257,23 +274,7 @@ export const CaseDetail = () => {
 
       return () => clearTimeout(timer);
     }
-  }, [caseId, selectedModel, loading, diagnosis]);
-
-  const runDiagnosis = async () => {
-    if (!caseId) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-      const result = await caseApi.runDiagnosis(parseInt(caseId), selectedModel);
-      setDiagnosis(result);
-    } catch (err) {
-      setError('诊断失败，请检查后端服务并稍后重试');
-      console.error('Error running diagnosis:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [caseId, selectedModel, loading, diagnosis, runDiagnosis]);
 
   // 加载中状态
   if (loadingCase) {
@@ -293,7 +294,7 @@ export const CaseDetail = () => {
           <h3 className="text-lg font-medium text-gray-800 mb-2">加载失败</h3>
           <p className="text-sm text-gray-600 mb-6">{error}</p>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/cases')}
             className="px-4 py-2 bg-gradient-to-r from-blue-500/90 to-cyan-500/90 hover:from-blue-500 hover:to-cyan-500 text-white text-sm font-medium rounded-xl transition-all inline-flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -319,7 +320,7 @@ export const CaseDetail = () => {
       <header className="bg-white border-b border-gray-200">
         <div className="container-custom py-5">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/cases')}
             className="inline-flex items-center text-gray-600 hover:text-gray-800 mb-5 transition-colors text-sm font-medium"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />

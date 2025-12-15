@@ -2,10 +2,11 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Upload, FileText, CheckCircle, AlertCircle,
-  Download, ArrowLeft, ArrowRight, Info, Sparkles, FileCheck
+  Download, ArrowRight, Info, Sparkles, FileCheck
 } from 'lucide-react';
 import { caseApi, type ImportCasesResponse } from '../services/api';
 import { Loading } from './Loading';
+import { downloadBlob } from '../utils/download';
 
 const ImportStep = {
   SELECT_FILE: 0,
@@ -27,7 +28,7 @@ export const ImportWizard = ({ onComplete, embedded = false }: ImportWizardProps
 
   const [currentStep, setCurrentStep] = useState<ImportStepType>(ImportStep.SELECT_FILE);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [_uploading, setUploading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<ImportCasesResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -107,8 +108,9 @@ The patient complains of...`,
       setResult(importResult);
       setCurrentStep(ImportStep.RESULT);
 
-    } catch (err: any) {
-      setError(err.response?.data?.detail || '导入失败，请重试');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || '导入失败，请重试');
       setCurrentStep(ImportStep.VALIDATE);
     } finally {
       setUploading(false);
@@ -166,14 +168,7 @@ Respiratory Exam: Prolonged expiration, wheezing on auscultation.`;
     }
 
     const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, filename);
   };
 
   const renderStepIndicator = () => (
@@ -365,6 +360,7 @@ Respiratory Exam: Prolonged expiration, wheezing on auscultation.`;
         );
 
       case ImportStep.UPLOAD:
+        void uploading;
         return (
           <div className="py-12">
             <div className="flex flex-col items-center">
@@ -467,8 +463,8 @@ Respiratory Exam: Prolonged expiration, wheezing on auscultation.`;
                         // 嵌入模式：通过回调切换标签页
                         onComplete?.();
                       } else {
-                        // 独立模式：导航到首页
-                        navigate('/');
+                        // 独立模式：导航到病例列表
+                        navigate('/cases');
                       }
                     }}
                     className="px-4 py-2 text-blue-500 hover:text-blue-700 font-medium transition-all hover:drop-shadow-sm"
@@ -488,31 +484,6 @@ Respiratory Exam: Prolonged expiration, wheezing on auscultation.`;
 
   return (
     <div className={embedded ? '' : 'min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-white'}>
-      {!embedded && (
-        <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-30 shadow-sm">
-          <div className="container-custom py-5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
-                  <Upload className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-gray-800">导入病例向导</h1>
-                  <p className="text-sm text-gray-500 mt-0.5">批量导入病例数据</p>
-                </div>
-              </div>
-              <button
-                onClick={() => navigate('/')}
-                className="px-5 py-2.5 bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 rounded-xl font-semibold flex items-center gap-2 shadow-sm hover:shadow transition-all"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                返回首页
-              </button>
-            </div>
-          </div>
-        </header>
-      )}
-
       <main className={embedded ? 'py-6' : 'container-custom py-10'}>
         <div className={`${embedded ? 'bg-white border' : 'bg-white'} border-gray-200 rounded-lg p-8`}>
           {renderStepIndicator()}

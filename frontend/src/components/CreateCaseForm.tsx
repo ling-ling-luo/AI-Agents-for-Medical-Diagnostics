@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Plus, Loader, CheckCircle, User, FileText,
+  Plus, Loader, CheckCircle, User, FileText,
   Heart, Activity, Stethoscope, Pill, FlaskConical, ClipboardList
 } from 'lucide-react';
 import { caseApi } from '../services/api';
@@ -37,13 +37,7 @@ export const CreateCaseForm = ({ embedded = false, editMode = false, caseId }: C
   });
 
   // 编辑模式：加载病例数据
-  useEffect(() => {
-    if (editMode && caseId) {
-      loadCaseData();
-    }
-  }, [editMode, caseId]);
-
-  const loadCaseData = async () => {
+  const loadCaseData = useCallback(async () => {
     if (!caseId) return;
 
     try {
@@ -66,13 +60,19 @@ export const CreateCaseForm = ({ embedded = false, editMode = false, caseId }: C
         vital_signs: '',
         language: 'en',
       });
-    } catch (err: any) {
+    } catch (err) {
       setError('加载病例数据失败');
       console.error('Error loading case:', err);
     } finally {
       setLoadingData(false);
     }
-  };
+  }, [caseId]);
+
+  useEffect(() => {
+    if (editMode && caseId) {
+      loadCaseData();
+    }
+  }, [editMode, caseId, loadCaseData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,7 +88,8 @@ export const CreateCaseForm = ({ embedded = false, editMode = false, caseId }: C
 
       if (editMode && caseId) {
         // 编辑模式：更新病例（patient_id由后端自动更新，不发送）
-        const { patient_id, ...updateData } = formData;
+        const { patient_id: _patientId, ...updateData } = formData;
+        void _patientId;
         await caseApi.updateCase(caseId, updateData);
         setSuccess(true);
 
@@ -98,7 +99,8 @@ export const CreateCaseForm = ({ embedded = false, editMode = false, caseId }: C
         }, 2000);
       } else {
         // 新增模式：创建病例（patient_id由后端自动生成，不发送）
-        const { patient_id, ...createData } = formData;
+        const { patient_id: _patientId, ...createData } = formData;
+        void _patientId;
         const result = await caseApi.createCase(createData);
         setSuccess(true);
 
@@ -107,8 +109,9 @@ export const CreateCaseForm = ({ embedded = false, editMode = false, caseId }: C
           navigate(`/case/${result.id}`);
         }, 2000);
       }
-    } catch (err: any) {
-      setError(err.response?.data?.detail || `${editMode ? '更新' : '创建'}病例失败，请检查输入`);
+    } catch (err) {
+      const detail = err instanceof Error ? undefined : (err as { response?: { data?: { detail?: string } } }).response?.data?.detail;
+      setError(detail || `${editMode ? '更新' : '创建'}病例失败，请检查输入`);
       console.error(`Error ${editMode ? 'updating' : 'creating'} case:`, err);
     } finally {
       setLoading(false);
@@ -158,32 +161,6 @@ export const CreateCaseForm = ({ embedded = false, editMode = false, caseId }: C
 
   return (
     <div className={embedded ? '' : 'min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-white'}>
-      {/* 顶部导航栏 - 非嵌入模式才显示 */}
-      {!embedded && (
-        <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-30 shadow-sm">
-          <div className="container-custom py-5">
-            <button
-              onClick={() => navigate('/')}
-              className="inline-flex items-center text-gray-600 hover:text-blue-600 mb-4 transition-colors text-sm font-medium group"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-              返回病例列表
-            </button>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
-                <Plus className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-800">
-                  {editMode ? '编辑病例' : '新增病例'}
-                </h1>
-                <p className="text-sm text-gray-500 mt-0.5">填写患者的详细医疗信息</p>
-              </div>
-            </div>
-          </div>
-        </header>
-      )}
-
       <main className={embedded ? 'py-6' : 'container-custom py-10'}>
         <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-8">
           {/* 基本信息 */}
@@ -444,7 +421,7 @@ export const CreateCaseForm = ({ embedded = false, editMode = false, caseId }: C
           <div className="flex items-center justify-end gap-4 pt-6 border-t border-gray-200">
             <button
               type="button"
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/cases')}
               className="px-6 py-2 text-gray-600 hover:text-gray-900 font-medium transition-all hover:drop-shadow-sm"
             >
               取消
