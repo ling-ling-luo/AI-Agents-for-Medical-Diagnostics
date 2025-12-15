@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 
 export interface DropdownPosition {
@@ -40,7 +40,7 @@ export const SmartDropdown = ({
   const [maxHeight, setMaxHeight] = useState<number>(400);
 
   // 计算最佳位置
-  const calculatePosition = () => {
+  const calculatePosition = useCallback(() => {
     if (!dropdownRef.current || !menuRef.current || !isOpen) return;
 
     const triggerRect = dropdownRef.current.getBoundingClientRect();
@@ -87,14 +87,20 @@ export const SmartDropdown = ({
     // 计算最大高度（留20px边距）
     const availableHeight = vertical === 'bottom' ? spaceBelow - 20 : spaceAbove - 20;
     setMaxHeight(Math.min(availableHeight, 400));
-  };
+  }, [isOpen, preferredPosition.horizontal, preferredPosition.vertical]);
 
   // 监听位置变化
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return;
+
+    const rafId = window.requestAnimationFrame(() => {
       calculatePosition();
-    }
-  }, [isOpen]);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(rafId);
+    };
+  }, [isOpen, calculatePosition]);
 
   // 监听窗口大小变化和滚动
   useEffect(() => {
@@ -110,7 +116,7 @@ export const SmartDropdown = ({
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('scroll', handleScroll, true);
     };
-  }, [isOpen]);
+  }, [isOpen, calculatePosition]);
 
   // 点击外部关闭
   useEffect(() => {

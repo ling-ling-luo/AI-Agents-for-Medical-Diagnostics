@@ -3,7 +3,7 @@
  */
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { AlertCircle, Loader, CheckCircle } from 'lucide-react';
 
 export const Register = () => {
@@ -78,11 +78,12 @@ export const Register = () => {
         formData.password,
         formData.fullName || undefined
       );
-      navigate('/'); // 注册成功后跳转到首页
-    } catch (err: any) {
+      navigate('/dashboard'); // 注册成功后跳转到仪表板
+    } catch (err) {
       console.error('Register error:', err);
-      if (err.response?.data?.detail) {
-        setError(err.response.data.detail);
+      const detail = err instanceof Error ? undefined : (err as { response?: { data?: { detail?: string } } }).response?.data?.detail;
+      if (detail) {
+        setError(detail);
       } else {
         setError('注册失败，请稍后重试');
       }

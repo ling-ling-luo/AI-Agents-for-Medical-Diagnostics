@@ -3,7 +3,8 @@
  * 显示历史登录账号，支持快速切换
  */
 import { useState } from 'react';
-import { useAuth, type SavedAccount } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
+import type { SavedAccount } from '../context/types';
 import { User, X, LogOut, ChevronDown, Loader } from 'lucide-react';
 
 export const AccountSwitcher = () => {
@@ -36,9 +37,10 @@ export const AccountSwitcher = () => {
       setIsOpen(false);
       setShowPasswordFor(null);
       setPassword('');
-    } catch (err: any) {
+    } catch (err) {
       console.error('Switch account error:', err);
-      setError('切换失败：' + (err.response?.data?.detail || '用户名或密码错误'));
+      const message = err instanceof Error ? err.message : String(err);
+      setError('切换失败：' + (message || '用户名或密码错误'));
     } finally {
       setSwitchingTo(null);
     }

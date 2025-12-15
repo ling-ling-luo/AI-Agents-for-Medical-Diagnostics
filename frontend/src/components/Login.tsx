@@ -3,7 +3,7 @@
  */
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { AlertCircle, Loader } from 'lucide-react';
 
 export const Login = () => {
@@ -35,12 +35,13 @@ export const Login = () => {
     try {
       setIsLoading(true);
       await login(formData.username, formData.password);
-      navigate('/'); // 登录成功后跳转到首页
-    } catch (err: any) {
+      navigate('/dashboard'); // 登录成功后跳转到仪表板
+    } catch (err) {
       console.error('Login error:', err);
-      if (err.response?.status === 401) {
+      const status = err instanceof Error ? undefined : (err as { response?: { status?: number } }).response?.status;
+      if (status === 401) {
         setError('用户名或密码错误');
-      } else if (err.response?.status === 403) {
+      } else if (status === 403) {
         setError('账户已被禁用，请联系管理员');
       } else {
         setError('登录失败，请稍后重试');

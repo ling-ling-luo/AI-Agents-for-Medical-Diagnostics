@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { downloadBlob } from '../utils/download';
 import {
   Sparkles,
   ClipboardCopy,
@@ -138,12 +139,7 @@ export const VersionInfoExtractor = () => {
 
   const handleExport = () => {
     const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${result.version || 'version-info'}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, `${result.version || 'version-info'}.json`);
     setStatus('已导出 JSON 文件');
   };
 

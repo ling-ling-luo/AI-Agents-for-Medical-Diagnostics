@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, User, Stethoscope, Activity, Filter, RefreshCw, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import type { Case } from '../types';
 import { caseApi } from '../services/api';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { Loading } from './Loading';
 import { Dropdown } from './Dropdown';
 import { DateRangeFilter } from './DateRangeFilter';
@@ -85,8 +85,9 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
 
       // 删除成功后从列表中移除该病例
       setCases(prevCases => prevCases.filter(c => c.id !== caseId));
-    } catch (err: any) {
-      setError(err.response?.data?.detail || '删除失败，请重试');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || '删除失败，请重试');
       console.error('Error deleting case:', err);
     }
   };
@@ -95,63 +96,63 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
     navigate('/import');
   };
 
-  const filteredCases = cases.filter(case_ => {
-    const patientNameOk = !filters.patient_name.trim()
-      || (case_.patient_name || '').toLowerCase().includes(filters.patient_name.trim().toLowerCase());
-    const patientIdOk = !filters.patient_id.trim()
-      || (case_.patient_id || '').toLowerCase().includes(filters.patient_id.trim().toLowerCase());
-    const chiefComplaintOk = !filters.chief_complaint.trim()
-      || (case_.chief_complaint || '').toLowerCase().includes(filters.chief_complaint.trim().toLowerCase());
+  const filteredCases = useMemo(() => {
+    return cases.filter(case_ => {
+      const patientNameOk = !filters.patient_name.trim()
+        || (case_.patient_name || '').toLowerCase().includes(filters.patient_name.trim().toLowerCase());
+      const patientIdOk = !filters.patient_id.trim()
+        || (case_.patient_id || '').toLowerCase().includes(filters.patient_id.trim().toLowerCase());
+      const chiefComplaintOk = !filters.chief_complaint.trim()
+        || (case_.chief_complaint || '').toLowerCase().includes(filters.chief_complaint.trim().toLowerCase());
 
-    const genderOk = !filters.gender.trim() || (case_.gender || '') === filters.gender;
+      const genderOk = !filters.gender.trim() || (case_.gender || '') === filters.gender;
 
-    const diagnosedFlag = (case_.has_diagnosis ?? ((case_.diagnosis_count ?? 0) > 0));
-    const diagnosedOk = !filters.diagnosed.trim()
-      || (filters.diagnosed === 'yes' ? diagnosedFlag : !diagnosedFlag);
+      const diagnosedFlag = (case_.has_diagnosis ?? ((case_.diagnosis_count ?? 0) > 0));
+      const diagnosedOk = !filters.diagnosed.trim()
+        || (filters.diagnosed === 'yes' ? diagnosedFlag : !diagnosedFlag);
 
-    const createdAtMs = case_.created_at ? Date.parse(case_.created_at) : NaN;
-    const fromMs = filters.created_from ? Date.parse(`${filters.created_from}T00:00:00`) : NaN;
-    const toMs = filters.created_to ? Date.parse(`${filters.created_to}T23:59:59.999`) : NaN;
-    const createdFromOk = !filters.created_from.trim() || (!Number.isNaN(createdAtMs) && createdAtMs >= fromMs);
-    const createdToOk = !filters.created_to.trim() || (!Number.isNaN(createdAtMs) && createdAtMs <= toMs);
+      const createdAtMs = case_.created_at ? Date.parse(case_.created_at) : NaN;
+      const fromMs = filters.created_from ? Date.parse(`${filters.created_from}T00:00:00`) : NaN;
+      const toMs = filters.created_to ? Date.parse(`${filters.created_to}T23:59:59.999`) : NaN;
+      const createdFromOk = !filters.created_from.trim() || (!Number.isNaN(createdAtMs) && createdAtMs >= fromMs);
+      const createdToOk = !filters.created_to.trim() || (!Number.isNaN(createdAtMs) && createdAtMs <= toMs);
 
-    const creatorOk = !filters.creator_username.trim()
-      || (case_.creator?.username || '').toLowerCase().includes(filters.creator_username.trim().toLowerCase());
+      const creatorOk = !filters.creator_username.trim()
+        || (case_.creator?.username || '').toLowerCase().includes(filters.creator_username.trim().toLowerCase());
 
-    // AND 联合筛选：所有非空筛选项都需要同时满足
-    return patientNameOk && patientIdOk && chiefComplaintOk && genderOk && diagnosedOk && createdFromOk && createdToOk && creatorOk;
-  });
+      // AND 联合筛选：所有非空筛选项都需要同时满足
+      return patientNameOk && patientIdOk && chiefComplaintOk && genderOk && diagnosedOk && createdFromOk && createdToOk && creatorOk;
+    });
+  }, [cases, filters]);
 
   // 计算分页
-  const totalPages = Math.ceil(filteredCases.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentCases = filteredCases.slice(startIndex, endIndex);
+  const totalPages = useMemo(
+    () => Math.ceil(filteredCases.length / ITEMS_PER_PAGE),
+    [filteredCases.length]
+  );
+  const startIndex = useMemo(() => (currentPage - 1) * ITEMS_PER_PAGE, [currentPage]);
+  const currentCases = useMemo(
+    () => filteredCases.slice(startIndex, startIndex + ITEMS_PER_PAGE),
+    [filteredCases, startIndex]
+  );
 
   // 当筛选条件改变时，重置到第一页
   useEffect(() => {
     setCurrentPage(1);
-  }, [
-    filters.patient_name,
-    filters.patient_id,
-    filters.chief_complaint,
-    filters.gender,
-    filters.diagnosed,
-    filters.created_from,
-    filters.created_to,
-    filters.creator_username,
-  ]);
+  }, [filters]);
 
   const showCreatorFilter = hasRole('admin') || hasRole('doctor');
   const creatorFilterLabel = hasRole('admin') ? '创建者：全部' : '创建者（只读）';
 
-  const uniqueCreatorUsernames = Array.from(
-    new Set(
-      cases
-        .map(c => c.creator?.username)
-        .filter((v): v is string => !!v)
-    )
-  ).sort((a, b) => a.localeCompare(b));
+  const uniqueCreatorUsernames = useMemo(() => {
+    return Array.from(
+      new Set(
+        cases
+          .map(c => c.creator?.username)
+          .filter((v): v is string => !!v)
+      )
+    ).sort((a, b) => a.localeCompare(b));
+  }, [cases]);
 
   const clearFilters = () => {
     setFilters({
@@ -245,7 +246,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                   导入病例
                 </button>
                 <button
-                  onClick={() => navigate('/create')}
+                  onClick={() => navigate('/cases/new')}
                   className="px-5 py-2.5 bg-transparent hover:bg-gray-50 text-blue-600 hover:text-blue-700 text-sm font-semibold transition-all whitespace-nowrap"
                 >
                   新增病例

@@ -2,55 +2,30 @@
  * 认证上下文
  * 提供全局的用户认证状态管理
  */
-import React, { createContext, useState, useEffect, useContext, type ReactNode } from 'react';
+import React, { useState, useEffect, type ReactNode } from 'react';
 import { authApi, type User } from '../services/authApi';
-
-// 历史账号类型
-export interface SavedAccount {
-  username: string;
-  fullName?: string;
-  lastLogin: string;
-}
-
-interface AuthContextType {
-  user: User | null;
-  token: string | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  login: (username: string, password: string) => Promise<void>;
-  register: (username: string, email: string, password: string, fullName?: string) => Promise<void>;
-  logout: () => void;
-  hasPermission: (permission: string) => boolean;
-  hasRole: (role: string) => boolean;
-  refreshUser: () => Promise<void>;
-  savedAccounts: SavedAccount[];  // 历史账号列表
-  switchAccount: (username: string, password: string) => Promise<void>;  // 切换账号
-  removeAccount: (username: string) => void;  // 移除历史账号
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import { AuthContext, type SavedAccount } from './AuthContextObject';
 
 interface AuthProviderProps {
   children: ReactNode;
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const savedAccountsString = localStorage.getItem('saved_accounts');
+  const savedAccounts: SavedAccount[] = (() => {
+    if (!savedAccountsString) return [];
+    try {
+      return JSON.parse(savedAccountsString) as SavedAccount[];
+    } catch (e) {
+      console.error('Failed to parse saved accounts:', e);
+      return [];
+    }
+  })();
+
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('access_token'));
   const [isLoading, setIsLoading] = useState(true);
-  const [savedAccounts, setSavedAccounts] = useState<SavedAccount[]>([]);
-
-  // 加载历史账号列表
-  useEffect(() => {
-    const accounts = localStorage.getItem('saved_accounts');
-    if (accounts) {
-      try {
-        setSavedAccounts(JSON.parse(accounts));
-      } catch (e) {
-        console.error('Failed to parse saved accounts:', e);
-      }
-    }
-  }, []);
+  const [savedAccountsState, setSavedAccountsState] = useState<SavedAccount[]>(savedAccounts);
 
   // 保存账号到历史列表
   const saveAccount = (userData: User) => {
@@ -60,7 +35,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       lastLogin: new Date().toISOString()
     };
 
-    setSavedAccounts(prev => {
+    setSavedAccountsState(prev => {
       // 移除重复的账号
       const filtered = prev.filter(acc => acc.username !== userData.username);
       // 添加到最前面
@@ -72,7 +47,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // 移除历史账号
   const removeAccount = (username: string) => {
-    setSavedAccounts(prev => {
+    setSavedAccountsState(prev => {
       const updated = prev.filter(acc => acc.username !== username);
       localStorage.setItem('saved_accounts', JSON.stringify(updated));
       return updated;
@@ -183,7 +158,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         hasPermission,
         hasRole,
         refreshUser,
-        savedAccounts,
+        savedAccounts: savedAccountsState,
         switchAccount,
         removeAccount
       }}
@@ -196,10 +171,3 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 /**
  * 使用认证上下文的Hook
  */
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
-};

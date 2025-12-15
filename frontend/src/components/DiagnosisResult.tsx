@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { CheckCircle, FileText, Heart, Brain, Wind, Download, Eye, ChevronDown } from 'lucide-react';
 import Markdown from 'markdown-to-jsx';
 import { SmartDropdown, DropdownItem } from './SmartDropdown';
 import { SpecialistReportModal } from './SpecialistReportModal';
 import { AllReportsModal } from './AllReportsModal';
 import { caseApi } from '../services/api';
+import { downloadBlob } from '../utils/download';
 
 interface DiagnosisResultProps {
   result: string;
@@ -12,7 +13,7 @@ interface DiagnosisResultProps {
 }
 
 export const DiagnosisResult = ({ result, caseId }: DiagnosisResultProps) => {
-  const [selectedReport, setSelectedReport] = useState<{ title: string; content: string; icon: any } | null>(null);
+  const [selectedReport, setSelectedReport] = useState<{ title: string; content: string; icon: typeof Heart } | null>(null);
   const [showAllReports, setShowAllReports] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -30,15 +31,7 @@ export const DiagnosisResult = ({ result, caseId }: DiagnosisResultProps) => {
 
       const blob = await caseApi.exportDiagnosis(caseId, format);
 
-      // 创建下载链接
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `diagnosis-${caseId}.${format === 'markdown' ? 'md' : format}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, `diagnosis-${caseId}.${format === 'markdown' ? 'md' : format}`);
     } catch (error) {
       console.error('Export failed:', error);
       alert('导出失败，请稍后重试');
@@ -49,7 +42,7 @@ export const DiagnosisResult = ({ result, caseId }: DiagnosisResultProps) => {
 
   // 提取诊断摘要
   const extractSummary = (markdown: string) => {
-    const summaryMatch = markdown.match(/## Final Diagnosis \(Summary\)[\s\S]*?(?=##|\Z)/);
+    const summaryMatch = markdown.match(/## Final Diagnosis \(Summary\)[\s\S]*?(?=##|$)/);
     if (summaryMatch) {
       return summaryMatch[0];
     }
@@ -58,10 +51,10 @@ export const DiagnosisResult = ({ result, caseId }: DiagnosisResultProps) => {
 
   // 提取专科报告
   const extractSpecialistReports = (markdown: string) => {
-    const reports: { title: string; content: string; icon: any; bgColor: string; borderColor: string }[] = [];
+    const reports: { title: string; content: string; icon: typeof Heart; bgColor: string; borderColor: string }[] = [];
 
     // 心脏科
-    const cardioMatch = markdown.match(/### Cardiologist[\s\S]*?(?=###|\Z)/);
+    const cardioMatch = markdown.match(/### Cardiologist[\s\S]*?(?=###|$)/);
     if (cardioMatch) {
       reports.push({
         title: '心脏科',
@@ -73,7 +66,7 @@ export const DiagnosisResult = ({ result, caseId }: DiagnosisResultProps) => {
     }
 
     // 心理学
-    const psychMatch = markdown.match(/### Psychologist[\s\S]*?(?=###|\Z)/);
+    const psychMatch = markdown.match(/### Psychologist[\s\S]*?(?=###|$)/);
     if (psychMatch) {
       reports.push({
         title: '心理学',
@@ -99,8 +92,8 @@ export const DiagnosisResult = ({ result, caseId }: DiagnosisResultProps) => {
     return reports;
   };
 
-  const summary = extractSummary(result);
-  const specialistReports = extractSpecialistReports(result);
+  const summary = useMemo(() => extractSummary(result), [result]);
+  const specialistReports = useMemo(() => extractSpecialistReports(result), [result]);
 
   return (
     <>
@@ -119,7 +112,7 @@ export const DiagnosisResult = ({ result, caseId }: DiagnosisResultProps) => {
       <AllReportsModal
         isOpen={showAllReports}
         onClose={() => setShowAllReports(false)}
-        reports={extractSpecialistReports(result)}
+        reports={specialistReports}
       />
 
       <div className="space-y-6 fade-in">

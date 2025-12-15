@@ -3,7 +3,7 @@
  * 用于需要认证才能访问的页面
  */
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { Loader } from 'lucide-react';
 
 interface ProtectedRouteProps {

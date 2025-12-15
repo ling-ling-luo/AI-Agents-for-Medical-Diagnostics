@@ -1,13 +1,19 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { HomePage } from './components/HomePage';
+import { Layout } from './components/layout/Layout';
+import { Dashboard } from './pages/Dashboard';
+import { CaseList } from './components/CaseList';
 import { CaseDetail } from './components/CaseDetail';
+import { CreateCaseForm } from './components/CreateCaseForm';
+import { ImportWizard } from './components/ImportWizard';
 import { EditCaseWrapper } from './components/EditCaseWrapper';
 import { DiagnosisHistory } from './components/DiagnosisHistory';
 import { VersionInfoExtractor } from './components/VersionInfoExtractor';
 import { Login } from './components/Login';
 import { Register } from './components/Register';
+import { DataAnalysis } from './pages/DataAnalysis';
+import { Settings } from './pages/Settings';
 import './App.css';
 
 function App() {
@@ -21,46 +27,19 @@ function App() {
             <Route path="/register" element={<Register />} />
 
             {/* 受保护的路由 - 需要登录 */}
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <HomePage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/case/:caseId"
-              element={
-                <ProtectedRoute requiredPermission="case:read">
-                  <CaseDetail />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/edit/:caseId"
-              element={
-                <ProtectedRoute requiredPermission="case:update">
-                  <EditCaseWrapper />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/history/:caseId"
-              element={
-                <ProtectedRoute requiredPermission="diagnosis:read">
-                  <DiagnosisHistory />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/version-extractor"
-              element={
-                <ProtectedRoute>
-                  <VersionInfoExtractor />
-                </ProtectedRoute>
-              }
-            />
+            <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/cases" element={<CaseList />} />
+              <Route path="/cases/new" element={<CreateCaseForm />} />
+              <Route path="/import" element={<ImportWizard />} />
+              <Route path="/case/:caseId" element={<CaseDetail />} />
+              <Route path="/edit/:caseId" element={<EditCaseWrapper />} />
+              <Route path="/history/:caseId" element={<DiagnosisHistory />} />
+              <Route path="/analysis" element={<DataAnalysis />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/version-extractor" element={<VersionInfoExtractor />} />
+            </Route>
           </Routes>
         </div>
       </AuthProvider>
