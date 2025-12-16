@@ -8,7 +8,8 @@ import { CaseDetail } from './components/CaseDetail';
 import { CreateCaseForm } from './components/CreateCaseForm';
 import { ImportWizard } from './components/ImportWizard';
 import { EditCaseWrapper } from './components/EditCaseWrapper';
-import { DiagnosisHistory } from './components/DiagnosisHistory';
+import AllDiagnosisHistory from './pages/AllDiagnosisHistory';
+import DiagnosisDetailPage from './pages/DiagnosisDetailPage';
 import { VersionInfoExtractor } from './components/VersionInfoExtractor';
 import { Login } from './components/Login';
 import { Register } from './components/Register';
@@ -35,7 +36,8 @@ function App() {
               <Route path="/import" element={<ImportWizard />} />
               <Route path="/case/:caseId" element={<CaseDetail />} />
               <Route path="/edit/:caseId" element={<EditCaseWrapper />} />
-              <Route path="/history/:caseId" element={<DiagnosisHistory />} />
+              <Route path="/diagnoses" element={<AllDiagnosisHistory />} />
+              <Route path="/diagnoses/:caseId/:diagnosisId" element={<DiagnosisDetailPage />} />
               <Route path="/analysis" element={<DataAnalysis />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/version-extractor" element={<VersionInfoExtractor />} />

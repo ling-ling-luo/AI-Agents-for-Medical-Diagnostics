@@ -74,8 +74,9 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
     navigate(`/edit/${caseId}`);
   };
 
-  const handleViewHistory = (caseId: number) => {
-    navigate(`/history/${caseId}`);
+  const handleViewHistory = (patientId: string) => {
+    // 跳转到全局诊断历史页面，并自动筛选该病例
+    navigate(`/diagnoses?patient_id=${encodeURIComponent(patientId)}`);
   };
 
   const handleDeleteCase = async (caseId: number) => {
@@ -520,7 +521,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                               label: '查看历史',
                               icon: 'clock',
                               color: 'gray',
-                              onClick: () => handleViewHistory(case_.id),
+                              onClick: () => handleViewHistory(case_.patient_id || ''),
                             },
                             {
                               label: '删除病历',

@@ -96,3 +96,36 @@ export interface DiagnosisDetail {
   execution_time_ms: number;
   diagnosis_markdown: string;
 }
+
+export interface AllDiagnosisItem {
+  id: number;
+  case_id: number;
+  patient_id: string;
+  patient_name: string | null;
+  age: number | null;
+  gender: string | null;
+  model_name: string;
+  run_timestamp: string;
+  execution_time_ms: number | null;
+  diagnosis_preview: string;
+  creator_username: string | null;
+  creator_full_name: string | null;
+}
+
+export interface AllDiagnosisResponse {
+  total: number;
+  page: number;
+  page_size: number;
+  items: AllDiagnosisItem[];
+}
+
+export interface DiagnosisFilters {
+  patient_id?: string;
+  patient_name?: string;
+  model?: string;
+  created_from?: string;
+  created_to?: string;
+  creator_username?: string;
+  sort?: string;
+  order?: 'asc' | 'desc';
+}

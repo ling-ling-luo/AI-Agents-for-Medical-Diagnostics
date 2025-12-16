@@ -16,7 +16,7 @@ export const Sidebar = () => {
     { path: '/cases', label: '病例列表', icon: FileText },
     { path: '/import', label: '导入病例', icon: Upload },
     { path: '/cases/new', label: '新增病例', icon: Plus },
-    { path: '/history', label: '诊断历史', icon: History },
+    { path: '/diagnoses', label: '诊断历史', icon: History },
     { path: '/analysis', label: '数据分析', icon: BarChart3 },
     { path: '/settings', label: '系统设置', icon: Settings },
   ];

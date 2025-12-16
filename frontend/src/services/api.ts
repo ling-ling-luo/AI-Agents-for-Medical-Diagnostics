@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Case, CaseDetail, DiagnosisResponse, CreateCaseRequest, CreateCaseResponse, UpdateCaseRequest, DiagnosisHistoryResponse, DiagnosisDetail } from '../types';
+import type { Case, CaseDetail, DiagnosisResponse, CreateCaseRequest, CreateCaseResponse, UpdateCaseRequest, DiagnosisHistoryResponse, DiagnosisDetail, AllDiagnosisResponse, DiagnosisFilters } from '../types';
 
 // 配置 API 基础 URL - 开发环境指向 FastAPI 后端
 const API_BASE_URL = 'http://localhost:8000';
@@ -179,6 +179,18 @@ export const caseApi = {
         },
       }
     );
+    return response.data;
+  },
+
+  // 获取全局诊断历史（跨病例）
+  getAllDiagnoses: async (page: number = 1, pageSize: number = 20, filters?: DiagnosisFilters): Promise<AllDiagnosisResponse> => {
+    const params: Record<string, any> = {
+      page,
+      page_size: pageSize,
+      ...filters
+    };
+
+    const response = await api.get<AllDiagnosisResponse>('/api/diagnoses/all', { params });
     return response.data;
   },
 };

@@ -484,6 +484,164 @@ async def get_diagnosis_detail(
     }
 
 
+class AllDiagnosisItem(BaseModel):
+    """全局诊断历史列表项"""
+    id: int
+    case_id: int
+    patient_id: str
+    patient_name: Optional[str] = None
+    age: Optional[int] = None
+    gender: Optional[str] = None
+    model_name: str
+    run_timestamp: datetime
+    execution_time_ms: Optional[int] = None
+    diagnosis_preview: str
+    creator_username: Optional[str] = None
+    creator_full_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class AllDiagnosisResponse(BaseModel):
+    """全局诊断历史响应"""
+    total: int
+    page: int
+    page_size: int
+    items: List[AllDiagnosisItem]
+
+
+@app.get("/api/diagnoses/all", response_model=AllDiagnosisResponse)
+async def get_all_diagnoses(
+    page: int = 1,
+    page_size: int = 20,
+    patient_id: Optional[str] = None,
+    patient_name: Optional[str] = None,
+    model: Optional[str] = None,
+    created_from: Optional[str] = None,
+    created_to: Optional[str] = None,
+    creator_username: Optional[str] = None,
+    sort: str = "run_timestamp",
+    order: str = "desc",
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_diagnosis_read)
+):
+    """
+    获取所有诊断历史（跨病例的全局视图，需要 diagnosis:read 权限）
+    - 管理员和医生：可以查看所有诊断历史
+    - 普通用户：只能查看自己创建的病例的诊断历史
+
+    参数:
+    - page: 页码（从1开始）
+    - page_size: 每页数量（默认20）
+    - patient_id: 按病例号筛选
+    - patient_name: 按患者姓名筛选（模糊匹配）
+    - model: 按AI模型筛选
+    - created_from: 诊断时间起始（ISO格式）
+    - created_to: 诊断时间结束（ISO格式）
+    - creator_username: 按创建者用户名筛选
+    - sort: 排序字段（run_timestamp, model_name, patient_id）
+    - order: 排序方向（asc, desc）
+    """
+    # 检查用户权限级别
+    is_admin_or_doctor = False
+    if current_user.is_superuser:
+        is_admin_or_doctor = True
+    else:
+        user_role_names = [role.name for role in current_user.roles]
+        is_admin_or_doctor = 'admin' in user_role_names or 'doctor' in user_role_names
+
+    # 构建基础查询 - 使用 joinedload 优化关联查询
+    query = db.query(DiagnosisHistory).options(
+        joinedload(DiagnosisHistory.case).joinedload(MedicalCase.creator)
+    )
+
+    # 如果不是管理员或医生，只能查看自己创建的病例的诊断
+    if not is_admin_or_doctor:
+        query = query.join(MedicalCase).filter(MedicalCase.created_by == current_user.id)
+    else:
+        # 确保已经 join MedicalCase（后续筛选需要）
+        query = query.join(MedicalCase)
+
+    # 应用筛选条件
+    if patient_id:
+        query = query.filter(MedicalCase.patient_id.like(f"%{patient_id}%"))
+
+    if patient_name:
+        query = query.filter(MedicalCase.patient_name.like(f"%{patient_name}%"))
+
+    if model:
+        query = query.filter(DiagnosisHistory.model_name == model)
+
+    if created_from:
+        try:
+            from_date = datetime.fromisoformat(created_from.replace('Z', '+00:00'))
+            query = query.filter(DiagnosisHistory.run_timestamp >= from_date)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="created_from 日期格式错误")
+
+    if created_to:
+        try:
+            to_date = datetime.fromisoformat(created_to.replace('Z', '+00:00'))
+            query = query.filter(DiagnosisHistory.run_timestamp <= to_date)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="created_to 日期格式错误")
+
+    if creator_username:
+        query = query.join(User, MedicalCase.created_by == User.id).filter(
+            User.username.like(f"%{creator_username}%")
+        )
+
+    # 获取总数
+    total = query.count()
+
+    # 应用排序
+    valid_sort_fields = {
+        "run_timestamp": DiagnosisHistory.run_timestamp,
+        "model_name": DiagnosisHistory.model_name,
+        "patient_id": MedicalCase.patient_id,
+    }
+
+    sort_field = valid_sort_fields.get(sort, DiagnosisHistory.run_timestamp)
+    if order.lower() == "asc":
+        query = query.order_by(sort_field.asc())
+    else:
+        query = query.order_by(sort_field.desc())
+
+    # 应用分页
+    offset = (page - 1) * page_size
+    diagnoses = query.offset(offset).limit(page_size).all()
+
+    # 构建响应数据
+    items = []
+    for d in diagnoses:
+        # 生成诊断预览（前200字符）
+        diagnosis_preview = d.diagnosis_markdown[:200] + "..." if len(d.diagnosis_markdown) > 200 else d.diagnosis_markdown
+
+        item = AllDiagnosisItem(
+            id=d.id,
+            case_id=d.case_id,
+            patient_id=d.case.patient_id,
+            patient_name=d.case.patient_name,
+            age=d.case.age,
+            gender=d.case.gender,
+            model_name=d.model_name,
+            run_timestamp=d.run_timestamp,
+            execution_time_ms=d.execution_time_ms,
+            diagnosis_preview=diagnosis_preview,
+            creator_username=d.case.creator.username if d.case.creator else None,
+            creator_full_name=d.case.creator.full_name if d.case.creator else None
+        )
+        items.append(item)
+
+    return AllDiagnosisResponse(
+        total=total,
+        page=page,
+        page_size=page_size,
+        items=items
+    )
+
+
 class ImportCasesResponse(BaseModel):
     """批量导入病例响应"""
     success_count: int
