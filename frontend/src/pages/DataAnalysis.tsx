@@ -2,7 +2,7 @@ import { BarChart3 } from 'lucide-react';
 
 export const DataAnalysis = () => {
   return (
-    <div className="flex items-center justify-center h-full">
+    <div className="flex-1 bg-gray-50 flex items-center justify-center p-8">
       <div className="text-center max-w-md">
         <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
           <BarChart3 className="w-8 h-8 text-blue-600" />

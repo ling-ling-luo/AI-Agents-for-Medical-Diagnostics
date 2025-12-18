@@ -10,6 +10,7 @@ import { ImportWizard } from './components/ImportWizard';
 import { EditCaseWrapper } from './components/EditCaseWrapper';
 import AllDiagnosisHistory from './pages/AllDiagnosisHistory';
 import DiagnosisDetailPage from './pages/DiagnosisDetailPage';
+import StyleGuideExample from './pages/StyleGuideExample';
 import { VersionInfoExtractor } from './components/VersionInfoExtractor';
 import { Login } from './components/Login';
 import { Register } from './components/Register';
@@ -40,6 +41,7 @@ function App() {
               <Route path="/diagnoses/:caseId/:diagnosisId" element={<DiagnosisDetailPage />} />
               <Route path="/analysis" element={<DataAnalysis />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/style-guide" element={<StyleGuideExample />} />
               <Route path="/version-extractor" element={<VersionInfoExtractor />} />
             </Route>
           </Routes>

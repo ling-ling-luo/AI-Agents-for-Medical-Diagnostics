@@ -88,6 +88,8 @@ input {
   font-family: inherit;
 }
 
+/* 移除全局 main 内边距，让页面组件自己控制 */
+/*
 main {
   padding: var(--spacing-2xl) var(--spacing-xl);
 }
@@ -97,6 +99,7 @@ main {
     padding: var(--spacing-xl) var(--spacing-md);
   }
 }
+*/
 
 .gradient-bg {
   background-image: var(--primary-gradient);
