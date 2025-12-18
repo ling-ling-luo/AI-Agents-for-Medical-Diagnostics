@@ -483,8 +483,8 @@ Respiratory Exam: Prolonged expiration, wheezing on auscultation.`;
   };
 
   return (
-    <div className={embedded ? '' : 'min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-white'}>
-      <main className={embedded ? 'py-6' : 'container-custom py-10'}>
+    <div className={embedded ? '' : 'flex-1 bg-gray-50'}>
+      <main className={embedded ? 'py-6' : 'max-w-7xl mx-auto px-8 py-8'}>
         <div className={`${embedded ? 'bg-white border' : 'bg-white'} border-gray-200 rounded-lg p-8`}>
           {renderStepIndicator()}
           {renderStepContent()}

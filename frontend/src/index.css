@@ -29,17 +29,37 @@
   --spacing-2xl: 48px;
 }
 
-/* 全局样式 - 强制铺满全屏（最高优先级） */
-* {
-  box-sizing: border-box !important;
+/* 全局样式 - 优化后的重置规则 */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* 仅重置特定元素的 margin 和 padding，不影响所有元素 */
+body,
+h1, h2, h3, h4, h5, h6,
+p,
+ul, ol,
+figure,
+blockquote,
+dl, dd {
   margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
   padding: 0;
+  margin: 0;
 }
 
 html {
   width: 100vw !important;
   height: 100% !important;
   overflow-x: hidden !important; /* 防止水平滚动条 */
+  font-size: 90%; /* 全局缩放到90%，让页面在100%浏览器缩放下完整显示 */
 }
 
 body {

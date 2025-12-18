@@ -78,7 +78,7 @@ const DiagnosisDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-white flex items-center justify-center">
+      <div className="flex-1 bg-gray-50 flex items-center justify-center">
         <Loading size="lg" text="正在加载诊断详情..." />
       </div>
     );
@@ -86,7 +86,7 @@ const DiagnosisDetailPage: React.FC = () => {
 
   if (error || !diagnosis) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-white flex items-center justify-center p-4">
+      <div className="flex-1 bg-gray-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white/80 backdrop-blur-md rounded-3xl shadow-2xl p-12 text-center border-2 border-red-200">
           <div className="w-20 h-20 bg-gradient-to-br from-red-100 to-pink-100 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
             <AlertCircle className="w-10 h-10 text-red-600" />
@@ -105,7 +105,7 @@ const DiagnosisDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-white">
+    <div className="flex-1 bg-gray-50">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-30 shadow-sm">
         <div className="container-custom py-5">

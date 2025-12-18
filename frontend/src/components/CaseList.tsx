@@ -192,7 +192,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
 
   if (loading) {
     return (
-      <div className={`${embedded ? 'py-8' : 'min-h-screen'} bg-${embedded ? 'transparent' : 'gray-50'} flex items-center justify-center`}>
+      <div className={`${embedded ? 'py-8' : 'flex-1 bg-gray-50'} flex items-center justify-center`}>
         <Loading size="lg" text="正在加载病例数据..." />
       </div>
     );
@@ -200,7 +200,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
 
   if (error) {
     return (
-      <div className={`${embedded ? 'py-8' : 'min-h-screen bg-gray-50'} flex items-center justify-center p-4`}>
+      <div className={`${embedded ? 'py-8' : 'flex-1 bg-gray-50'} flex items-center justify-center p-4`}>
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center border border-red-200">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Activity className="w-8 h-8 text-red-600" />
@@ -220,7 +220,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
   }
 
   return (
-    <div className={embedded ? '' : 'min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-white'}>
+    <div className={embedded ? '' : 'flex-1 bg-gray-50'}>
       {/* 顶部导航栏 - 非嵌入模式才显示 */}
       {!embedded && (
         <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">

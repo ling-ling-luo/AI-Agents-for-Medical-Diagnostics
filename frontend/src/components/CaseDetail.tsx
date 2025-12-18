@@ -279,7 +279,7 @@ export const CaseDetail = () => {
   // 加载中状态
   if (loadingCase) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-cyan-50/20 to-white flex items-center justify-center">
+      <div className="flex-1 bg-gray-50 flex items-center justify-center">
         <Loading size="lg" text="正在加载病例详情..." />
       </div>
     );
@@ -288,7 +288,7 @@ export const CaseDetail = () => {
   // 错误状态
   if (error && !caseDetail) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-cyan-50/20 to-white flex items-center justify-center p-4">
+      <div className="flex-1 bg-gray-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white/70 backdrop-blur-sm rounded-2xl border border-red-200/60 p-8 text-center">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-800 mb-2">加载失败</h3>
@@ -306,7 +306,7 @@ export const CaseDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-white">
+    <div className="flex-1 bg-gray-50">
       {/* 智能体信息模态框 */}
       {selectedAgent && (
         <AgentInfoModal

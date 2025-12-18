@@ -129,7 +129,7 @@ export const CreateCaseForm = ({ embedded = false, editMode = false, caseId }: C
   // 加载数据中
   if (loadingData) {
     return (
-      <div className={`${embedded ? 'py-8' : 'min-h-screen'} ${embedded ? '' : 'bg-gradient-to-br from-blue-50 via-cyan-50 to-white'} flex items-center justify-center p-4`}>
+      <div className={`${embedded ? 'py-8' : 'flex-1 bg-gray-50'} flex items-center justify-center p-4`}>
         <div className="text-center">
           <Loader className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
           <p className="text-gray-600">正在加载病例数据...</p>
@@ -140,7 +140,7 @@ export const CreateCaseForm = ({ embedded = false, editMode = false, caseId }: C
 
   if (success) {
     return (
-      <div className={`${embedded ? 'py-8' : 'min-h-screen'} ${embedded ? '' : 'bg-gradient-to-br from-blue-50 via-cyan-50 to-white'} flex items-center justify-center p-4`}>
+      <div className={`${embedded ? 'py-8' : 'flex-1 bg-gray-50'} flex items-center justify-center p-4`}>
         <div className="bg-white/80 backdrop-blur-md border-2 border-green-200 rounded-3xl p-12 text-center max-w-md shadow-2xl fade-in">
           <div className="w-24 h-24 bg-gradient-to-br from-green-100 to-emerald-100 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
             <CheckCircle className="w-12 h-12 text-green-600" />
@@ -160,7 +160,7 @@ export const CreateCaseForm = ({ embedded = false, editMode = false, caseId }: C
   }
 
   return (
-    <div className={embedded ? '' : 'min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-white'}>
+    <div className={embedded ? '' : 'flex-1 bg-gray-50'}>
       <main className={embedded ? 'py-6' : 'container-custom py-10'}>
         <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-8">
           {/* 基本信息 */}
