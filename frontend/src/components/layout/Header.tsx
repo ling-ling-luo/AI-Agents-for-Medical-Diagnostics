@@ -18,18 +18,24 @@ export const Header = () => {
 
   // Generate breadcrumbs based on current path
   const generateBreadcrumbs = () => {
-    const pathnames = location.pathname.split('/').filter(x => x);
+    const currentPath = location.pathname;
     const breadcrumbs = [];
 
     // Always start with home
     breadcrumbs.push({ path: '/', label: '首页' });
 
-    // Add intermediate paths
-    let currentPath = '';
-    for (let i = 0; i < pathnames.length; i++) {
-      currentPath += `/${pathnames[i]}`;
-      const label = breadcrumbMap[currentPath] || pathnames[i];
-      breadcrumbs.push({ path: currentPath, label });
+    // If current path has a mapping, use it directly (avoid intermediate paths)
+    if (currentPath !== '/' && breadcrumbMap[currentPath]) {
+      breadcrumbs.push({ path: currentPath, label: breadcrumbMap[currentPath] });
+    } else {
+      // For unmapped paths (like /case/123), build breadcrumbs normally
+      const pathnames = currentPath.split('/').filter(x => x);
+      let accumulatedPath = '';
+      for (let i = 0; i < pathnames.length; i++) {
+        accumulatedPath += `/${pathnames[i]}`;
+        const label = breadcrumbMap[accumulatedPath] || pathnames[i];
+        breadcrumbs.push({ path: accumulatedPath, label });
+      }
     }
 
     return breadcrumbs;

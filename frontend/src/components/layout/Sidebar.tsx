@@ -12,25 +12,25 @@ import {
 
 export const Sidebar = () => {
   const navItems = [
-    { path: '/dashboard', label: '首页', icon: Home },
-    { path: '/cases', label: '病例列表', icon: FileText },
-    { path: '/import', label: '导入病例', icon: Upload },
-    { path: '/cases/new', label: '新增病例', icon: Plus },
-    { path: '/diagnoses', label: '诊断历史', icon: History },
-    { path: '/analysis', label: '数据分析', icon: BarChart3 },
-    { path: '/settings', label: '系统设置', icon: Settings },
+    { path: '/dashboard', label: '首页', icon: Home, end: true },
+    { path: '/cases', label: '病例列表', icon: FileText, end: true },
+    { path: '/import', label: '导入病例', icon: Upload, end: true },
+    { path: '/cases/new', label: '新增病例', icon: Plus, end: true },
+    { path: '/diagnoses', label: '诊断历史', icon: History, end: true },
+    { path: '/analysis', label: '数据分析', icon: BarChart3, end: true },
+    { path: '/settings', label: '系统设置', icon: Settings, end: true },
   ];
 
   return (
     <div className="w-80 bg-gradient-to-b from-blue-800 to-blue-900 flex flex-col h-full">
       {/* Logo Section */}
       <div className="p-8">
-        <Link to="/dashboard" className="flex items-center gap-4 no-underline !text-white !opacity-100">
+        <Link to="/dashboard" style={{ textDecoration: 'none' }} className="flex items-center gap-4">
           <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
             <Stethoscope className="w-7 h-7 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-semibold text-white !opacity-100">AI 诊断</h1>
+            <h1 className="text-2xl font-semibold text-white">AI 诊断</h1>
           </div>
         </Link>
       </div>
@@ -44,11 +44,13 @@ export const Sidebar = () => {
               <li key={item.path}>
                 <NavLink
                   to={item.path}
+                  end={item.end}
+                  style={{ textDecoration: 'none' }}
                   className={({ isActive }) =>
-                    `flex items-center gap-4 w-full px-4 py-5 text-lg font-medium transition-colors no-underline !text-white !opacity-100 rounded-xl mx-2 ${
+                    `flex items-center gap-4 w-full px-4 py-5 text-lg font-medium transition-colors rounded-xl ${
                       isActive
-                        ? 'bg-white/20'
-                        : 'hover:bg-white/10'
+                        ? 'bg-white/20 text-white'
+                        : 'text-white hover:bg-white/10'
                     }`
                   }
                 >
