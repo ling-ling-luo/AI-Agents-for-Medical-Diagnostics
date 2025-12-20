@@ -241,74 +241,119 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                 </button>
               )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
-              <input
-                type="text"
-                placeholder="患者姓名"
-                value={filters.patient_name}
-                onChange={(e) => updateFilter('patient_name', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-400 bg-white"
-              />
-              <input
-                type="text"
-                placeholder="病历号"
-                value={filters.patient_id}
-                onChange={(e) => updateFilter('patient_id', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-400 bg-white"
-              />
-              <input
-                type="text"
-                placeholder="主诉"
-                value={filters.chief_complaint}
-                onChange={(e) => updateFilter('chief_complaint', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-400 bg-white"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* 患者姓名 */}
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-700 whitespace-nowrap font-medium">
+                  患者姓名：
+                </label>
+                <input
+                  type="text"
+                  placeholder="输入姓名"
+                  value={filters.patient_name}
+                  onChange={(e) => updateFilter('patient_name', e.target.value)}
+                  className="w-32 px-3 py-2 text-sm border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
+                />
+              </div>
 
-              <select
-                value={filters.gender}
-                onChange={(e) => updateFilter('gender', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-400 bg-white"
-              >
-                <option value="">性别：全部</option>
-                <option value="male">男</option>
-                <option value="female">女</option>
-              </select>
+              {/* 病历号 */}
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-700 whitespace-nowrap font-medium">
+                  病历号：
+                </label>
+                <input
+                  type="text"
+                  placeholder="输入病历号"
+                  value={filters.patient_id}
+                  onChange={(e) => updateFilter('patient_id', e.target.value)}
+                  className="w-32 px-3 py-2 text-sm border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
+                />
+              </div>
 
-              <select
-                value={filters.diagnosed}
-                onChange={(e) => updateFilter('diagnosed', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-400 bg-white"
-              >
-                <option value="">诊断状态：全部</option>
-                <option value="yes">已诊断</option>
-                <option value="no">未诊断</option>
-              </select>
+              {/* 主诉 */}
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-700 whitespace-nowrap font-medium">
+                  主诉：
+                </label>
+                <input
+                  type="text"
+                  placeholder="输入主诉"
+                  value={filters.chief_complaint}
+                  onChange={(e) => updateFilter('chief_complaint', e.target.value)}
+                  className="w-32 px-3 py-2 text-sm border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
+                />
+              </div>
 
-              {showCreatorFilter && (
+              {/* 性别 */}
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-700 whitespace-nowrap font-medium">
+                  性别：
+                </label>
                 <select
-                  value={filters.creator_username}
-                  onChange={(e) => updateFilter('creator_username', e.target.value)}
-                  disabled={!hasRole('admin')}
-                  className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-400 bg-white disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                  value={filters.gender}
+                  onChange={(e) => updateFilter('gender', e.target.value)}
+                  className="w-32 px-3 py-2 text-sm border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
                 >
-                  <option value="">{creatorFilterLabel}</option>
-                  {uniqueCreatorUsernames.map((u) => (
-                    <option key={u} value={u}>{u}</option>
-                  ))}
+                  <option value="">全部</option>
+                  <option value="male">男</option>
+                  <option value="female">女</option>
                 </select>
+              </div>
+
+              {/* 诊断状态 */}
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-700 whitespace-nowrap font-medium">
+                  诊断状态：
+                </label>
+                <select
+                  value={filters.diagnosed}
+                  onChange={(e) => updateFilter('diagnosed', e.target.value)}
+                  className="w-32 px-3 py-2 text-sm border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
+                >
+                  <option value="">全部</option>
+                  <option value="yes">已诊断</option>
+                  <option value="no">未诊断</option>
+                </select>
+              </div>
+
+              {/* 创建者 */}
+              {showCreatorFilter && (
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-gray-700 whitespace-nowrap font-medium">
+                    创建者：
+                  </label>
+                  <select
+                    value={filters.creator_username}
+                    onChange={(e) => updateFilter('creator_username', e.target.value)}
+                    disabled={!hasRole('admin')}
+                    className="w-32 px-3 py-2 text-sm border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed disabled:hover:border-gray-300"
+                  >
+                    <option value="">{creatorFilterLabel}</option>
+                    {uniqueCreatorUsernames.map((u) => (
+                      <option key={u} value={u}>{u}</option>
+                    ))}
+                  </select>
+                </div>
               )}
 
               {/* 日期范围筛选器 */}
-              <DateRangeFilter
-                value={{ from: filters.created_from, to: filters.created_to }}
-                onChange={(range) => {
-                  setFilters(prev => ({
-                    ...prev,
-                    created_from: range.from,
-                    created_to: range.to,
-                  }));
-                }}
-              />
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-700 whitespace-nowrap font-medium">
+                  创建日期：
+                </label>
+                <div className="w-52">
+                  <DateRangeFilter
+                    value={{ from: filters.created_from, to: filters.created_to }}
+                    onChange={(range) => {
+                      setFilters(prev => ({
+                        ...prev,
+                        created_from: range.from,
+                        created_to: range.to,
+                      }));
+                    }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -339,74 +384,119 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                     </button>
                   )}
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                  <input
-                    type="text"
-                    placeholder="患者姓名"
-                    value={filters.patient_name}
-                    onChange={(e) => updateFilter('patient_name', e.target.value)}
-                    className="w-full px-3 py-1.5 border border-gray-200 text-sm focus:outline-none focus:border-blue-400 bg-white"
-                  />
-                  <input
-                    type="text"
-                    placeholder="病历号"
-                    value={filters.patient_id}
-                    onChange={(e) => updateFilter('patient_id', e.target.value)}
-                    className="w-full px-3 py-1.5 border border-gray-200 text-sm focus:outline-none focus:border-blue-400 bg-white"
-                  />
-                  <input
-                    type="text"
-                    placeholder="主诉"
-                    value={filters.chief_complaint}
-                    onChange={(e) => updateFilter('chief_complaint', e.target.value)}
-                    className="w-full px-3 py-1.5 border border-gray-200 text-sm focus:outline-none focus:border-blue-400 bg-white"
-                  />
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3">
+                  {/* 患者姓名 */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-gray-700 whitespace-nowrap font-medium">
+                      患者姓名：
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="输入姓名"
+                      value={filters.patient_name}
+                      onChange={(e) => updateFilter('patient_name', e.target.value)}
+                      className="w-28 px-2.5 py-1.5 text-xs border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
+                    />
+                  </div>
 
-                  <select
-                    value={filters.gender}
-                    onChange={(e) => updateFilter('gender', e.target.value)}
-                    className="w-full px-3 py-1.5 border border-gray-200 text-sm focus:outline-none focus:border-blue-400 bg-white"
-                  >
-                    <option value="">性别：全部</option>
-                    <option value="male">男</option>
-                    <option value="female">女</option>
-                  </select>
+                  {/* 病历号 */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-gray-700 whitespace-nowrap font-medium">
+                      病历号：
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="输入病历号"
+                      value={filters.patient_id}
+                      onChange={(e) => updateFilter('patient_id', e.target.value)}
+                      className="w-28 px-2.5 py-1.5 text-xs border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
+                    />
+                  </div>
 
-                  <select
-                    value={filters.diagnosed}
-                    onChange={(e) => updateFilter('diagnosed', e.target.value)}
-                    className="w-full px-3 py-1.5 border border-gray-200 text-sm focus:outline-none focus:border-blue-400 bg-white"
-                  >
-                    <option value="">诊断状态：全部</option>
-                    <option value="yes">已诊断</option>
-                    <option value="no">未诊断</option>
-                  </select>
+                  {/* 主诉 */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-gray-700 whitespace-nowrap font-medium">
+                      主诉：
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="输入主诉"
+                      value={filters.chief_complaint}
+                      onChange={(e) => updateFilter('chief_complaint', e.target.value)}
+                      className="w-28 px-2.5 py-1.5 text-xs border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
+                    />
+                  </div>
 
-                  {showCreatorFilter && (
+                  {/* 性别 */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-gray-700 whitespace-nowrap font-medium">
+                      性别：
+                    </label>
                     <select
-                      value={filters.creator_username}
-                      onChange={(e) => updateFilter('creator_username', e.target.value)}
-                      disabled={!hasRole('admin')}
-                      className="w-full px-3 py-1.5 border border-gray-200 text-sm focus:outline-none focus:border-blue-400 bg-white disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                      value={filters.gender}
+                      onChange={(e) => updateFilter('gender', e.target.value)}
+                      className="w-28 px-2.5 py-1.5 text-xs border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
                     >
-                      <option value="">{creatorFilterLabel}</option>
-                      {uniqueCreatorUsernames.map((u) => (
-                        <option key={u} value={u}>{u}</option>
-                      ))}
+                      <option value="">全部</option>
+                      <option value="male">男</option>
+                      <option value="female">女</option>
                     </select>
+                  </div>
+
+                  {/* 诊断状态 */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-gray-700 whitespace-nowrap font-medium">
+                      诊断状态：
+                    </label>
+                    <select
+                      value={filters.diagnosed}
+                      onChange={(e) => updateFilter('diagnosed', e.target.value)}
+                      className="w-28 px-2.5 py-1.5 text-xs border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
+                    >
+                      <option value="">全部</option>
+                      <option value="yes">已诊断</option>
+                      <option value="no">未诊断</option>
+                    </select>
+                  </div>
+
+                  {/* 创建者 */}
+                  {showCreatorFilter && (
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs text-gray-700 whitespace-nowrap font-medium">
+                        创建者：
+                      </label>
+                      <select
+                        value={filters.creator_username}
+                        onChange={(e) => updateFilter('creator_username', e.target.value)}
+                        disabled={!hasRole('admin')}
+                        className="w-28 px-2.5 py-1.5 text-xs border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed disabled:hover:border-gray-300"
+                      >
+                        <option value="">{creatorFilterLabel}</option>
+                        {uniqueCreatorUsernames.map((u) => (
+                          <option key={u} value={u}>{u}</option>
+                        ))}
+                      </select>
+                    </div>
                   )}
 
-                  {/* 日期范围筛选器 - 占两列 */}
-                  <DateRangeFilter
-                    value={{ from: filters.created_from, to: filters.created_to }}
-                    onChange={(range) => {
-                      setFilters(prev => ({
-                        ...prev,
-                        created_from: range.from,
-                        created_to: range.to,
-                      }));
-                    }}
-                  />
+                  {/* 日期范围筛选器 */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-gray-700 whitespace-nowrap font-medium">
+                      创建日期：
+                    </label>
+                    <div className="w-44">
+                      <DateRangeFilter
+                        value={{ from: filters.created_from, to: filters.created_to }}
+                        onChange={(range) => {
+                          setFilters(prev => ({
+                            ...prev,
+                            created_from: range.from,
+                            created_to: range.to,
+                          }));
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
