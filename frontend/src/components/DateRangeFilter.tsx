@@ -279,7 +279,7 @@ export const DateRangeFilter = ({ value, onChange }: DateRangeFilterProps) => {
   return (
     <div className="relative w-full" ref={dropdownRef}>
       {/* 单一输入框，内含两个日期区域 */}
-      <div className="relative w-full border border-gray-300 rounded hover:border-blue-500 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all bg-white flex items-center">
+      <div className="relative w-full border border-gray-300 rounded hover:border-blue-500 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all bg-white flex items-center">
         {/* 开始日期 */}
         <button
           type="button"

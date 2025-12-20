@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { HelpCircle } from 'lucide-react';
 import type { DiagnosisFilters } from '../types';
 import { caseApi } from '../services/api';
 import { DateRangeFilter } from './DateRangeFilter';
@@ -16,6 +17,7 @@ export const DiagnosisFiltersComponent: React.FC<DiagnosisFiltersProps> = ({
 }) => {
   const [localFilters, setLocalFilters] = useState<DiagnosisFilters>(filters);
   const [availableModels, setAvailableModels] = useState<Array<{ id: string; name: string; provider: string }>>([]);
+  const [showTooltip, setShowTooltip] = useState(false);
 
   useEffect(() => {
     caseApi.getAvailableModels().then(data => {
@@ -23,15 +25,16 @@ export const DiagnosisFiltersComponent: React.FC<DiagnosisFiltersProps> = ({
     });
   }, []);
 
+  // 自动触发筛选
+  useEffect(() => {
+    onFiltersChange(localFilters);
+  }, [localFilters]);
+
   const handleInputChange = (field: keyof DiagnosisFilters, value: string) => {
     setLocalFilters(prev => ({
       ...prev,
       [field]: value || undefined
     }));
-  };
-
-  const handleApply = () => {
-    onFiltersChange(localFilters);
   };
 
   const handleReset = () => {
@@ -50,7 +53,7 @@ export const DiagnosisFiltersComponent: React.FC<DiagnosisFiltersProps> = ({
             type="text"
             value={localFilters.patient_id || ''}
             onChange={(e) => handleInputChange('patient_id', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 hover:border-blue-500 transition-colors"
             placeholder="输入病例号"
           />
         </div>
@@ -63,7 +66,7 @@ export const DiagnosisFiltersComponent: React.FC<DiagnosisFiltersProps> = ({
             type="text"
             value={localFilters.patient_name || ''}
             onChange={(e) => handleInputChange('patient_name', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 hover:border-blue-500 transition-colors"
             placeholder="输入患者姓名"
           />
         </div>
@@ -75,7 +78,7 @@ export const DiagnosisFiltersComponent: React.FC<DiagnosisFiltersProps> = ({
           <select
             value={localFilters.model || ''}
             onChange={(e) => handleInputChange('model', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 hover:border-blue-500 transition-colors"
           >
             <option value="">全部模型</option>
             {availableModels.map(model => (
@@ -87,8 +90,30 @@ export const DiagnosisFiltersComponent: React.FC<DiagnosisFiltersProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1.5">
             诊断时间
+            <div className="relative">
+              <HelpCircle
+                className="w-4 h-4 text-gray-400 hover:text-blue-500 cursor-help transition-colors"
+                onMouseEnter={() => setShowTooltip(true)}
+                onMouseLeave={() => setShowTooltip(false)}
+              />
+              {showTooltip && (
+                <div className="absolute left-0 top-6 z-50 w-64 p-3 bg-gray-800 text-white text-xs rounded shadow-lg">
+                  <div className="space-y-2">
+                    <p className="font-semibold">日期筛选使用说明：</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>单击某日期：选择该单日</li>
+                      <li>单击两个不同日期：选择时间段</li>
+                      <li>长按拖动：快速选择连续时间段</li>
+                      <li>快捷按钮：选择常用时间段</li>
+                    </ul>
+                  </div>
+                  {/* 小三角箭头 */}
+                  <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
+                </div>
+              )}
+            </div>
           </label>
           <DateRangeFilter
             value={{
@@ -113,25 +138,20 @@ export const DiagnosisFiltersComponent: React.FC<DiagnosisFiltersProps> = ({
             type="text"
             value={localFilters.creator_username || ''}
             onChange={(e) => handleInputChange('creator_username', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 hover:border-blue-500 transition-colors"
             placeholder="输入用户名"
           />
         </div>
-      </div>
 
-      <div className="flex items-center gap-3 mt-4">
-        <button
-          onClick={handleApply}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          应用筛选
-        </button>
-        <button
-          onClick={handleReset}
-          className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
-        >
-          重置
-        </button>
+        {/* 重置按钮放在创建者同一行 */}
+        <div className="flex items-end justify-end">
+          <button
+            onClick={handleReset}
+            className="px-8 py-2 bg-white text-gray-700 border border-gray-300 rounded hover:bg-blue-50 hover:text-blue-600 hover:border-blue-500 font-medium transition-all whitespace-nowrap"
+          >
+            重置
+          </button>
+        </div>
       </div>
     </div>
   );

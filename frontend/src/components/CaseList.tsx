@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, User, Stethoscope, Activity, Filter, RefreshCw, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { FileText, User, Stethoscope, Activity, Filter, RefreshCw, ChevronLeft, ChevronRight, X, HelpCircle } from 'lucide-react';
 import type { Case } from '../types';
 import { caseApi } from '../services/api';
 import { useAuth } from '../context/useAuth';
@@ -31,6 +31,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [jumpToPage, setJumpToPage] = useState('');
+  const [showTooltip, setShowTooltip] = useState(false);
 
   const hasActiveFilters = Object.values(filters).some(v => v.trim() !== '');
   const updateFilter = (key: keyof typeof filters, value: string) => {
@@ -319,8 +320,30 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
 
               {/* 日期范围筛选器 */}
               <div className="flex items-center gap-3">
-                <label className="text-base text-gray-700 whitespace-nowrap font-medium">
+                <label className="text-base text-gray-700 whitespace-nowrap font-medium flex items-center gap-1.5">
                   创建日期：
+                  <div className="relative">
+                    <HelpCircle
+                      className="w-4 h-4 text-gray-400 hover:text-blue-500 cursor-help transition-colors"
+                      onMouseEnter={() => setShowTooltip(true)}
+                      onMouseLeave={() => setShowTooltip(false)}
+                    />
+                    {showTooltip && (
+                      <div className="absolute left-0 top-6 z-50 w-64 p-3 bg-gray-800 text-white text-xs rounded shadow-lg">
+                        <div className="space-y-2">
+                          <p className="font-semibold">日期筛选使用说明：</p>
+                          <ul className="list-disc list-inside space-y-1">
+                            <li>单击某日期：选择该单日</li>
+                            <li>单击两个不同日期：选择时间段</li>
+                            <li>长按拖动：快速选择连续时间段</li>
+                            <li>快捷按钮：选择常用时间段</li>
+                          </ul>
+                        </div>
+                        {/* 小三角箭头 */}
+                        <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
+                      </div>
+                    )}
+                  </div>
                 </label>
                 <div className="flex-1 min-w-[240px]">
                   <DateRangeFilter
@@ -336,14 +359,14 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                 </div>
               </div>
 
-              {/* 清空筛选按钮 - 与创建日期同行 */}
+              {/* 重置按钮 - 与创建日期同行 */}
               <div className="flex items-center justify-end">
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="px-8 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium transition-all whitespace-nowrap"
+                  className="px-8 py-2 bg-white text-gray-700 border border-gray-300 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-500 font-medium transition-all whitespace-nowrap"
                 >
-                  清空筛选
+                  重置
                 </button>
               </div>
             </div>
@@ -701,7 +724,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                       max={totalPages}
                       value={jumpToPage || ''}
                       onChange={(e) => setJumpToPage(e.target.value)}
-                      onKeyPress={handleJumpInputKeyPress}
+                      onKeyDown={handleJumpInputKeyPress}
                       onFocus={() => setJumpToPage('')}
                       onBlur={() => {
                         if (jumpToPage) {

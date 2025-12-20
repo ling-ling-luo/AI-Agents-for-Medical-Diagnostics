@@ -1,18 +1,22 @@
 import { useMemo, useState } from 'react';
-import { CheckCircle, FileText, Heart, Brain, Wind, Download, Eye, ChevronDown } from 'lucide-react';
+import { CheckCircle, FileText, Heart, Brain, Wind, Download, Eye, ChevronDown, Calendar, Package, Zap } from 'lucide-react';
 import Markdown from 'markdown-to-jsx';
 import { SmartDropdown, DropdownItem } from './SmartDropdown';
 import { SpecialistReportModal } from './SpecialistReportModal';
 import { AllReportsModal } from './AllReportsModal';
 import { caseApi } from '../services/api';
 import { downloadBlob } from '../utils/download';
+import { formatDateTime, formatExecutionTime } from '../utils/diagnosisHelpers';
 
 interface DiagnosisResultProps {
   result: string;
   caseId?: number;
+  timestamp?: string;
+  model?: string;
+  executionTimeMs?: number;
 }
 
-export const DiagnosisResult = ({ result, caseId }: DiagnosisResultProps) => {
+export const DiagnosisResult = ({ result, caseId, timestamp, model, executionTimeMs }: DiagnosisResultProps) => {
   const [selectedReport, setSelectedReport] = useState<{ title: string; content: string; icon: typeof Heart } | null>(null);
   const [showAllReports, setShowAllReports] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -116,13 +120,52 @@ export const DiagnosisResult = ({ result, caseId }: DiagnosisResultProps) => {
       />
 
       <div className="space-y-6 fade-in">
-        {/* 诊断完成提示 - 矩形设计 */}
+        {/* 诊断完成提示 - 矩形设计，添加诊断时间和模型信息 */}
         <div className="bg-white border border-gray-200 rounded-none p-6 shadow-lg">
-          <div className="flex items-center gap-4">
-            <CheckCircle className="w-8 h-8 text-green-600 flex-shrink-0" />
-            <div>
+          <div className="flex items-start gap-4">
+            <CheckCircle className="w-8 h-8 text-green-600 flex-shrink-0 mt-1" />
+            <div className="flex-1">
               <h2 className="text-base font-semibold text-gray-800">诊断完成</h2>
-              <p className="text-sm text-gray-600 mt-1">AI 智能体分析报告已生成</p>
+              <p className="text-sm text-gray-600 mt-1 mb-4">AI 智能体分析报告已生成</p>
+
+              {/* 诊断元数据 */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+                {timestamp && (
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                      <Calendar className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">诊断时间</p>
+                      <p className="text-sm font-medium text-gray-700">{formatDateTime(timestamp)}</p>
+                    </div>
+                  </div>
+                )}
+
+                {model && (
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center flex-shrink-0">
+                      <Package className="w-4 h-4 text-purple-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">AI 模型</p>
+                      <p className="text-sm font-medium text-gray-700">{model}</p>
+                    </div>
+                  </div>
+                )}
+
+                {executionTimeMs !== undefined && (
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-cyan-50 flex items-center justify-center flex-shrink-0">
+                      <Zap className="w-4 h-4 text-cyan-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">执行时间</p>
+                      <p className="text-sm font-medium text-gray-700">{formatExecutionTime(executionTimeMs)}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

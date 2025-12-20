@@ -82,6 +82,11 @@ export const CaseDetail = () => {
   const { token } = useAuth();
   const [caseDetail, setCaseDetail] = useState<CaseDetailType | null>(null);
   const [diagnosis, setDiagnosis] = useState<DiagnosisResponse | null>(null);
+  const [diagnosisMetadata, setDiagnosisMetadata] = useState<{
+    timestamp?: string;
+    model?: string;
+    executionTimeMs?: number;
+  }>({});
   const [loading, setLoading] = useState(false);
   const [loadingCase, setLoadingCase] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -215,13 +220,21 @@ export const CaseDetail = () => {
                 case_id: parseInt(caseId),
                 diagnosis_markdown: latestDiagnosis.diagnosis_full
               });
+              // 保存诊断元数据
+              setDiagnosisMetadata({
+                timestamp: latestDiagnosis.timestamp,
+                model: latestDiagnosis.model,
+                executionTimeMs: latestDiagnosis.execution_time_ms
+              });
             }
           } else {
             setDiagnosis(null);
+            setDiagnosisMetadata({});
           }
         } catch {
           // 如果没有诊断历史，不显示错误，只是不加载诊断结果
           setDiagnosis(null);
+          setDiagnosisMetadata({});
         }
       } catch (err) {
         setError('无法加载病例详情，请检查后端服务');
@@ -247,8 +260,18 @@ export const CaseDetail = () => {
     try {
       setLoading(true);
       setError(null);
+      const startTime = Date.now();
       const result = await caseApi.runDiagnosis(parseInt(caseId), selectedModel);
+      const executionTime = Date.now() - startTime;
+
       setDiagnosis(result);
+
+      // 保存新诊断的元数据
+      setDiagnosisMetadata({
+        timestamp: new Date().toISOString(),
+        model: selectedModel,
+        executionTimeMs: executionTime
+      });
     } catch (err) {
       setError('诊断失败，请检查后端服务并稍后重试');
       console.error('Error running diagnosis:', err);
@@ -667,6 +690,9 @@ export const CaseDetail = () => {
           <DiagnosisResult
             result={diagnosis.diagnosis_markdown}
             caseId={caseId ? parseInt(caseId) : undefined}
+            timestamp={diagnosisMetadata.timestamp}
+            model={diagnosisMetadata.model}
+            executionTimeMs={diagnosisMetadata.executionTimeMs}
           />
         )}
       </main>
