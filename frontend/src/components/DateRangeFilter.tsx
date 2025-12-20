@@ -19,10 +19,25 @@ type CalendarType = 'from' | 'to' | null;
 export const DateRangeFilter = ({ value, onChange }: DateRangeFilterProps) => {
   const [activeCalendar, setActiveCalendar] = useState<CalendarType>(null);
   const [viewDate, setViewDate] = useState<Date>(new Date());
-  const [tempFrom, setTempFrom] = useState(value.from);
-  const [tempTo, setTempTo] = useState(value.to);
+
+  const [tempFromDate, setTempFromDate] = useState(value.from);
+  const [tempToDate, setTempToDate] = useState(value.to);
+
+  // 拖拽选择状态
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartDate, setDragStartDate] = useState<string | null>(null);
+  const [hasMoved, setHasMoved] = useState(false); // 记录鼠标是否移动过
+  const [clickCount, setClickCount] = useState(0); // 记录点击次数
 
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // 辅助函数：将Date对象转换为本地YYYY-MM-DD格式字符串
+  const formatDateToLocal = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   // 点击外部关闭
   useEffect(() => {
@@ -35,10 +50,31 @@ export const DateRangeFilter = ({ value, onChange }: DateRangeFilterProps) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // 全局监听鼠标松开（处理拖拽结束）
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      if (isDragging || dragStartDate) {
+        setIsDragging(false);
+        setDragStartDate(null);
+        setHasMoved(false);
+      }
+    };
+    document.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => document.removeEventListener('mouseup', handleGlobalMouseUp);
+  }, [isDragging, dragStartDate]);
+
   // 同步外部值
   useEffect(() => {
-    setTempFrom(value.from);
-    setTempTo(value.to);
+    setTempFromDate(value.from);
+    setTempToDate(value.to);
+    // 根据当前日期范围初始化点击计数
+    if (value.from && value.to && value.from === value.to) {
+      // 单日选择状态，下次点击会设置范围
+      setClickCount(1);
+    } else {
+      // 空状态或已有范围，下次点击会设置单日
+      setClickCount(0);
+    }
   }, [value]);
 
   // 格式化日期显示
@@ -81,21 +117,93 @@ export const DateRangeFilter = ({ value, onChange }: DateRangeFilterProps) => {
   // 选择日期
   const selectDate = (day: number) => {
     const selectedDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
-    const dateStr = selectedDate.toISOString().split('T')[0];
+    const dateStr = formatDateToLocal(selectedDate);
 
-    if (activeCalendar === 'from') {
-      setTempFrom(dateStr);
-      // 如果结束日期早于开始日期，自动调整
-      if (tempTo && dateStr > tempTo) {
-        setTempTo(dateStr);
+    console.log('selectDate called:', { day, dateStr, clickCount, tempFromDate, tempToDate });
+
+    if (clickCount === 0) {
+      // 第一次点击：起始日期和结束日期都设置为同一天
+      console.log('First click: setting both dates to', dateStr);
+      setTempFromDate(dateStr);
+      setTempToDate(dateStr);
+      setClickCount(1);
+    } else {
+      // 第二次点击：根据时间先后顺序设置范围
+      console.log('Second click: adjusting range');
+      if (dateStr < tempFromDate) {
+        // 点击的日期早于起始日期，将其设为起始日期
+        console.log('Date is before from, updating from:', dateStr);
+        setTempFromDate(dateStr);
+      } else if (dateStr > tempToDate) {
+        // 点击的日期晚于结束日期，将其设为结束日期
+        console.log('Date is after to, updating to:', dateStr);
+        setTempToDate(dateStr);
+      } else {
+        // 点击的日期在范围内，重置为该日期
+        console.log('Date is in range, resetting to single date:', dateStr);
+        setTempFromDate(dateStr);
+        setTempToDate(dateStr);
       }
-    } else if (activeCalendar === 'to') {
-      setTempTo(dateStr);
-      // 如果开始日期晚于结束日期，自动调整
-      if (tempFrom && dateStr < tempFrom) {
-        setTempFrom(dateStr);
-      }
+      setClickCount(0); // 重置点击计数，准备下一轮选择
     }
+  };
+
+  // 处理鼠标按下
+  const handleDateMouseDown = (day: number) => {
+    const selectedDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
+    const dateStr = formatDateToLocal(selectedDate);
+
+    console.log('Mouse down on:', dateStr);
+    setDragStartDate(dateStr);
+    setHasMoved(false);
+  };
+
+  // 处理鼠标移入（拖拽）
+  const handleDateMouseEnter = (day: number) => {
+    if (!dragStartDate) return;
+
+    // 鼠标移动了，标记为拖拽模式
+    if (!hasMoved) {
+      console.log('Drag started from:', dragStartDate);
+      setHasMoved(true);
+      setIsDragging(true);
+      setTempFromDate(dragStartDate);
+      setTempToDate(dragStartDate);
+    }
+
+    const selectedDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
+    const dateStr = formatDateToLocal(selectedDate);
+
+    console.log('Dragging to:', dateStr);
+
+    // 根据拖拽方向设置起始和结束日期
+    if (dateStr >= dragStartDate) {
+      setTempFromDate(dragStartDate);
+      setTempToDate(dateStr);
+    } else {
+      setTempFromDate(dateStr);
+      setTempToDate(dragStartDate);
+    }
+  };
+
+  // 处理鼠标松开
+  const handleDateMouseUp = (day?: number) => {
+    console.log('Mouse up on:', day, 'hasMoved:', hasMoved);
+
+    if (hasMoved) {
+      // 发生了拖拽，重置点击计数
+      console.log('Drag completed, resetting click count');
+      setClickCount(0);
+    } else if (day !== undefined) {
+      // 没有移动，这是纯点击
+      console.log('Pure click detected, calling selectDate');
+      selectDate(day);
+    }
+
+    // 清理拖拽状态
+    setIsDragging(false);
+    setDragStartDate(null);
+    setHasMoved(false);
   };
 
   // 快捷选项
@@ -105,31 +213,35 @@ export const DateRangeFilter = ({ value, onChange }: DateRangeFilterProps) => {
 
     switch (option) {
       case 'today': {
-        const dateStr = today.toISOString().split('T')[0];
-        setTempFrom(dateStr);
-        setTempTo(dateStr);
+        const dateStr = formatDateToLocal(today);
+        setTempFromDate(dateStr);
+        setTempToDate(dateStr);
+        setClickCount(1); // 单日选择，下次点击会设置范围
         break;
       }
       case 'yesterday': {
         const yesterday = new Date(today);
         yesterday.setDate(yesterday.getDate() - 1);
-        const dateStr = yesterday.toISOString().split('T')[0];
-        setTempFrom(dateStr);
-        setTempTo(dateStr);
+        const dateStr = formatDateToLocal(yesterday);
+        setTempFromDate(dateStr);
+        setTempToDate(dateStr);
+        setClickCount(1); // 单日选择，下次点击会设置范围
         break;
       }
       case 'last7days': {
         const from = new Date(today);
         from.setDate(from.getDate() - 6);
-        setTempFrom(from.toISOString().split('T')[0]);
-        setTempTo(today.toISOString().split('T')[0]);
+        setTempFromDate(formatDateToLocal(from));
+        setTempToDate(formatDateToLocal(today));
+        setClickCount(0); // 范围选择，下次点击会设置单日
         break;
       }
       case 'last14days': {
         const from = new Date(today);
         from.setDate(from.getDate() - 13);
-        setTempFrom(from.toISOString().split('T')[0]);
-        setTempTo(today.toISOString().split('T')[0]);
+        setTempFromDate(formatDateToLocal(from));
+        setTempToDate(formatDateToLocal(today));
+        setClickCount(0); // 范围选择，下次点击会设置单日
         break;
       }
     }
@@ -137,14 +249,14 @@ export const DateRangeFilter = ({ value, onChange }: DateRangeFilterProps) => {
 
   // 确认选择
   const handleOK = () => {
-    onChange({ from: tempFrom, to: tempTo });
+    onChange({ from: tempFromDate, to: tempToDate });
     setActiveCalendar(null);
   };
 
   // 取消
   const handleCancel = () => {
-    setTempFrom(value.from);
-    setTempTo(value.to);
+    setTempFromDate(value.from);
+    setTempToDate(value.to);
     setActiveCalendar(null);
   };
 
@@ -153,44 +265,54 @@ export const DateRangeFilter = ({ value, onChange }: DateRangeFilterProps) => {
 
   // 判断日期是否被选中
   const isSelected = (day: number) => {
-    const dateStr = new Date(viewDate.getFullYear(), viewDate.getMonth(), day).toISOString().split('T')[0];
-    return dateStr === tempFrom || dateStr === tempTo;
+    const dateStr = formatDateToLocal(new Date(viewDate.getFullYear(), viewDate.getMonth(), day));
+    return dateStr === tempFromDate || dateStr === tempToDate;
   };
 
   // 判断日期是否在范围内
   const isInRange = (day: number) => {
-    if (!tempFrom || !tempTo) return false;
-    const dateStr = new Date(viewDate.getFullYear(), viewDate.getMonth(), day).toISOString().split('T')[0];
-    return dateStr >= tempFrom && dateStr <= tempTo;
+    if (!tempFromDate || !tempToDate) return false;
+    const dateStr = formatDateToLocal(new Date(viewDate.getFullYear(), viewDate.getMonth(), day));
+    return dateStr >= tempFromDate && dateStr <= tempToDate;
   };
 
   return (
-    <div className="relative col-span-2" ref={dropdownRef}>
-      {/* 输入框 */}
-      <div className="grid grid-cols-2 gap-2">
+    <div className="relative w-full" ref={dropdownRef}>
+      {/* 单一输入框，内含两个日期区域 */}
+      <div className="relative w-full border border-gray-300 rounded hover:border-blue-500 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all bg-white flex items-center">
+        {/* 开始日期 */}
         <button
           type="button"
           onClick={() => {
             setActiveCalendar('from');
-            setViewDate(tempFrom ? new Date(tempFrom) : new Date());
+            setViewDate(tempFromDate ? new Date(tempFromDate) : new Date());
           }}
-          className="w-full px-3 py-1.5 border border-gray-200 text-sm text-left focus:outline-none focus:border-blue-400 bg-white hover:bg-gray-50 transition-colors flex items-center justify-between text-gray-500"
+          className="flex-1 px-2 py-1.5 text-xs text-left focus:outline-none text-gray-700 hover:bg-gray-50 transition-colors"
         >
-          <span>{formatDisplay(tempFrom)}</span>
-          <Calendar className="w-4 h-4 text-gray-400 ml-2 flex-shrink-0" />
+          <span className={tempFromDate ? '' : 'text-gray-400'}>
+            {tempFromDate || '开始日期'}
+          </span>
         </button>
 
+        {/* 分隔符 */}
+        <span className="text-gray-400 text-xs px-1">~</span>
+
+        {/* 结束日期 */}
         <button
           type="button"
           onClick={() => {
             setActiveCalendar('to');
-            setViewDate(tempTo ? new Date(tempTo) : new Date());
+            setViewDate(tempToDate ? new Date(tempToDate) : new Date());
           }}
-          className="w-full px-3 py-1.5 border border-gray-200 text-sm text-left focus:outline-none focus:border-blue-400 bg-white hover:bg-gray-50 transition-colors flex items-center justify-between text-gray-500"
+          className="flex-1 px-2 py-1.5 text-xs text-left focus:outline-none text-gray-700 hover:bg-gray-50 transition-colors"
         >
-          <span>{formatDisplay(tempTo)}</span>
-          <Calendar className="w-4 h-4 text-gray-400 ml-2 flex-shrink-0" />
+          <span className={tempToDate ? '' : 'text-gray-400'}>
+            {tempToDate || '结束日期'}
+          </span>
         </button>
+
+        {/* 日历图标 */}
+        <Calendar className="w-3.5 h-3.5 text-gray-400 mr-2 flex-shrink-0" />
       </div>
 
       {/* 日历面板 */}
@@ -199,14 +321,16 @@ export const DateRangeFilter = ({ value, onChange }: DateRangeFilterProps) => {
           {/* 月份导航 */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-1">
+              {/* 上一年（双左箭头）*/}
               <button
                 type="button"
                 onClick={() => navigateMonth(-12)}
-                className="p-1 hover:bg-gray-100 text-gray-600"
+                className="p-1 hover:bg-gray-100 text-gray-600 flex items-center"
               >
-                <ChevronLeft className="w-4 h-4" />
-                <ChevronLeft className="w-4 h-4 -ml-3" />
+                <ChevronLeft className="w-3.5 h-3.5 -mr-2" />
+                <ChevronLeft className="w-3.5 h-3.5" />
               </button>
+              {/* 上一月（单左箭头）*/}
               <button
                 type="button"
                 onClick={() => navigateMonth(-1)}
@@ -219,6 +343,7 @@ export const DateRangeFilter = ({ value, onChange }: DateRangeFilterProps) => {
             <span className="text-sm font-medium text-gray-800">{monthYear}</span>
 
             <div className="flex items-center gap-1">
+              {/* 下一月（单右箭头）*/}
               <button
                 type="button"
                 onClick={() => navigateMonth(1)}
@@ -226,13 +351,14 @@ export const DateRangeFilter = ({ value, onChange }: DateRangeFilterProps) => {
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
+              {/* 下一年（双右箭头）*/}
               <button
                 type="button"
                 onClick={() => navigateMonth(12)}
-                className="p-1 hover:bg-gray-100 text-gray-600"
+                className="p-1 hover:bg-gray-100 text-gray-600 flex items-center"
               >
-                <ChevronRight className="w-4 h-4" />
-                <ChevronRight className="w-4 h-4 -ml-3" />
+                <ChevronRight className="w-3.5 h-3.5" />
+                <ChevronRight className="w-3.5 h-3.5 -ml-2" />
               </button>
             </div>
           </div>
@@ -247,14 +373,20 @@ export const DateRangeFilter = ({ value, onChange }: DateRangeFilterProps) => {
           </div>
 
           {/* 日期网格 */}
-          <div className="grid grid-cols-7 gap-1 mb-4">
+          <div
+            className="grid grid-cols-7 gap-1 mb-4"
+            onMouseUp={() => handleDateMouseUp()}
+            onMouseLeave={() => handleDateMouseUp()}
+          >
             {days.map((day, index) => (
               <div key={index} className="text-center">
                 {day ? (
                   <button
                     type="button"
-                    onClick={() => selectDate(day)}
-                    className={`w-8 h-8 text-sm transition-colors ${
+                    onMouseDown={() => handleDateMouseDown(day)}
+                    onMouseEnter={() => handleDateMouseEnter(day)}
+                    onMouseUp={() => handleDateMouseUp(day)}
+                    className={`w-8 h-8 text-sm transition-colors select-none ${
                       isSelected(day)
                         ? 'bg-blue-500 text-white font-medium'
                         : isInRange(day)
@@ -271,54 +403,57 @@ export const DateRangeFilter = ({ value, onChange }: DateRangeFilterProps) => {
             ))}
           </div>
 
-          {/* 快捷选项 */}
-          <div className="grid grid-cols-4 gap-2 mb-4 pt-3 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={() => applyQuickOption('last14days')}
-              className="px-2 py-1 text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
-            >
-              Last 14 Days
-            </button>
-            <button
-              type="button"
-              onClick={() => applyQuickOption('last7days')}
-              className="px-2 py-1 text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
-            >
-              Last 7 Days
-            </button>
-            <button
-              type="button"
-              onClick={() => applyQuickOption('yesterday')}
-              className="px-2 py-1 text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
-            >
-              Yesterday
-            </button>
-            <button
-              type="button"
-              onClick={() => applyQuickOption('today')}
-              className="px-2 py-1 text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
-            >
-              Today
-            </button>
-          </div>
+          {/* 快捷选项和按钮 */}
+          <div className="pt-4 border-t border-gray-300">
+            {/* 快捷选项 */}
+            <div className="grid grid-cols-4 gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => applyQuickOption('last14days')}
+                className="px-2 py-1 text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+              >
+                Last 14 Days
+              </button>
+              <button
+                type="button"
+                onClick={() => applyQuickOption('last7days')}
+                className="px-2 py-1 text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+              >
+                Last 7 Days
+              </button>
+              <button
+                type="button"
+                onClick={() => applyQuickOption('yesterday')}
+                className="px-2 py-1 text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+              >
+                Yesterday
+              </button>
+              <button
+                type="button"
+                onClick={() => applyQuickOption('today')}
+                className="px-2 py-1 text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+              >
+                Today
+              </button>
+            </div>
 
-          {/* 操作按钮 */}
-          <div className="flex items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="px-4 py-1.5 text-xs text-gray-600 hover:text-gray-900"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleOK}
-              className="px-4 py-1.5 bg-blue-500 text-white text-xs hover:bg-blue-600 transition-colors"
-            >
-              OK
-            </button>
+            {/* 操作按钮 */}
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="px-4 py-1.5 text-xs text-gray-600 hover:text-gray-900"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleOK}
+                className="px-4 py-1.5 bg-blue-500 text-white text-xs hover:bg-blue-600 transition-colors"
+              >
+                OK
+              </button>
+            </div>
           </div>
         </div>
       )}
