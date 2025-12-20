@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### 1) 配置（首次）
 
 - 复制配置模板并按需修改：
-  - `apikey.example.env` → `apikey.env`
+  - 创建 `apikey.env`（参考项目需求配置 `OPENAI_API_KEY`、`OPENAI_BASE_URL`、`LLM_MODEL`、`JWT_SECRET_KEY` 等）
   - `api/config/models.example.json` → `api/config/models.json`
 
 ### 2) 后端（FastAPI）
@@ -34,6 +34,11 @@ npm run dev
 ```
 
 前端默认 `http://localhost:5173`，后端 Swagger 在 `http://localhost:8000/docs`。
+
+**默认测试账号**（由 `init_auth_db.py` 创建）：
+- 管理员：`admin` / `admin123`
+- 医生：`doctor` / `doctor123`
+- 普通用户：`viewer` / `viewer123`
 
 ---
 
@@ -65,10 +70,15 @@ npm run dev
   ```bash
   source venv/bin/activate
   pytest tests/test_txt_parser.py
+
+  # 运行所有 pytest 测试
+  pytest
   ```
 
 - 需要后端服务运行的脚本（集成/冒烟测试）：
   ```bash
+  # 确保后端服务已在 8000 端口运行
+
   # 权限/RBAC 行为（requests 调用本地 API）
   python test_permissions.py
 
@@ -136,6 +146,12 @@ npm run preview
 - 认证状态：`frontend/src/context/AuthContext.tsx`
 - API 封装（Axios）：`frontend/src/services/api.ts`
   - token 存储在 `localStorage` 并通过请求拦截器注入 `Authorization`
+- 技术栈：
+  - React 19 + TypeScript
+  - Vite（构建工具）
+  - Tailwind CSS 4（样式框架）
+  - React Router（路由）
+  - Axios（HTTP 客户端）
 
 ---
 
@@ -143,4 +159,9 @@ npm run preview
 
 - **提示词约束**：`Utils/Agents.py` 内的英文提示词不要改动（会影响诊断质量与稳定性）。
 - **迁移/脚本**：仓库存在 `api/migrations/` 下的脚本式迁移文件；依赖里包含 Alembic，但当前未见典型 `alembic.ini`/版本目录结构，做 DB 结构变更前先确认项目采用的迁移方式。
-- **前端 UI 风格**：整体保持“Google 简约风格 / 矩形设计 / 灰色分隔线 / 少装饰”的一致性（Tailwind）。
+- **前端 UI 风格**：整体保持"Google 简约风格 / 矩形设计 / 灰色分隔线 / 少装饰"的一致性（Tailwind）。详见 `DESIGN_SYSTEM.md`。
+  - 所有卡片使用统一样式：`bg-white border border-gray-200 rounded-lg shadow-sm`
+  - 标准内边距：`p-8`（2rem），卡片间距：`space-y-8`
+  - 文字层级：H1 用 `text-2xl`，H2 用 `text-lg`，正文用 `text-base`
+  - 避免过度装饰和 sticky 定位
+- **环境要求**：Python 3.10+、Node.js 18+、SQLite 3

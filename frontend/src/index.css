@@ -47,11 +47,21 @@ dl, dd {
   margin: 0;
 }
 
+/* 注释掉按钮的 padding 重置，让按钮保持自然大小 */
+/*
 button,
 input,
 select,
 textarea {
   padding: 0;
+  margin: 0;
+}
+*/
+
+button,
+input,
+select,
+textarea {
   margin: 0;
 }
 

@@ -287,15 +287,15 @@ export const DateRangeFilter = ({ value, onChange }: DateRangeFilterProps) => {
             setActiveCalendar('from');
             setViewDate(tempFromDate ? new Date(tempFromDate) : new Date());
           }}
-          className="flex-1 px-2 py-1.5 text-xs text-left focus:outline-none text-gray-700 hover:bg-gray-50 transition-colors"
+          className="flex-1 px-3 py-2.5 text-base text-left focus:outline-none text-gray-700 hover:bg-gray-50 transition-colors"
         >
           <span className={tempFromDate ? '' : 'text-gray-400'}>
-            {tempFromDate || '开始日期'}
+            {tempFromDate || '起'}
           </span>
         </button>
 
         {/* 分隔符 */}
-        <span className="text-gray-400 text-xs px-1">~</span>
+        <span className="text-gray-400 text-base px-1">~</span>
 
         {/* 结束日期 */}
         <button
@@ -304,15 +304,15 @@ export const DateRangeFilter = ({ value, onChange }: DateRangeFilterProps) => {
             setActiveCalendar('to');
             setViewDate(tempToDate ? new Date(tempToDate) : new Date());
           }}
-          className="flex-1 px-2 py-1.5 text-xs text-left focus:outline-none text-gray-700 hover:bg-gray-50 transition-colors"
+          className="flex-1 px-3 py-2.5 text-base text-left focus:outline-none text-gray-700 hover:bg-gray-50 transition-colors"
         >
           <span className={tempToDate ? '' : 'text-gray-400'}>
-            {tempToDate || '结束日期'}
+            {tempToDate || '止'}
           </span>
         </button>
 
         {/* 日历图标 */}
-        <Calendar className="w-3.5 h-3.5 text-gray-400 mr-2 flex-shrink-0" />
+        <Calendar className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
       </div>
 
       {/* 日历面板 */}

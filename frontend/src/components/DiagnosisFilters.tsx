@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { DiagnosisFilters } from '../types';
 import { caseApi } from '../services/api';
+import { DateRangeFilter } from './DateRangeFilter';
 
 interface DiagnosisFiltersProps {
   filters: DiagnosisFilters;
@@ -87,25 +88,20 @@ export const DiagnosisFiltersComponent: React.FC<DiagnosisFiltersProps> = ({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            诊断时间（从）
+            诊断时间
           </label>
-          <input
-            type="date"
-            value={localFilters.created_from || ''}
-            onChange={(e) => handleInputChange('created_from', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            诊断时间（到）
-          </label>
-          <input
-            type="date"
-            value={localFilters.created_to || ''}
-            onChange={(e) => handleInputChange('created_to', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+          <DateRangeFilter
+            value={{
+              from: localFilters.created_from || '',
+              to: localFilters.created_to || ''
+            }}
+            onChange={(range) => {
+              setLocalFilters(prev => ({
+                ...prev,
+                created_from: range.from || undefined,
+                created_to: range.to || undefined
+              }));
+            }}
           />
         </div>
 

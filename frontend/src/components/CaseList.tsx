@@ -9,7 +9,7 @@ import { Dropdown } from './Dropdown';
 import { DateRangeFilter } from './DateRangeFilter';
 import '../styles/hide-scrollbar.css'; // 引入样式文件以隐藏数字输入框的箭头
 
-const ITEMS_PER_PAGE = 9; // 每页显示9个病例
+const ITEMS_PER_PAGE = 6; // 每页显示6个病例（2行×3列）
 
 interface CaseListProps {
   embedded?: boolean; // 是否为嵌入模式（在标签页中使用）
@@ -221,30 +221,11 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
       <main className={`${embedded ? 'py-2' : 'container-custom py-3'} min-h-[calc(100vh-120px)] flex flex-col`}>
         {/* 筛选区域 - 非嵌入模式 */}
         {!embedded && (
-          <div className="bg-white rounded-lg border border-gray-200 p-3 mb-3 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-gray-400" />
-                <span className="text-sm font-medium text-gray-700">筛选条件</span>
-                {hasActiveFilters && (
-                  <span className="text-xs text-blue-600">({filteredCases.length} 条匹配)</span>
-                )}
-              </div>
-              {hasActiveFilters && (
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="flex items-center gap-1 text-xs text-gray-600 hover:text-gray-900"
-                >
-                  <X className="w-3 h-3" />
-                  <span>清空</span>
-                </button>
-              )}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4 shadow-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-4">
               {/* 患者姓名 */}
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-700 whitespace-nowrap font-medium">
+              <div className="flex items-center gap-3">
+                <label className="text-base text-gray-700 whitespace-nowrap font-medium">
                   患者姓名：
                 </label>
                 <input
@@ -252,13 +233,13 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                   placeholder="输入姓名"
                   value={filters.patient_name}
                   onChange={(e) => updateFilter('patient_name', e.target.value)}
-                  className="w-32 px-3 py-2 text-sm border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
+                  className="flex-1 px-3 py-2.5 text-base border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
                 />
               </div>
 
               {/* 病历号 */}
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-700 whitespace-nowrap font-medium">
+              <div className="flex items-center gap-3">
+                <label className="text-base text-gray-700 whitespace-nowrap font-medium">
                   病历号：
                 </label>
                 <input
@@ -266,13 +247,13 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                   placeholder="输入病历号"
                   value={filters.patient_id}
                   onChange={(e) => updateFilter('patient_id', e.target.value)}
-                  className="w-32 px-3 py-2 text-sm border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
+                  className="flex-1 px-3 py-2.5 text-base border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
                 />
               </div>
 
               {/* 主诉 */}
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-700 whitespace-nowrap font-medium">
+              <div className="flex items-center gap-3">
+                <label className="text-base text-gray-700 whitespace-nowrap font-medium">
                   主诉：
                 </label>
                 <input
@@ -280,19 +261,19 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                   placeholder="输入主诉"
                   value={filters.chief_complaint}
                   onChange={(e) => updateFilter('chief_complaint', e.target.value)}
-                  className="w-32 px-3 py-2 text-sm border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
+                  className="flex-1 px-3 py-2.5 text-base border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
                 />
               </div>
 
               {/* 性别 */}
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-700 whitespace-nowrap font-medium">
+              <div className="flex items-center gap-3">
+                <label className="text-base text-gray-700 whitespace-nowrap font-medium">
                   性别：
                 </label>
                 <select
                   value={filters.gender}
                   onChange={(e) => updateFilter('gender', e.target.value)}
-                  className="w-32 px-3 py-2 text-sm border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
+                  className="flex-1 px-3 py-2.5 text-base border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
                 >
                   <option value="">全部</option>
                   <option value="male">男</option>
@@ -301,14 +282,14 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
               </div>
 
               {/* 诊断状态 */}
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-700 whitespace-nowrap font-medium">
+              <div className="flex items-center gap-3">
+                <label className="text-base text-gray-700 whitespace-nowrap font-medium">
                   诊断状态：
                 </label>
                 <select
                   value={filters.diagnosed}
                   onChange={(e) => updateFilter('diagnosed', e.target.value)}
-                  className="w-32 px-3 py-2 text-sm border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
+                  className="flex-1 px-3 py-2.5 text-base border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
                 >
                   <option value="">全部</option>
                   <option value="yes">已诊断</option>
@@ -318,15 +299,15 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
 
               {/* 创建者 */}
               {showCreatorFilter && (
-                <div className="flex items-center gap-2">
-                  <label className="text-sm text-gray-700 whitespace-nowrap font-medium">
+                <div className="flex items-center gap-3">
+                  <label className="text-base text-gray-700 whitespace-nowrap font-medium">
                     创建者：
                   </label>
                   <select
                     value={filters.creator_username}
                     onChange={(e) => updateFilter('creator_username', e.target.value)}
                     disabled={!hasRole('admin')}
-                    className="w-32 px-3 py-2 text-sm border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed disabled:hover:border-gray-300"
+                    className="flex-1 px-3 py-2.5 text-base border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed disabled:hover:border-gray-300"
                   >
                     <option value="">{creatorFilterLabel}</option>
                     {uniqueCreatorUsernames.map((u) => (
@@ -337,11 +318,11 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
               )}
 
               {/* 日期范围筛选器 */}
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-700 whitespace-nowrap font-medium">
+              <div className="flex items-center gap-3">
+                <label className="text-base text-gray-700 whitespace-nowrap font-medium">
                   创建日期：
                 </label>
-                <div className="w-52">
+                <div className="flex-1 min-w-[240px]">
                   <DateRangeFilter
                     value={{ from: filters.created_from, to: filters.created_to }}
                     onChange={(range) => {
@@ -353,6 +334,17 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                     }}
                   />
                 </div>
+              </div>
+
+              {/* 清空筛选按钮 - 与创建日期同行 */}
+              <div className="flex items-center justify-end">
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="px-8 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium transition-all whitespace-nowrap"
+                >
+                  清空筛选
+                </button>
               </div>
             </div>
           </div>
@@ -535,28 +527,28 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                   }}
                 >
                   {/* 病例头部 - 增强质感 */}
-                  <div className="p-3">
-                    <div className="flex items-start gap-2 mb-2">
-                      <div className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                  <div className="p-4">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
                         {case_.gender === 'male' ? (
-                          <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                            <User className="w-3.5 h-3.5 text-blue-600" />
+                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                            <User className="w-5 h-5 text-blue-600" />
                           </div>
                         ) : case_.gender === 'female' ? (
-                          <div className="w-6 h-6 rounded-full bg-pink-100 flex items-center justify-center">
-                            <User className="w-3.5 h-3.5 text-pink-600" />
+                          <div className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center">
+                            <User className="w-5 h-5 text-pink-600" />
                           </div>
                         ) : (
-                          <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
-                            <User className="w-3.5 h-3.5 text-gray-600" />
+                          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                            <User className="w-5 h-5 text-gray-600" />
                           </div>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-xs font-semibold text-gray-800 truncate">
+                        <h3 className="text-sm font-semibold text-gray-800 truncate">
                           {case_.patient_name || `病例 #${case_.id}`}
                         </h3>
-                        <p className="text-[10px] text-gray-500 truncate mt-0.5">{case_.patient_id}</p>
+                        <p className="text-xs text-gray-500 truncate mt-1">{case_.patient_id}</p>
                       </div>
                       {/* 更多操作菜单 */}
                       <div className="dropdown-container">
@@ -587,7 +579,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                     </div>
 
                   {/* 患者信息标签 - 纯文字 */}
-                  <div className="flex items-center gap-1.5 mb-2 text-[10px] text-gray-600 font-medium">
+                  <div className="flex items-center gap-2 mb-3 text-xs text-gray-600 font-medium">
                     {case_.age && (
                       <span>
                         {case_.age} 岁
@@ -605,9 +597,9 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
 
                   {/* 主诉信息 - 严格矩形，严丝合缝 */}
                   {case_.chief_complaint && (
-                    <div className="mb-0 p-2 bg-blue-50 rounded-none border-t border-b border-blue-100">
-                      <p className="text-[10px] font-semibold text-gray-600 mb-0.5">主诉</p>
-                      <p className="text-[10px] text-gray-700 leading-relaxed truncate">
+                    <div className="mb-0 p-3 bg-blue-50 rounded-none border-t border-b border-blue-100">
+                      <p className="text-xs font-semibold text-gray-600 mb-1">主诉</p>
+                      <p className="text-xs text-gray-700 leading-relaxed truncate">
                         {case_.chief_complaint}
                       </p>
                     </div>
@@ -619,9 +611,9 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                       e.stopPropagation(); // 阻止事件冒泡到卡片容器
                       navigate(`/case/${case_.id}?autoDiagnose=true`);
                     }}
-                    className="w-full px-2 py-1.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-[10px] font-semibold rounded-none rounded-b-md transition-all flex items-center justify-center gap-1 whitespace-nowrap"
+                    className="w-full px-3 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-xs font-semibold rounded-none rounded-b-md transition-all flex items-center justify-center gap-1.5 whitespace-nowrap"
                   >
-                    <Stethoscope className="w-3 h-3 flex-shrink-0" />
+                    <Stethoscope className="w-4 h-4 flex-shrink-0" />
                     <span className="truncate">开始诊断</span>
                   </button>
                 </div>
@@ -633,94 +625,99 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
           {/* 分页控件 - 移到底部 */}
           {totalPages > 1 && (
             <div className="mt-3 pt-3 border-t border-gray-200">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-sm text-gray-500">
+              <div className="flex items-center justify-between gap-4">
+                {/* 左侧：病例总数 */}
+                <div className="text-sm text-gray-500 whitespace-nowrap">
                   共 {cases.length} 个病例 {hasActiveFilters && `· ${filteredCases.length} 个匹配`}
                 </div>
-                <div className="text-sm text-gray-500">
-                  第 {currentPage} / {totalPages} 页
-                </div>
-              </div>
-              <div className="flex items-center justify-center gap-2 flex-wrap">
-                {/* 上一页按钮 */}
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1.5 bg-transparent text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  <span className="text-sm font-medium">上一页</span>
-                </button>
 
-                {/* 页码按钮 */}
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                    // 显示逻辑：始终显示第1页、最后1页、当前页及其前后各1页
-                    const showPage =
-                      page === 1 ||
-                      page === totalPages ||
-                      (page >= currentPage - 1 && page <= currentPage + 1);
+                {/* 中间：分页控件 */}
+                <div className="flex items-center justify-center gap-2 flex-wrap">
+                  {/* 上一页按钮 */}
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 bg-transparent text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span className="text-sm font-medium">上一页</span>
+                  </button>
 
-                    // 显示省略号
-                    const showEllipsisBefore = page === currentPage - 2 && currentPage > 3;
-                    const showEllipsisAfter = page === currentPage + 2 && currentPage < totalPages - 2;
+                  {/* 页码按钮 */}
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                      // 显示逻辑：始终显示第1页、最后1页、当前页及其前后各1页
+                      const showPage =
+                        page === 1 ||
+                        page === totalPages ||
+                        (page >= currentPage - 1 && page <= currentPage + 1);
 
-                    if (showEllipsisBefore || showEllipsisAfter) {
-                      return (
-                        <span key={page} className="px-2 text-gray-400">
-                          ...
-                        </span>
-                      );
-                    }
+                      // 显示省略号
+                      const showEllipsisBefore = page === currentPage - 2 && currentPage > 3;
+                      const showEllipsisAfter = page === currentPage + 2 && currentPage < totalPages - 2;
 
-                    if (!showPage) return null;
-
-                    return (
-                      <button
-                        key={page}
-                        onClick={() => handlePageChange(page)}
-                        className={`min-w-[32px] h-8 text-sm font-medium transition-all ${
-                          currentPage === page
-                            ? 'text-blue-700 font-bold'
-                            : 'text-blue-600 hover:text-blue-800'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* 下一页按钮 */}
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 bg-transparent text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1"
-                >
-                  <span className="text-sm font-medium">下一页</span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-
-                {/* 页码跳转 */}
-                <div className="flex items-center gap-1 ml-4 text-sm text-gray-600">
-                  <span>跳至</span>
-                  <input
-                    type="number"
-                    min="1"
-                    max={totalPages}
-                    value={jumpToPage || ''}
-                    onChange={(e) => setJumpToPage(e.target.value)}
-                    onKeyPress={handleJumpInputKeyPress}
-                    onFocus={() => setJumpToPage('')}
-                    onBlur={() => {
-                      if (jumpToPage) {
-                        handleJumpToPage();
+                      if (showEllipsisBefore || showEllipsisAfter) {
+                        return (
+                          <span key={page} className="px-2 text-gray-400">
+                            ...
+                          </span>
+                        );
                       }
-                    }}
-                    placeholder={String(currentPage)}
-                    className="w-12 text-center border border-gray-300 rounded px-2 py-1 focus:border-blue-500 focus:outline-none bg-white transition-colors hide-spin-buttons text-gray-600"
-                  />
-                  <span>页</span>
+
+                      if (!showPage) return null;
+
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => handlePageChange(page)}
+                          className={`min-w-[32px] h-8 text-sm font-medium transition-all ${
+                            currentPage === page
+                              ? 'text-blue-700 font-bold'
+                              : 'text-blue-600 hover:text-blue-800'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* 下一页按钮 */}
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 bg-transparent text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1"
+                  >
+                    <span className="text-sm font-medium">下一页</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+
+                  {/* 页码跳转 */}
+                  <div className="flex items-center gap-1 ml-4 text-sm text-gray-600">
+                    <span>跳至</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max={totalPages}
+                      value={jumpToPage || ''}
+                      onChange={(e) => setJumpToPage(e.target.value)}
+                      onKeyPress={handleJumpInputKeyPress}
+                      onFocus={() => setJumpToPage('')}
+                      onBlur={() => {
+                        if (jumpToPage) {
+                          handleJumpToPage();
+                        }
+                      }}
+                      placeholder={String(currentPage)}
+                      className="w-12 text-center border border-gray-300 rounded px-2 py-1 focus:border-blue-500 focus:outline-none bg-white transition-colors hide-spin-buttons text-gray-600"
+                    />
+                    <span>页</span>
+                  </div>
+                </div>
+
+                {/* 右侧：页码信息 */}
+                <div className="text-sm text-gray-500 whitespace-nowrap">
+                  第 {currentPage} / {totalPages} 页
                 </div>
               </div>
             </div>
@@ -728,6 +725,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
           </>
         )}
       </div>
+
     </main>
     </div>
   );
