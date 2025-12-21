@@ -7,6 +7,7 @@
  * 4. 月份导航
  */
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface DateRangeFilterProps {
@@ -17,6 +18,7 @@ interface DateRangeFilterProps {
 type CalendarType = 'from' | 'to' | null;
 
 export const DateRangeFilter = ({ value, onChange }: DateRangeFilterProps) => {
+  const { t } = useTranslation();
   const [activeCalendar, setActiveCalendar] = useState<CalendarType>(null);
   const [viewDate, setViewDate] = useState<Date>(new Date());
 
@@ -290,7 +292,7 @@ export const DateRangeFilter = ({ value, onChange }: DateRangeFilterProps) => {
           className="flex-1 px-3 py-2.5 text-base text-left focus:outline-none text-gray-700 hover:bg-gray-50 transition-colors"
         >
           <span className={tempFromDate ? '' : 'text-gray-400'}>
-            {tempFromDate || '起'}
+            {tempFromDate || t('caseList.dateFrom')}
           </span>
         </button>
 
@@ -307,7 +309,7 @@ export const DateRangeFilter = ({ value, onChange }: DateRangeFilterProps) => {
           className="flex-1 px-3 py-2.5 text-base text-left focus:outline-none text-gray-700 hover:bg-gray-50 transition-colors"
         >
           <span className={tempToDate ? '' : 'text-gray-400'}>
-            {tempToDate || '止'}
+            {tempToDate || t('caseList.dateTo')}
           </span>
         </button>
 
@@ -412,28 +414,28 @@ export const DateRangeFilter = ({ value, onChange }: DateRangeFilterProps) => {
                 onClick={() => applyQuickOption('last14days')}
                 className="px-2 py-1 text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
               >
-                Last 14 Days
+                {t('caseList.last14Days')}
               </button>
               <button
                 type="button"
                 onClick={() => applyQuickOption('last7days')}
                 className="px-2 py-1 text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
               >
-                Last 7 Days
+                {t('caseList.last7Days')}
               </button>
               <button
                 type="button"
                 onClick={() => applyQuickOption('yesterday')}
                 className="px-2 py-1 text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
               >
-                Yesterday
+                {t('caseList.yesterday')}
               </button>
               <button
                 type="button"
                 onClick={() => applyQuickOption('today')}
                 className="px-2 py-1 text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
               >
-                Today
+                {t('caseList.today')}
               </button>
             </div>
 
@@ -444,14 +446,14 @@ export const DateRangeFilter = ({ value, onChange }: DateRangeFilterProps) => {
                 onClick={handleCancel}
                 className="px-4 py-1.5 text-xs text-gray-600 hover:text-gray-900"
               >
-                Cancel
+                {t('caseList.cancel')}
               </button>
               <button
                 type="button"
                 onClick={handleOK}
                 className="px-4 py-1.5 bg-blue-500 text-white text-xs hover:bg-blue-600 transition-colors"
               >
-                OK
+                {t('caseList.ok')}
               </button>
             </div>
           </div>

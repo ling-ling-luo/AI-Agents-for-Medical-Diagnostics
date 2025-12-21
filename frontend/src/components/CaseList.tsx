@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { FileText, User, Stethoscope, Activity, Filter, RefreshCw, ChevronLeft, ChevronRight, X, HelpCircle } from 'lucide-react';
 import type { Case } from '../types';
 import { caseApi } from '../services/api';
@@ -16,13 +17,13 @@ interface CaseListProps {
 }
 
 export const CaseList = ({ embedded = false }: CaseListProps) => {
+  const { t } = useTranslation();
   const [cases, setCases] = useState<Case[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     patient_name: '',
     patient_id: '',
-    chief_complaint: '',
     gender: '', // male/female
     diagnosed: '', // yes/no
     created_from: '', // YYYY-MM-DD
@@ -46,7 +47,6 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
     setFilters({
       patient_name: '',
       patient_id: '',
-      chief_complaint: '',
       gender: '',
       diagnosed: '',
       created_from: '',
@@ -64,7 +64,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
       const data = await caseApi.getCases();
       setCases(data);
     } catch (err) {
-      setError('无法连接到服务器，请检查后端服务是否正常运行');
+      setError(t('caseList.loadError'));
       console.error('Error loading cases:', err);
     } finally {
       setLoading(false);
@@ -89,7 +89,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
       setCases(prevCases => prevCases.filter(c => c.id !== caseId));
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      setError(message || '删除失败，请重试');
+      setError(message || t('caseList.deleteFailed'));
       console.error('Error deleting case:', err);
     }
   };
@@ -101,8 +101,6 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
         || (case_.patient_name || '').toLowerCase().includes(filters.patient_name.trim().toLowerCase());
       const patientIdOk = !filters.patient_id.trim()
         || (case_.patient_id || '').toLowerCase().includes(filters.patient_id.trim().toLowerCase());
-      const chiefComplaintOk = !filters.chief_complaint.trim()
-        || (case_.chief_complaint || '').toLowerCase().includes(filters.chief_complaint.trim().toLowerCase());
 
       const genderOk = !filters.gender.trim() || (case_.gender || '') === filters.gender;
 
@@ -120,7 +118,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
         || (case_.creator?.username || '').toLowerCase().includes(filters.creator_username.trim().toLowerCase());
 
       // AND 联合筛选：所有非空筛选项都需要同时满足
-      return patientNameOk && patientIdOk && chiefComplaintOk && genderOk && diagnosedOk && createdFromOk && createdToOk && creatorOk;
+      return patientNameOk && patientIdOk && genderOk && diagnosedOk && createdFromOk && createdToOk && creatorOk;
     });
   }, [cases, filters]);
 
@@ -141,7 +139,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
   }, [filters]);
 
   const showCreatorFilter = hasRole('admin') || hasRole('doctor');
-  const creatorFilterLabel = hasRole('admin') ? '创建者：全部' : '创建者（只读）';
+  const creatorFilterLabel = hasRole('admin') ? t('caseList.creatorAll') : t('caseList.creatorReadonly');
 
   const uniqueCreatorUsernames = useMemo(() => {
     return Array.from(
@@ -191,7 +189,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
   if (loading) {
     return (
       <div className={`${embedded ? 'py-8' : 'flex-1 bg-gray-50'} flex items-center justify-center`}>
-        <Loading size="lg" text="正在加载病例数据..." />
+        <Loading size="lg" text={t('caseList.loading')} />
       </div>
     );
   }
@@ -203,7 +201,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Activity className="w-8 h-8 text-red-600" />
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">连接失败</h3>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('caseList.connectionFailed')}</h3>
           <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={loadCases}
@@ -222,106 +220,40 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
       <main className={`${embedded ? 'py-2' : 'container-custom py-3'} min-h-[calc(100vh-120px)] flex flex-col`}>
         {/* 筛选区域 - 非嵌入模式 */}
         {!embedded && (
-          <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4 shadow-sm">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-4">
+          <div className="bg-white rounded-lg border border-gray-200 p-5 mb-4 shadow-sm">
+            {/* 第一行：患者姓名、病历号、创建日期 */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-3 mb-4">
               {/* 患者姓名 */}
-              <div className="flex items-center gap-3">
-                <label className="text-base text-gray-700 whitespace-nowrap font-medium">
-                  患者姓名：
+              <div className="flex items-center gap-2">
+                <label className="text-base text-gray-700 font-medium w-32 text-right flex-shrink-0 whitespace-nowrap">
+                  {t('caseList.patientName')}：
                 </label>
                 <input
                   type="text"
-                  placeholder="输入姓名"
+                  placeholder={t('caseList.inputName')}
                   value={filters.patient_name}
                   onChange={(e) => updateFilter('patient_name', e.target.value)}
-                  className="flex-1 px-3 py-2.5 text-base border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
+                  className="w-40 px-3 py-2 text-sm border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
                 />
               </div>
 
               {/* 病历号 */}
-              <div className="flex items-center gap-3">
-                <label className="text-base text-gray-700 whitespace-nowrap font-medium">
-                  病历号：
+              <div className="flex items-center gap-2 -ml-10">
+                <label className="text-base text-gray-700 font-medium w-32 text-right flex-shrink-0 whitespace-nowrap">
+                  {t('caseList.patientId')}：
                 </label>
                 <input
                   type="text"
-                  placeholder="输入病历号"
+                  placeholder={t('caseList.inputPatientId')}
                   value={filters.patient_id}
                   onChange={(e) => updateFilter('patient_id', e.target.value)}
-                  className="flex-1 px-3 py-2.5 text-base border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
+                  className="w-40 px-3 py-2 text-sm border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
                 />
               </div>
 
-              {/* 主诉 */}
-              <div className="flex items-center gap-3">
-                <label className="text-base text-gray-700 whitespace-nowrap font-medium">
-                  主诉：
-                </label>
-                <input
-                  type="text"
-                  placeholder="输入主诉"
-                  value={filters.chief_complaint}
-                  onChange={(e) => updateFilter('chief_complaint', e.target.value)}
-                  className="flex-1 px-3 py-2.5 text-base border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
-                />
-              </div>
-
-              {/* 性别 */}
-              <div className="flex items-center gap-3">
-                <label className="text-base text-gray-700 whitespace-nowrap font-medium">
-                  性别：
-                </label>
-                <select
-                  value={filters.gender}
-                  onChange={(e) => updateFilter('gender', e.target.value)}
-                  className="flex-1 px-3 py-2.5 text-base border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
-                >
-                  <option value="">全部</option>
-                  <option value="male">男</option>
-                  <option value="female">女</option>
-                </select>
-              </div>
-
-              {/* 诊断状态 */}
-              <div className="flex items-center gap-3">
-                <label className="text-base text-gray-700 whitespace-nowrap font-medium">
-                  诊断状态：
-                </label>
-                <select
-                  value={filters.diagnosed}
-                  onChange={(e) => updateFilter('diagnosed', e.target.value)}
-                  className="flex-1 px-3 py-2.5 text-base border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
-                >
-                  <option value="">全部</option>
-                  <option value="yes">已诊断</option>
-                  <option value="no">未诊断</option>
-                </select>
-              </div>
-
-              {/* 创建者 */}
-              {showCreatorFilter && (
-                <div className="flex items-center gap-3">
-                  <label className="text-base text-gray-700 whitespace-nowrap font-medium">
-                    创建者：
-                  </label>
-                  <select
-                    value={filters.creator_username}
-                    onChange={(e) => updateFilter('creator_username', e.target.value)}
-                    disabled={!hasRole('admin')}
-                    className="flex-1 px-3 py-2.5 text-base border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed disabled:hover:border-gray-300"
-                  >
-                    <option value="">{creatorFilterLabel}</option>
-                    {uniqueCreatorUsernames.map((u) => (
-                      <option key={u} value={u}>{u}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* 日期范围筛选器 */}
-              <div className="flex items-center gap-3">
-                <label className="text-base text-gray-700 whitespace-nowrap font-medium flex items-center gap-1.5">
-                  创建日期：
+              {/* 创建日期 */}
+              <div className="flex items-center gap-2 -ml-16">
+                <label className="text-base text-gray-700 font-medium w-32 text-right flex-shrink-0 flex items-center justify-end gap-1.5 whitespace-nowrap">
                   <div className="relative">
                     <HelpCircle
                       className="w-4 h-4 text-gray-400 hover:text-blue-500 cursor-help transition-colors"
@@ -329,23 +261,24 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                       onMouseLeave={() => setShowTooltip(false)}
                     />
                     {showTooltip && (
-                      <div className="absolute left-0 top-6 z-50 w-64 p-3 bg-gray-800 text-white text-xs rounded shadow-lg">
-                        <div className="space-y-2">
-                          <p className="font-semibold">日期筛选使用说明：</p>
+                      <div className="absolute right-0 top-6 z-50 w-80 p-3 bg-gray-800 text-white text-xs rounded shadow-lg">
+                        <div className="space-y-2 text-left">
+                          <p className="font-semibold">{t('caseList.dateFilterHelp')}</p>
                           <ul className="list-disc list-inside space-y-1">
-                            <li>单击某日期：选择该单日</li>
-                            <li>单击两个不同日期：选择时间段</li>
-                            <li>长按拖动：快速选择连续时间段</li>
-                            <li>快捷按钮：选择常用时间段</li>
+                            <li>{t('caseList.dateFilterTip1')}</li>
+                            <li>{t('caseList.dateFilterTip2')}</li>
+                            <li>{t('caseList.dateFilterTip3')}</li>
+                            <li>{t('caseList.dateFilterTip4')}</li>
                           </ul>
                         </div>
                         {/* 小三角箭头 */}
-                        <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
+                        <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
                       </div>
                     )}
                   </div>
+                  {t('caseList.createdDate')}：
                 </label>
-                <div className="flex-1 min-w-[240px]">
+                <div className="w-72">
                   <DateRangeFilter
                     value={{ from: filters.created_from, to: filters.created_to }}
                     onChange={(range) => {
@@ -358,16 +291,84 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                   />
                 </div>
               </div>
+            </div>
 
-              {/* 重置按钮 - 与创建日期同行 */}
-              <div className="flex items-center justify-end">
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="px-8 py-2 bg-white text-gray-700 border border-gray-300 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-500 font-medium transition-all whitespace-nowrap"
+            {/* 第二行：性别、诊断状态、创建者、重置按钮 */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-3">
+              {/* 性别 */}
+              <div className="flex items-center gap-2">
+                <label className="text-base text-gray-700 font-medium w-32 text-right flex-shrink-0 whitespace-nowrap">
+                  {t('caseList.gender')}：
+                </label>
+                <select
+                  value={filters.gender}
+                  onChange={(e) => updateFilter('gender', e.target.value)}
+                  className="w-40 px-3 py-2 text-sm border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
                 >
-                  重置
-                </button>
+                  <option value="">{t('caseList.all')}</option>
+                  <option value="male">{t('caseList.male')}</option>
+                  <option value="female">{t('caseList.female')}</option>
+                </select>
+              </div>
+
+              {/* 诊断状态 */}
+              <div className="flex items-center gap-2 -ml-10">
+                <label className="text-base text-gray-700 font-medium w-32 text-right flex-shrink-0 whitespace-nowrap">
+                  {t('caseList.diagnosedStatus')}：
+                </label>
+                <select
+                  value={filters.diagnosed}
+                  onChange={(e) => updateFilter('diagnosed', e.target.value)}
+                  className="w-40 px-3 py-2 text-sm border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
+                >
+                  <option value="">{t('caseList.all')}</option>
+                  <option value="yes">{t('caseList.diagnosed')}</option>
+                  <option value="no">{t('caseList.notDiagnosed')}</option>
+                </select>
+              </div>
+
+              {/* 创建者 + 重置按钮 */}
+              <div className="flex items-center gap-2 -ml-16">
+                {showCreatorFilter ? (
+                  <>
+                    <label className="text-base text-gray-700 font-medium w-32 text-right flex-shrink-0 whitespace-nowrap">
+                      {t('caseList.creator')}：
+                    </label>
+                    <select
+                      value={filters.creator_username}
+                      onChange={(e) => updateFilter('creator_username', e.target.value)}
+                      disabled={!hasRole('admin')}
+                      className="w-40 px-3 py-2 text-sm border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed disabled:hover:border-gray-300"
+                    >
+                      <option value="">{creatorFilterLabel}</option>
+                      {uniqueCreatorUsernames.map((u) => (
+                        <option key={u} value={u}>{u}</option>
+                      ))}
+                    </select>
+                    <div className="flex-1"></div>
+                    {/* 重置按钮 - 右对齐 */}
+                    <button
+                      type="button"
+                      onClick={clearFilters}
+                      className="px-5 py-2 text-sm bg-white text-gray-700 border border-gray-300 rounded hover:bg-blue-50 hover:text-blue-600 hover:border-blue-500 font-medium transition-all whitespace-nowrap flex-shrink-0"
+                    >
+                      {t('caseList.reset')}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-32 flex-shrink-0"></div>
+                    <div className="flex-1"></div>
+                    {/* 重置按钮 - 右对齐 */}
+                    <button
+                      type="button"
+                      onClick={clearFilters}
+                      className="px-5 py-2 text-sm bg-white text-gray-700 border border-gray-300 rounded hover:bg-blue-50 hover:text-blue-600 hover:border-blue-500 font-medium transition-all whitespace-nowrap flex-shrink-0"
+                    >
+                      {t('caseList.reset')}
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -383,7 +384,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <Filter className="w-4 h-4 text-gray-400" />
-                    <span className="text-xs font-medium text-gray-700">筛选条件</span>
+                    <span className="text-xs font-medium text-gray-700">{t('caseList.filterTitle')}</span>
                     {hasActiveFilters && (
                       <span className="text-xs text-blue-600">({filteredCases.length} 条匹配)</span>
                     )}
@@ -395,7 +396,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                       className="flex items-center gap-1 text-xs text-gray-600 hover:text-gray-900"
                     >
                       <X className="w-3 h-3" />
-                      <span>清空</span>
+                      <span>{t('caseList.clearFilters')}</span>
                     </button>
                   )}
                 </div>
@@ -403,11 +404,11 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                   {/* 患者姓名 */}
                   <div className="flex items-center gap-2">
                     <label className="text-xs text-gray-700 whitespace-nowrap font-medium">
-                      患者姓名：
+                      {t('caseList.patientName')}：
                     </label>
                     <input
                       type="text"
-                      placeholder="输入姓名"
+                      placeholder={t('caseList.inputName')}
                       value={filters.patient_name}
                       onChange={(e) => updateFilter('patient_name', e.target.value)}
                       className="w-28 px-2.5 py-1.5 text-xs border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
@@ -417,27 +418,13 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                   {/* 病历号 */}
                   <div className="flex items-center gap-2">
                     <label className="text-xs text-gray-700 whitespace-nowrap font-medium">
-                      病历号：
+                      {t('caseList.patientId')}：
                     </label>
                     <input
                       type="text"
-                      placeholder="输入病历号"
+                      placeholder={t('caseList.inputPatientId')}
                       value={filters.patient_id}
                       onChange={(e) => updateFilter('patient_id', e.target.value)}
-                      className="w-28 px-2.5 py-1.5 text-xs border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
-                    />
-                  </div>
-
-                  {/* 主诉 */}
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs text-gray-700 whitespace-nowrap font-medium">
-                      主诉：
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="输入主诉"
-                      value={filters.chief_complaint}
-                      onChange={(e) => updateFilter('chief_complaint', e.target.value)}
                       className="w-28 px-2.5 py-1.5 text-xs border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
                     />
                   </div>
@@ -445,32 +432,32 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                   {/* 性别 */}
                   <div className="flex items-center gap-2">
                     <label className="text-xs text-gray-700 whitespace-nowrap font-medium">
-                      性别：
+                      {t('caseList.gender')}：
                     </label>
                     <select
                       value={filters.gender}
                       onChange={(e) => updateFilter('gender', e.target.value)}
                       className="w-28 px-2.5 py-1.5 text-xs border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
                     >
-                      <option value="">全部</option>
-                      <option value="male">男</option>
-                      <option value="female">女</option>
+                      <option value="">{t('caseList.all')}</option>
+                      <option value="male">{t('caseList.male')}</option>
+                      <option value="female">{t('caseList.female')}</option>
                     </select>
                   </div>
 
                   {/* 诊断状态 */}
                   <div className="flex items-center gap-2">
                     <label className="text-xs text-gray-700 whitespace-nowrap font-medium">
-                      诊断状态：
+                      {t('caseList.diagnosedStatus')}：
                     </label>
                     <select
                       value={filters.diagnosed}
                       onChange={(e) => updateFilter('diagnosed', e.target.value)}
                       className="w-28 px-2.5 py-1.5 text-xs border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
                     >
-                      <option value="">全部</option>
-                      <option value="yes">已诊断</option>
-                      <option value="no">未诊断</option>
+                      <option value="">{t('caseList.all')}</option>
+                      <option value="yes">{t('caseList.diagnosed')}</option>
+                      <option value="no">{t('caseList.notDiagnosed')}</option>
                     </select>
                   </div>
 
@@ -478,7 +465,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                   {showCreatorFilter && (
                     <div className="flex items-center gap-2">
                       <label className="text-xs text-gray-700 whitespace-nowrap font-medium">
-                        创建者：
+                        {t('caseList.creator')}：
                       </label>
                       <select
                         value={filters.creator_username}
@@ -497,7 +484,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                   {/* 日期范围筛选器 */}
                   <div className="flex items-center gap-2">
                     <label className="text-xs text-gray-700 whitespace-nowrap font-medium">
-                      创建日期：
+                      {t('caseList.createdDate')}：
                     </label>
                     <div className="w-44">
                       <DateRangeFilter
@@ -526,10 +513,10 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
               <div className="text-center">
                 <FileText className="w-14 h-14 text-gray-300 mx-auto mb-3" />
                 <h3 className="text-base font-medium text-gray-700 mb-1.5">
-                  {hasActiveFilters ? '未找到匹配的病例' : '暂无病例数据'}
+                  {hasActiveFilters ? t('caseList.noMatches') : t('caseList.noCases')}
                 </h3>
                 <p className="text-sm text-gray-500">
-                  {hasActiveFilters ? '请调整筛选条件' : '请先导入医疗病历文件'}
+                  {hasActiveFilters ? t('caseList.adjustFilters') : t('caseList.pleaseImport')}
                 </p>
               </div>
             </div>
@@ -578,19 +565,19 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                         <Dropdown
                           options={[
                             {
-                              label: '编辑资料',
+                              label: t('caseList.editProfile'),
                               icon: 'edit',
                               color: 'gray',
                               onClick: () => handleEditCase(case_.id),
                             },
                             {
-                              label: '查看历史',
+                              label: t('caseList.viewHistory'),
                               icon: 'clock',
                               color: 'gray',
                               onClick: () => handleViewHistory(case_.patient_id || ''),
                             },
                             {
-                              label: '删除病历',
+                              label: t('caseList.deleteCase'),
                               icon: 'trash',
                               color: 'red',
                               onClick: () => handleDeleteCase(case_.id),
@@ -605,7 +592,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                   <div className="flex items-center gap-2 mb-3 text-xs text-gray-600 font-medium">
                     {case_.age && (
                       <span>
-                        {case_.age} 岁
+                        {case_.age} {t('caseList.age')}
                       </span>
                     )}
                     {case_.age && case_.gender && (
@@ -613,7 +600,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                     )}
                     {case_.gender && (
                       <span>
-                        {case_.gender === 'male' ? '男' : case_.gender === 'female' ? '女' : '其他'}
+                        {case_.gender === 'male' ? t('caseList.male') : case_.gender === 'female' ? t('caseList.female') : t('caseList.other')}
                       </span>
                     )}
                   </div>
@@ -621,7 +608,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                   {/* 主诉信息 - 严格矩形，严丝合缝 */}
                   {case_.chief_complaint && (
                     <div className="mb-0 p-3 bg-blue-50 rounded-none border-t border-b border-blue-100">
-                      <p className="text-xs font-semibold text-gray-600 mb-1">主诉</p>
+                      <p className="text-xs font-semibold text-gray-600 mb-1">{t('caseList.chiefComplaint')}</p>
                       <p className="text-xs text-gray-700 leading-relaxed truncate">
                         {case_.chief_complaint}
                       </p>
@@ -637,7 +624,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                     className="w-full px-3 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-xs font-semibold rounded-none rounded-b-md transition-all flex items-center justify-center gap-1.5 whitespace-nowrap"
                   >
                     <Stethoscope className="w-4 h-4 flex-shrink-0" />
-                    <span className="truncate">开始诊断</span>
+                    <span className="truncate">{t('caseList.startDiagnosis')}</span>
                   </button>
                 </div>
               </div>
@@ -663,7 +650,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                     className="px-3 py-1.5 bg-transparent text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1"
                   >
                     <ChevronLeft className="w-4 h-4" />
-                    <span className="text-sm font-medium">上一页</span>
+                    <span className="text-sm font-medium">{t('caseList.prevPage')}</span>
                   </button>
 
                   {/* 页码按钮 */}
@@ -711,13 +698,13 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                     disabled={currentPage === totalPages}
                     className="px-3 py-1.5 bg-transparent text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1"
                   >
-                    <span className="text-sm font-medium">下一页</span>
+                    <span className="text-sm font-medium">{t('caseList.nextPage')}</span>
                     <ChevronRight className="w-4 h-4" />
                   </button>
 
                   {/* 页码跳转 */}
                   <div className="flex items-center gap-1 ml-4 text-sm text-gray-600">
-                    <span>跳至</span>
+                    <span>{t('caseList.jumpTo')}</span>
                     <input
                       type="number"
                       min="1"
@@ -734,7 +721,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                       placeholder={String(currentPage)}
                       className="w-12 text-center border border-gray-300 rounded px-2 py-1 focus:border-blue-500 focus:outline-none bg-white transition-colors hide-spin-buttons text-gray-600"
                     />
-                    <span>页</span>
+                    <span>{t('caseList.page')}</span>
                   </div>
                 </div>
 
