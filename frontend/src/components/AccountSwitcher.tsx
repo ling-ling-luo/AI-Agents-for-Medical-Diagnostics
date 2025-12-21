@@ -3,11 +3,13 @@
  * 显示历史登录账号，支持快速切换
  */
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/useAuth';
 import type { SavedAccount } from '../context/types';
 import { User, X, LogOut, ChevronDown, Loader } from 'lucide-react';
 
 export const AccountSwitcher = () => {
+  const { t } = useTranslation();
   const { user, savedAccounts, switchAccount, removeAccount, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [switchingTo, setSwitchingTo] = useState<string | null>(null);
@@ -26,7 +28,7 @@ export const AccountSwitcher = () => {
 
   const handleSwitch = async (username: string) => {
     if (!password) {
-      setError('请输入密码');
+      setError(t('account.pleaseEnterPassword'));
       return;
     }
 
@@ -40,7 +42,7 @@ export const AccountSwitcher = () => {
     } catch (err) {
       console.error('Switch account error:', err);
       const message = err instanceof Error ? err.message : String(err);
-      setError('切换失败：' + (message || '用户名或密码错误'));
+      setError(t('account.switchFailed') + (message || t('account.invalidCredentials')));
     } finally {
       setSwitchingTo(null);
     }
@@ -64,11 +66,11 @@ export const AccountSwitcher = () => {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return '刚刚';
-    if (diffMins < 60) return `${diffMins}分钟前`;
-    if (diffHours < 24) return `${diffHours}小时前`;
-    if (diffDays < 7) return `${diffDays}天前`;
-    return date.toLocaleDateString('zh-CN');
+    if (diffMins < 1) return t('account.justNow');
+    if (diffMins < 60) return `${diffMins} ${t('account.minutesAgo')}`;
+    if (diffHours < 24) return `${diffHours} ${t('account.hoursAgo')}`;
+    if (diffDays < 7) return `${diffDays} ${t('account.daysAgo')}`;
+    return date.toLocaleDateString();
   };
 
   return (
@@ -86,7 +88,7 @@ export const AccountSwitcher = () => {
             {user?.full_name || user?.username}
           </p>
           <p className="text-xs text-gray-500">
-            {user?.roles.map(r => r === 'admin' ? '管理员' : r === 'doctor' ? '医生' : '普通用户').join(', ')}
+            {user?.roles.map(r => r === 'admin' ? t('account.admin') : r === 'doctor' ? t('account.doctor') : t('account.user')).join(', ')}
           </p>
         </div>
         <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -127,7 +129,7 @@ export const AccountSwitcher = () => {
             {otherAccounts.length > 0 && (
               <div className="py-2">
                 <div className="px-4 py-2 text-xs font-medium text-gray-500">
-                  切换账号
+                  {t('account.switchAccount')}
                 </div>
                 {otherAccounts.map(account => (
                   <div key={account.username}>
@@ -149,7 +151,7 @@ export const AccountSwitcher = () => {
                               handleSwitch(account.username);
                             }
                           }}
-                          placeholder="输入密码"
+                          placeholder={t('account.enterPassword')}
                           autoFocus
                           className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                         />
@@ -165,10 +167,10 @@ export const AccountSwitcher = () => {
                             {switchingTo === account.username ? (
                               <>
                                 <Loader className="w-3 h-3 animate-spin" />
-                                <span>切换中...</span>
+                                <span>{t('common.switchingAccount')}</span>
                               </>
                             ) : (
-                              <span>确认</span>
+                              <span>{t('common.confirm')}</span>
                             )}
                           </button>
                           <button
@@ -179,7 +181,7 @@ export const AccountSwitcher = () => {
                             }}
                             className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-200 rounded transition-colors"
                           >
-                            取消
+                            {t('common.cancel')}
                           </button>
                         </div>
                       </div>
@@ -203,7 +205,7 @@ export const AccountSwitcher = () => {
                         <button
                           onClick={(e) => handleRemove(account.username, e)}
                           className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded transition-all"
-                          title="移除此账号"
+                          title={t('account.removeAccount')}
                         >
                           <X className="w-4 h-4 text-gray-500" />
                         </button>
@@ -224,7 +226,7 @@ export const AccountSwitcher = () => {
                 className="w-full px-4 py-3 hover:bg-gray-50 transition-colors flex items-center gap-2 text-gray-700"
               >
                 <LogOut className="w-4 h-4" />
-                <span className="text-sm">退出登录</span>
+                <span className="text-sm">{t('common.logout')}</span>
               </button>
             </div>
           </div>

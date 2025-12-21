@@ -3,11 +3,13 @@
  */
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/useAuth';
 import { AlertCircle, Loader, CheckCircle } from 'lucide-react';
 
 export const Register = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { register } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -22,12 +24,12 @@ export const Register = () => {
   // 密码强度提示
   const getPasswordStrength = (password: string) => {
     if (password.length === 0) return null;
-    if (password.length < 6) return { text: '密码太短', color: 'text-red-600' };
-    if (password.length < 8) return { text: '密码强度：弱', color: 'text-orange-600' };
+    if (password.length < 6) return { text: t('auth.passwordTooShort'), color: 'text-red-600' };
+    if (password.length < 8) return { text: t('auth.passwordWeak'), color: 'text-orange-600' };
     if (!/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
-      return { text: '密码强度：中', color: 'text-yellow-600' };
+      return { text: t('auth.passwordMedium'), color: 'text-yellow-600' };
     }
-    return { text: '密码强度：强', color: 'text-green-600' };
+    return { text: t('auth.passwordStrong'), color: 'text-green-600' };
   };
 
   const passwordStrength = getPasswordStrength(formData.password);
@@ -44,27 +46,27 @@ export const Register = () => {
 
     // 验证
     if (!formData.username || !formData.password) {
-      setError('请填写所有必填项');
+      setError(t('auth.fillAllRequired'));
       return;
     }
 
     if (formData.username.length < 3) {
-      setError('用户名至少3个字符');
+      setError(t('auth.usernameMinLength'));
       return;
     }
 
     if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
-      setError('用户名只能包含字母、数字和下划线');
+      setError(t('auth.usernameInvalidChars'));
       return;
     }
 
     if (formData.password.length < 6) {
-      setError('密码至少6个字符');
+      setError(t('auth.passwordMinLength'));
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError('两次输入的密码不一致');
+      setError(t('auth.passwordsNotMatch'));
       return;
     }
 
@@ -85,7 +87,7 @@ export const Register = () => {
       if (detail) {
         setError(detail);
       } else {
-        setError('注册失败，请稍后重试');
+        setError(t('auth.registerFailed'));
       }
     } finally {
       setIsLoading(false);
@@ -98,9 +100,9 @@ export const Register = () => {
         {/* Logo和标题 */}
         <div className="text-center mb-8">
           <h1 className="text-2xl font-normal text-gray-800 mb-2">
-            创建您的账户
+            {t('auth.createYourAccount')}
           </h1>
-          <p className="text-sm text-gray-600">加入 AI 医疗诊断系统</p>
+          <p className="text-sm text-gray-600">{t('auth.joinSystem')}</p>
         </div>
 
         {/* 注册表单 */}
@@ -113,13 +115,13 @@ export const Register = () => {
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
-                placeholder="用户名（必填）"
+                placeholder={t('auth.usernameRequired')}
                 disabled={isLoading}
                 className="w-full px-4 py-3 border border-gray-300 rounded text-base text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all disabled:bg-gray-100"
                 autoFocus
               />
               <p className="text-xs text-gray-500 mt-1 ml-1">
-                3-50个字符，仅字母、数字和下划线
+                {t('auth.usernameHint')}
               </p>
             </div>
 
@@ -130,7 +132,7 @@ export const Register = () => {
                 name="fullName"
                 value={formData.fullName}
                 onChange={handleChange}
-                placeholder="姓名（可选）"
+                placeholder={t('auth.fullNameOptional')}
                 disabled={isLoading}
                 className="w-full px-4 py-3 border border-gray-300 rounded text-base text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all disabled:bg-gray-100"
               />
@@ -143,7 +145,7 @@ export const Register = () => {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="密码（必填）"
+                placeholder={t('auth.passwordRequired')}
                 disabled={isLoading}
                 className="w-full px-4 py-3 border border-gray-300 rounded text-base text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all disabled:bg-gray-100"
               />
@@ -161,7 +163,7 @@ export const Register = () => {
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                placeholder="确认密码（必填）"
+                placeholder={t('auth.confirmPasswordRequired')}
                 disabled={isLoading}
                 className="w-full px-4 py-3 border border-gray-300 rounded text-base text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all disabled:bg-gray-100"
               />
@@ -174,12 +176,12 @@ export const Register = () => {
                   {formData.password === formData.confirmPassword ? (
                     <>
                       <CheckCircle className="w-3 h-3" />
-                      <span>密码匹配</span>
+                      <span>{t('auth.passwordMatch')}</span>
                     </>
                   ) : (
                     <>
                       <AlertCircle className="w-3 h-3" />
-                      <span>密码不匹配</span>
+                      <span>{t('auth.passwordMismatch')}</span>
                     </>
                   )}
                 </p>
@@ -204,10 +206,10 @@ export const Register = () => {
                 {isLoading ? (
                   <>
                     <Loader className="w-5 h-5 animate-spin" />
-                    <span>注册中...</span>
+                    <span>{t('auth.registering')}</span>
                   </>
                 ) : (
-                  <span>注册</span>
+                  <span>{t('auth.registerButton')}</span>
                 )}
               </button>
             </div>
@@ -215,13 +217,13 @@ export const Register = () => {
 
           {/* 登录链接 */}
           <div className="mt-6 text-center">
-            <span className="text-sm text-gray-600">已有账户？</span>
+            <span className="text-sm text-gray-600">{t('auth.hasAccount')}</span>
             {' '}
             <Link
               to="/login"
               className="text-sm text-blue-600 hover:text-blue-700 font-medium"
             >
-              立即登录
+              {t('auth.signInNow')}
             </Link>
           </div>
         </div>

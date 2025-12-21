@@ -34,25 +34,44 @@
 - `src/i18n/locales/zh-CN.json` - `app.*`, `nav.*`, `breadcrumb.*`
 - `src/i18n/locales/en-US.json` - 对应英文翻译
 
+#### 3. 账号切换组件（2025-12-22）
+**文件**: `src/components/AccountSwitcher.tsx`
+
+**翻译内容**:
+- [x] 角色显示（管理员、医生、普通用户）
+- [x] 切换账号菜单标签
+- [x] 时间显示（刚刚、X分钟前、X小时前、X天前）
+- [x] 密码输入提示
+- [x] 确认、取消、切换中等按钮文字
+- [x] 错误提示信息
+- [x] 退出登录按钮
+
+**翻译文件**:
+- `src/i18n/locales/zh-CN.json` - `common.*`, `account.*`
+- `src/i18n/locales/en-US.json` - 对应英文翻译
+
+#### 4. 登录/注册页面（2025-12-22）
+**文件**: `src/components/Login.tsx`, `src/components/Register.tsx`
+
+**翻译内容**:
+- [x] 登录表单（用户名、密码、登录按钮、登录中状态）
+- [x] 注册表单（用户名、姓名、密码、确认密码）
+- [x] 表单验证错误提示（必填项、长度限制、格式验证）
+- [x] 密码强度提示（太短、弱、中、强）
+- [x] 密码匹配提示
+- [x] 页面标题和副标题
+- [x] 注册/登录链接文案
+- [x] 测试账户提示
+- [x] 占位符文本
+- [x] 用户名格式提示
+
+**翻译文件**:
+- `src/i18n/locales/zh-CN.json` - `auth.*` (28个翻译键)
+- `src/i18n/locales/en-US.json` - 对应英文翻译
+
 ---
 
 ### ⏳ 待翻译模块
-
-#### 3. 登录/注册页面（待计划）
-**文件**: `src/components/Login.tsx`, `src/components/Register.tsx`
-
-**计划翻译内容**:
-- [ ] 登录表单（用户名、密码、登录按钮）
-- [ ] 注册表单
-- [ ] 表单验证错误提示
-- [ ] "忘记密码"、"注册账号"等链接文案
-
-**预计翻译键**:
-```
-auth.login, auth.register, auth.username, auth.password,
-auth.forgotPassword, auth.noAccount, auth.hasAccount,
-validation.required, validation.minLength, validation.invalidEmail
-```
 
 ---
 
@@ -214,14 +233,78 @@ validation.required, validation.minLength, validation.invalidEmail
 
 ---
 
-## 下一步计划
+## 下一步计划（按优先级排序）
 
-1. ✅ 完成基础框架和布局组件（2025-12-22）
-2. ⏳ 翻译登录/注册页面
-3. ⏳ 翻译仪表盘页面
-4. ⏳ 翻译病例相关页面
-5. ⏳ 翻译其他功能页面
-6. ⏳ 完善通用组件翻译
+### 优先级说明
+- **P0（最高）**：必须先翻译，影响用户登录和基本导航
+- **P1（高）**：核心业务功能，使用频率高
+- **P2（中）**：辅助功能，提升体验
+- **P3（低）**：低频功能，可最后处理
+
+### 翻译计划
+
+1. ✅ **P0** - 完成基础框架和布局组件（2025-12-22）
+   - 侧边栏、导航栏、面包屑
+
+2. ✅ **P0** - 账号切换组件（AccountSwitcher）- 已完成（2025-12-22）
+   - 用户下拉菜单、账号切换、退出登录
+   - **位置**：Header 右上角，所有页面可见
+   - **文件**：`src/components/AccountSwitcher.tsx`
+
+3. ✅ **P0** - 登录/注册页面 - 已完成（2025-12-22）
+   - 登录表单、注册表单、验证提示
+   - **原因**：所有用户首次进入系统必经路径
+   - **文件**：`src/components/Login.tsx`, `src/components/Register.tsx`
+
+4. ⏳ **P1** - 仪表盘页面（Dashboard）
+   - 统计卡片、图表标题、快捷操作
+   - **原因**：登录后首页，高频访问
+   - **文件**：`src/pages/Dashboard.tsx`
+
+5. ⏳ **P1** - 病例列表页面（CaseList）
+   - 表格列标题、筛选器、操作按钮、分页
+   - **原因**：核心业务功能，医生主要工作界面
+   - **文件**：`src/components/CaseList.tsx`
+
+6. ⏳ **P1** - 创建/编辑病例表单
+   - 表单字段、验证提示、提交按钮
+   - **原因**：创建病例的关键流程
+   - **文件**：`src/components/CreateCaseForm.tsx`, `src/components/EditCaseWrapper.tsx`
+
+7. ⏳ **P1** - 病例详情页面（CaseDetail）
+   - 患者信息、病史、诊断结果、操作按钮
+   - **原因**：查看病例详情的核心页面
+   - **文件**：`src/components/CaseDetail.tsx`
+
+8. ⏳ **P2** - 诊断历史页面
+   - 列表标题、筛选器、状态标签
+   - **原因**：查看历史记录，辅助决策
+   - **文件**：`src/pages/AllDiagnosisHistory.tsx`
+
+9. ⏳ **P2** - 诊断详情页面
+   - 报告标题、导出选项、返回按钮
+   - **原因**：查看诊断详情
+   - **文件**：`src/pages/DiagnosisDetailPage.tsx`
+
+10. ⏳ **P2** - 导入向导（ImportWizard）
+    - 步骤标题、上传提示、预览表格
+    - **原因**：批量导入功能
+    - **文件**：`src/components/ImportWizard.tsx`
+
+11. ⏳ **P3** - 数据分析页面
+    - 图表标题、统计维度、日期选择器
+    - **原因**：数据可视化，管理员使用
+    - **文件**：`src/pages/DataAnalysis.tsx`
+
+12. ⏳ **P3** - 设置页面
+    - 设置项标题、保存/重置按钮
+    - **原因**：低频使用的配置页面
+    - **文件**：`src/pages/Settings.tsx`
+
+13. ⏳ **P2** - 通用组件（Pagination等）
+    - 分页控件、通用提示、加载状态
+    - **原因**：贯穿多个页面的通用元素
+    - **文件**：多个组件
 
 ---
 
@@ -230,4 +313,6 @@ validation.required, validation.minLength, validation.invalidEmail
 | 日期 | 负责人 | 变更内容 |
 |------|-------|---------|
 | 2025-12-22 | Claude | 初始化 i18n 框架，完成侧边栏/导航栏翻译 |
+| 2025-12-22 | Claude | 完成账号切换组件（AccountSwitcher）翻译 |
+| 2025-12-22 | Claude | 完成登录/注册页面（Login & Register）翻译，包含28个auth翻译键 |
 

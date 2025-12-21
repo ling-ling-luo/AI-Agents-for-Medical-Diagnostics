@@ -3,11 +3,13 @@
  */
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/useAuth';
 import { AlertCircle, Loader } from 'lucide-react';
 
 export const Login = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { login } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -28,7 +30,7 @@ export const Login = () => {
     setError(null);
 
     if (!formData.username || !formData.password) {
-      setError('请输入用户名和密码');
+      setError(t('auth.pleaseEnterCredentials'));
       return;
     }
 
@@ -40,11 +42,11 @@ export const Login = () => {
       console.error('Login error:', err);
       const status = err instanceof Error ? undefined : (err as { response?: { status?: number } }).response?.status;
       if (status === 401) {
-        setError('用户名或密码错误');
+        setError(t('auth.invalidCredentials'));
       } else if (status === 403) {
-        setError('账户已被禁用，请联系管理员');
+        setError(t('auth.accountDisabled'));
       } else {
-        setError('登录失败，请稍后重试');
+        setError(t('auth.loginFailed'));
       }
     } finally {
       setIsLoading(false);
@@ -57,9 +59,9 @@ export const Login = () => {
         {/* Logo和标题 */}
         <div className="text-center mb-8">
           <h1 className="text-2xl font-normal text-gray-800 mb-2">
-            AI 医疗诊断系统
+            {t('app.fullName')}
           </h1>
-          <p className="text-sm text-gray-600">登录到您的账户</p>
+          <p className="text-sm text-gray-600">{t('auth.loginToAccount')}</p>
         </div>
 
         {/* 登录表单 */}
@@ -72,7 +74,7 @@ export const Login = () => {
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
-                placeholder="用户名"
+                placeholder={t('auth.username')}
                 disabled={isLoading}
                 className="w-full px-4 py-3 border border-gray-300 rounded text-base text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all disabled:bg-gray-100 disabled:text-gray-500"
                 autoFocus
@@ -86,7 +88,7 @@ export const Login = () => {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="密码"
+                placeholder={t('auth.password')}
                 disabled={isLoading}
                 className="w-full px-4 py-3 border border-gray-300 rounded text-base text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all disabled:bg-gray-100 disabled:text-gray-500"
               />
@@ -110,10 +112,10 @@ export const Login = () => {
                 {isLoading ? (
                   <>
                     <Loader className="w-5 h-5 animate-spin" />
-                    <span>登录中...</span>
+                    <span>{t('auth.loggingIn')}</span>
                   </>
                 ) : (
-                  <span>登录</span>
+                  <span>{t('auth.loginButton')}</span>
                 )}
               </button>
             </div>
@@ -121,13 +123,13 @@ export const Login = () => {
 
           {/* 注册链接 */}
           <div className="mt-6 text-center">
-            <span className="text-sm text-gray-600">还没有账户？</span>
+            <span className="text-sm text-gray-600">{t('auth.noAccount')}</span>
             {' '}
             <Link
               to="/register"
               className="text-sm text-blue-600 hover:text-blue-700 font-medium"
             >
-              创建账户
+              {t('auth.createAccount')}
             </Link>
           </div>
         </div>
@@ -135,7 +137,7 @@ export const Login = () => {
         {/* 测试账户提示 */}
         <div className="mt-6 text-center">
           <p className="text-xs text-gray-500">
-            测试账户：admin / admin123
+            {t('auth.testAccount')}: admin / admin123
           </p>
         </div>
       </div>
