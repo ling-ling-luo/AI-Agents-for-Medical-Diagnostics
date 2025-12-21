@@ -1,0 +1,32 @@
+{
+  "app": {
+    "name": "AI 诊断",
+    "fullName": "AI 医疗诊断系统",
+    "version": "v1.0.0"
+  },
+  "nav": {
+    "home": "首页",
+    "dashboard": "首页",
+    "cases": "病例列表",
+    "import": "导入病例",
+    "createCase": "新增病例",
+    "diagnoses": "诊断历史",
+    "analysis": "数据分析",
+    "settings": "系统设置"
+  },
+  "breadcrumb": {
+    "home": "首页",
+    "dashboard": "首页",
+    "cases": "病例列表",
+    "casesNew": "新增病例",
+    "import": "导入病例",
+    "history": "诊断历史",
+    "analysis": "数据分析",
+    "settings": "系统设置"
+  },
+  "common": {
+    "logout": "退出登录",
+    "profile": "个人资料",
+    "language": "语言"
+  }
+}

@@ -1,4 +1,5 @@
 import { Link, NavLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Home,
   FileText,
@@ -11,14 +12,16 @@ import {
 } from 'lucide-react';
 
 export const Sidebar = () => {
+  const { t } = useTranslation();
+
   const navItems = [
-    { path: '/dashboard', label: '首页', icon: Home, end: true },
-    { path: '/cases', label: '病例列表', icon: FileText, end: true },
-    { path: '/import', label: '导入病例', icon: Upload, end: true },
-    { path: '/cases/new', label: '新增病例', icon: Plus, end: true },
-    { path: '/diagnoses', label: '诊断历史', icon: History, end: true },
-    { path: '/analysis', label: '数据分析', icon: BarChart3, end: true },
-    { path: '/settings', label: '系统设置', icon: Settings, end: true },
+    { path: '/dashboard', label: t('nav.dashboard'), icon: Home, end: true },
+    { path: '/cases', label: t('nav.cases'), icon: FileText, end: true },
+    { path: '/import', label: t('nav.import'), icon: Upload, end: true },
+    { path: '/cases/new', label: t('nav.createCase'), icon: Plus, end: true },
+    { path: '/diagnoses', label: t('nav.diagnoses'), icon: History, end: true },
+    { path: '/analysis', label: t('nav.analysis'), icon: BarChart3, end: true },
+    { path: '/settings', label: t('nav.settings'), icon: Settings, end: true },
   ];
 
   return (
@@ -30,7 +33,7 @@ export const Sidebar = () => {
             <Stethoscope className="w-7 h-7 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-semibold text-white">AI 诊断</h1>
+            <h1 className="text-2xl font-semibold text-white">{t('app.name')}</h1>
           </div>
         </Link>
       </div>
@@ -65,8 +68,8 @@ export const Sidebar = () => {
 
       {/* Footer */}
       <div className="p-6 text-sm text-white !opacity-100">
-        <p>AI 医疗诊断系统</p>
-        <p className="mt-2">v1.0.0</p>
+        <p>{t('app.fullName')}</p>
+        <p className="mt-2">{t('app.version')}</p>
       </div>
     </div>
   );

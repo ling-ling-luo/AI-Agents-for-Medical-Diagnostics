@@ -1,0 +1,32 @@
+{
+  "app": {
+    "name": "AI Diagnosis",
+    "fullName": "AI Medical Diagnosis System",
+    "version": "v1.0.0"
+  },
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "cases": "Cases",
+    "import": "Import Cases",
+    "createCase": "New Case",
+    "diagnoses": "Diagnosis History",
+    "analysis": "Data Analysis",
+    "settings": "Settings"
+  },
+  "breadcrumb": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "cases": "Cases",
+    "casesNew": "New Case",
+    "import": "Import Cases",
+    "history": "Diagnosis History",
+    "analysis": "Data Analysis",
+    "settings": "Settings"
+  },
+  "common": {
+    "logout": "Logout",
+    "profile": "Profile",
+    "language": "Language"
+  }
+}

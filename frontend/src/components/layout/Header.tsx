@@ -1,19 +1,22 @@
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AccountSwitcher } from '../AccountSwitcher';
+import { LanguageSwitcher } from '../LanguageSwitcher';
 
 export const Header = () => {
   const location = useLocation();
+  const { t } = useTranslation();
 
   // Map routes to breadcrumb labels
   const breadcrumbMap: Record<string, string> = {
-    '/': '首页',
-    '/dashboard': '首页',
-    '/cases': '病例列表',
-    '/cases/new': '新增病例',
-    '/import': '导入病例',
-    '/history': '诊断历史',
-    '/analysis': '数据分析',
-    '/settings': '系统设置',
+    '/': t('breadcrumb.home'),
+    '/dashboard': t('breadcrumb.dashboard'),
+    '/cases': t('breadcrumb.cases'),
+    '/cases/new': t('breadcrumb.casesNew'),
+    '/import': t('breadcrumb.import'),
+    '/history': t('breadcrumb.history'),
+    '/analysis': t('breadcrumb.analysis'),
+    '/settings': t('breadcrumb.settings'),
   };
 
   // Generate breadcrumbs based on current path
@@ -22,7 +25,7 @@ export const Header = () => {
     const breadcrumbs = [];
 
     // Always start with home
-    breadcrumbs.push({ path: '/', label: '首页' });
+    breadcrumbs.push({ path: '/', label: t('breadcrumb.home') });
 
     // If current path has a mapping, use it directly (avoid intermediate paths)
     if (currentPath !== '/' && breadcrumbMap[currentPath]) {
@@ -69,7 +72,8 @@ export const Header = () => {
       </div>
 
       {/* Account Switcher */}
-      <div className="flex items-center">
+      <div className="flex items-center gap-4">
+        <LanguageSwitcher />
         <AccountSwitcher />
       </div>
     </header>
