@@ -69,6 +69,21 @@
 - `src/i18n/locales/zh-CN.json` - `auth.*` (28个翻译键)
 - `src/i18n/locales/en-US.json` - 对应英文翻译
 
+#### 5. 仪表盘页面（2025-12-22）
+**文件**: `src/pages/Dashboard.tsx`
+
+**翻译内容**:
+- [x] 欢迎标题和副标题
+- [x] 统计卡片（总病例数、总诊断数、今日新增）
+- [x] 加载状态提示
+- [x] 错误提示和重新加载按钮
+- [x] 系统概览区域
+- [x] 使用指南和系统状态文本
+
+**翻译文件**:
+- `src/i18n/locales/zh-CN.json` - `dashboard.*` (11个翻译键)
+- `src/i18n/locales/en-US.json` - 对应英文翻译
+
 ---
 
 ### ⏳ 待翻译模块
@@ -233,6 +248,129 @@
 
 ---
 
+## 下一步翻译计划（P1 优先级）
+
+根据当前进度，接下来将翻译 P1 优先级的核心业务页面：
+
+### 第一阶段：仪表盘页面（Dashboard）
+**预计翻译键数量**: ~15个
+**文件**: `src/pages/Dashboard.tsx`
+**复杂度**: ⭐️⭐️ (中等)
+
+**待翻译内容**:
+- 页面标题和欢迎语
+- 统计卡片（总病例数、总诊断数、今日新增）
+- 加载状态提示
+- 错误提示
+- 重新加载按钮
+- 系统概览区域（使用指南、系统状态）
+
+**预计翻译键**:
+```
+dashboard.welcome
+dashboard.subtitle
+dashboard.totalCases
+dashboard.totalDiagnoses
+dashboard.todayNew
+dashboard.loading
+dashboard.loadError
+dashboard.reload
+dashboard.systemOverview
+dashboard.userGuide
+dashboard.systemStatus
+```
+
+---
+
+### 第二阶段：病例列表页面（CaseList）
+**预计翻译键数量**: ~50个
+**文件**: `src/components/CaseList.tsx` (755行，内容最多)
+**复杂度**: ⭐️⭐️⭐️⭐️⭐️ (非常复杂)
+
+**待翻译内容**:
+- 筛选器标签（患者姓名、病历号、主诉、性别、诊断状态、创建者、创建日期）
+- 筛选器占位符
+- 下拉选项（性别：男/女/全部，诊断状态：已诊断/未诊断/全部）
+- 日期筛选使用说明（4条提示）
+- 快捷时间段按钮（今天、近7天、近30天、全部）
+- 重置筛选按钮
+- 病例卡片字段（患者姓名、病历号、性别、年龄、主诉、诊断状态等）
+- 操作按钮（查看详情、编辑、删除、查看诊断历史、开始诊断）
+- 分页控件（首页、上一页、下一页、末页、跳转到第X页）
+- 空状态提示（无病例、筛选无结果）
+- 加载状态
+- 错误提示
+- 删除确认对话框
+
+**预计翻译键分类**:
+```
+// 筛选器 (15个)
+caseList.filter.patientName
+caseList.filter.patientId
+caseList.filter.chiefComplaint
+caseList.filter.gender
+caseList.filter.diagnosedStatus
+caseList.filter.creator
+caseList.filter.createdDate
+caseList.filter.all
+caseList.filter.male
+caseList.filter.female
+caseList.filter.diagnosed
+caseList.filter.notDiagnosed
+caseList.filter.reset
+caseList.filter.dateHelp
+caseList.filter.quickDates.*
+
+// 卡片和操作 (15个)
+caseList.card.patientName
+caseList.card.patientId
+caseList.card.gender
+caseList.card.age
+caseList.card.chiefComplaint
+caseList.action.view
+caseList.action.edit
+caseList.action.delete
+caseList.action.viewHistory
+caseList.action.startDiagnosis
+
+// 分页 (10个)
+caseList.pagination.first
+caseList.pagination.prev
+caseList.pagination.next
+caseList.pagination.last
+caseList.pagination.jumpTo
+caseList.pagination.total
+caseList.pagination.page
+
+// 状态提示 (10个)
+caseList.loading
+caseList.loadError
+caseList.empty
+caseList.noResults
+caseList.deleteSuccess
+caseList.deleteFailed
+caseList.reload
+```
+
+---
+
+### 翻译策略
+
+**按阶段逐步翻译，每完成一个阶段暂停检查：**
+
+1. ✅ **已完成**: P0 页面（登录、注册、账号切换）
+2. ⏳ **当前阶段**: Dashboard（预计20分钟）
+3. ⏳ **下一阶段**: CaseList（预计40分钟，内容最多）
+4. ⏳ **后续阶段**: 其他 P1/P2 页面
+
+**每个阶段完成后**:
+- 让用户测试翻译效果
+- 确认没问题后提交 Git
+- 更新进度文档
+- 继续下一个页面
+
+---
+
 ## 下一步计划（按优先级排序）
 
 ### 优先级说明
@@ -256,7 +394,7 @@
    - **原因**：所有用户首次进入系统必经路径
    - **文件**：`src/components/Login.tsx`, `src/components/Register.tsx`
 
-4. ⏳ **P1** - 仪表盘页面（Dashboard）
+4. ✅ **P1** - 仪表盘页面（Dashboard）- 已完成（2025-12-22）
    - 统计卡片、图表标题、快捷操作
    - **原因**：登录后首页，高频访问
    - **文件**：`src/pages/Dashboard.tsx`
@@ -315,4 +453,5 @@
 | 2025-12-22 | Claude | 初始化 i18n 框架，完成侧边栏/导航栏翻译 |
 | 2025-12-22 | Claude | 完成账号切换组件（AccountSwitcher）翻译 |
 | 2025-12-22 | Claude | 完成登录/注册页面（Login & Register）翻译，包含28个auth翻译键 |
+| 2025-12-22 | Claude | 完成仪表盘页面（Dashboard）翻译，包含11个dashboard翻译键 |
 

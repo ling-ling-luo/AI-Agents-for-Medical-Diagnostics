@@ -86,5 +86,19 @@
     "passwordMinLength": "Password must be at least 6 characters",
     "passwordsNotMatch": "Passwords do not match",
     "registerFailed": "Registration failed, please try again later"
+  },
+  "dashboard": {
+    "welcome": "Welcome to AI Medical Diagnosis System",
+    "subtitle": "View overall system performance here",
+    "totalCases": "Total Cases",
+    "totalDiagnoses": "Total Diagnoses",
+    "todayNew": "Today's New",
+    "systemOverview": "System Overview",
+    "userGuide": "User Guide",
+    "userGuideText": "Select the corresponding function from the left navigation bar to start using the system. You can view case list, import new cases or create new diagnosis cases.",
+    "systemStatus": "System Status",
+    "systemStatusText": "System is running normally. All functions are available, please start your diagnosis work at any time.",
+    "loadError": "Failed to load statistics",
+    "reload": "Reload"
   }
 }

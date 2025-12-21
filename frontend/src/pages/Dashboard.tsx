@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { caseApi } from '../services/api';
 
 export const Dashboard = () => {
+  const { t } = useTranslation();
   const [stats, setStats] = useState({
     totalCases: 0,
     totalDiagnoses: 0,
@@ -37,7 +39,7 @@ export const Dashboard = () => {
         });
       } catch (err) {
         console.error('Failed to fetch dashboard stats:', err);
-        setError('无法加载统计数据');
+        setError(t('dashboard.loadError'));
       } finally {
         setLoading(false);
       }
@@ -51,7 +53,7 @@ export const Dashboard = () => {
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">加载中...</p>
+          <p className="mt-4 text-gray-600">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -67,7 +69,7 @@ export const Dashboard = () => {
             onClick={() => window.location.reload()}
             className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
           >
-            重新加载
+            {t('dashboard.reload')}
           </button>
         </div>
       </div>
@@ -78,8 +80,8 @@ export const Dashboard = () => {
     <div className="flex-1 bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">欢迎使用 AI 医疗诊断系统</h1>
-          <p className="text-gray-600 mt-1">在这里查看系统的整体运行情况</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('dashboard.welcome')}</h1>
+          <p className="text-gray-600 mt-1">{t('dashboard.subtitle')}</p>
         </div>
 
         {/* Stats Cards */}
@@ -93,7 +95,7 @@ export const Dashboard = () => {
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">总病例数</p>
+                <p className="text-sm font-medium text-gray-600">{t('dashboard.totalCases')}</p>
                 <p className="text-2xl font-semibold text-gray-900">{stats.totalCases}</p>
               </div>
             </div>
@@ -108,7 +110,7 @@ export const Dashboard = () => {
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">总诊断数</p>
+                <p className="text-sm font-medium text-gray-600">{t('dashboard.totalDiagnoses')}</p>
                 <p className="text-2xl font-semibold text-gray-900">{stats.totalDiagnoses}</p>
               </div>
             </div>
@@ -123,7 +125,7 @@ export const Dashboard = () => {
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">今日新增</p>
+                <p className="text-sm font-medium text-gray-600">{t('dashboard.todayNew')}</p>
                 <p className="text-2xl font-semibold text-gray-900">{stats.todayCases}</p>
               </div>
             </div>
@@ -132,18 +134,18 @@ export const Dashboard = () => {
 
         {/* Additional Information */}
         <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">系统概览</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('dashboard.systemOverview')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-4 bg-gray-50 rounded-lg">
-              <h3 className="font-medium text-gray-900">使用指南</h3>
+              <h3 className="font-medium text-gray-900">{t('dashboard.userGuide')}</h3>
               <p className="text-sm text-gray-600 mt-1">
-                从左侧导航栏选择相应功能开始使用系统。您可以查看病例列表、导入新病例或创建新的诊断案例。
+                {t('dashboard.userGuideText')}
               </p>
             </div>
             <div className="p-4 bg-gray-50 rounded-lg">
-              <h3 className="font-medium text-gray-900">系统状态</h3>
+              <h3 className="font-medium text-gray-900">{t('dashboard.systemStatus')}</h3>
               <p className="text-sm text-gray-600 mt-1">
-                系统运行正常。所有功能均可正常使用，请随时开始您的诊断工作。
+                {t('dashboard.systemStatusText')}
               </p>
             </div>
           </div>

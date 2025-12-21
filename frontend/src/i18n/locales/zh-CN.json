@@ -86,5 +86,19 @@
     "passwordMinLength": "密码至少6个字符",
     "passwordsNotMatch": "两次输入的密码不一致",
     "registerFailed": "注册失败，请稍后重试"
+  },
+  "dashboard": {
+    "welcome": "欢迎使用 AI 医疗诊断系统",
+    "subtitle": "在这里查看系统的整体运行情况",
+    "totalCases": "总病例数",
+    "totalDiagnoses": "总诊断数",
+    "todayNew": "今日新增",
+    "systemOverview": "系统概览",
+    "userGuide": "使用指南",
+    "userGuideText": "从左侧导航栏选择相应功能开始使用系统。您可以查看病例列表、导入新病例或创建新的诊断案例。",
+    "systemStatus": "系统状态",
+    "systemStatusText": "系统运行正常。所有功能均可正常使用，请随时开始您的诊断工作。",
+    "loadError": "无法加载统计数据",
+    "reload": "重新加载"
   }
 }
