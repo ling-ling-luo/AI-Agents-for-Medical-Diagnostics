@@ -79,12 +79,6 @@ export const DateRangeFilter = ({ value, onChange }: DateRangeFilterProps) => {
     }
   }, [value]);
 
-  // 格式化日期显示
-  const formatDisplay = (dateStr: string) => {
-    if (!dateStr) return 'Please select';
-    return dateStr;
-  };
-
   // 生成日历数据
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();

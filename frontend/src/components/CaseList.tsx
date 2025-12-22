@@ -155,7 +155,6 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
     setFilters({
       patient_name: '',
       patient_id: '',
-      chief_complaint: '',
       gender: '',
       diagnosed: '',
       created_from: '',
@@ -638,7 +637,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
               <div className="flex items-center justify-between gap-4">
                 {/* 左侧：病例总数 */}
                 <div className="text-sm text-gray-500 whitespace-nowrap">
-                  共 {cases.length} 个病例 {hasActiveFilters && `· ${filteredCases.length} 个匹配`}
+                  {t('caseList.totalCases', { count: cases.length })} {hasActiveFilters && `· ${t('caseList.matchedCases', { count: filteredCases.length })}`}
                 </div>
 
                 {/* 中间：分页控件 */}
@@ -727,7 +726,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
 
                 {/* 右侧：页码信息 */}
                 <div className="text-sm text-gray-500 whitespace-nowrap">
-                  第 {currentPage} / {totalPages} 页
+                  {t('caseList.pageInfo', { current: currentPage, total: totalPages })}
                 </div>
               </div>
             </div>

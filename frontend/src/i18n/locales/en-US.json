@@ -153,12 +153,12 @@
     "startDiagnosis": "Start Diagnosis",
     "deleteSuccess": "Deleted successfully",
     "deleteFailed": "Delete failed, please try again",
-    "totalCases": "{count} cases in total",
-    "matchedCases": "· {count} matched",
+    "totalCases": "{{count}} cases in total",
+    "matchedCases": "· {{count}} matched",
     "prevPage": "Previous",
     "nextPage": "Next",
     "jumpTo": "Jump to",
     "page": "page",
-    "pageInfo": "Page {current} / {total}"
+    "pageInfo": "Page {{current}} / {{total}}"
   }
 }
