@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CheckCircle, FileText, Heart, Brain, Wind, Download, Eye, ChevronDown, Calendar, Package, Zap } from 'lucide-react';
 import Markdown from 'markdown-to-jsx';
 import { SmartDropdown, DropdownItem } from './SmartDropdown';
@@ -17,6 +18,7 @@ interface DiagnosisResultProps {
 }
 
 export const DiagnosisResult = ({ result, caseId, timestamp, model, executionTimeMs }: DiagnosisResultProps) => {
+  const { t } = useTranslation();
   const [selectedReport, setSelectedReport] = useState<{ title: string; content: string; icon: typeof Heart } | null>(null);
   const [showAllReports, setShowAllReports] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -25,7 +27,7 @@ export const DiagnosisResult = ({ result, caseId, timestamp, model, executionTim
   // 导出报告
   const handleExport = async (format: 'pdf' | 'docx' | 'markdown' | 'json') => {
     if (!caseId) {
-      alert('无法导出：病例ID缺失');
+      alert(t('diagnosisResult.exportFailedNoCaseId'));
       return;
     }
 
@@ -38,7 +40,7 @@ export const DiagnosisResult = ({ result, caseId, timestamp, model, executionTim
       downloadBlob(blob, `diagnosis-${caseId}.${format === 'markdown' ? 'md' : format}`);
     } catch (error) {
       console.error('Export failed:', error);
-      alert('导出失败，请稍后重试');
+      alert(t('diagnosisResult.exportFailed'));
     } finally {
       setExporting(false);
     }
@@ -61,7 +63,7 @@ export const DiagnosisResult = ({ result, caseId, timestamp, model, executionTim
     const cardioMatch = markdown.match(/### Cardiologist[\s\S]*?(?=###|$)/);
     if (cardioMatch) {
       reports.push({
-        title: '心脏科',
+        title: t('caseDetail.cardiology'),
         content: cardioMatch[0],
         icon: Heart,
         bgColor: 'bg-red-50',
@@ -73,7 +75,7 @@ export const DiagnosisResult = ({ result, caseId, timestamp, model, executionTim
     const psychMatch = markdown.match(/### Psychologist[\s\S]*?(?=###|$)/);
     if (psychMatch) {
       reports.push({
-        title: '心理学',
+        title: t('caseDetail.psychology'),
         content: psychMatch[0],
         icon: Brain,
         bgColor: 'bg-purple-50',
@@ -85,7 +87,7 @@ export const DiagnosisResult = ({ result, caseId, timestamp, model, executionTim
     const pulmoMatch = markdown.match(/### Pulmonologist[\s\S]*$/);
     if (pulmoMatch) {
       reports.push({
-        title: '呼吸科',
+        title: t('caseDetail.pulmonology'),
         content: pulmoMatch[0],
         icon: Wind,
         bgColor: 'bg-cyan-50',
@@ -97,7 +99,7 @@ export const DiagnosisResult = ({ result, caseId, timestamp, model, executionTim
   };
 
   const summary = useMemo(() => extractSummary(result), [result]);
-  const specialistReports = useMemo(() => extractSpecialistReports(result), [result]);
+  const specialistReports = useMemo(() => extractSpecialistReports(result), [result, t]);
 
   return (
     <>
@@ -125,8 +127,8 @@ export const DiagnosisResult = ({ result, caseId, timestamp, model, executionTim
           <div className="flex items-start gap-4">
             <CheckCircle className="w-8 h-8 text-green-600 flex-shrink-0 mt-1" />
             <div className="flex-1">
-              <h2 className="text-base font-semibold text-gray-800">诊断完成</h2>
-              <p className="text-sm text-gray-600 mt-1 mb-4">AI 智能体分析报告已生成</p>
+              <h2 className="text-base font-semibold text-gray-800">{t('diagnosisResult.diagnosisCompleted')}</h2>
+              <p className="text-sm text-gray-600 mt-1 mb-4">{t('diagnosisResult.reportGenerated')}</p>
 
               {/* 诊断元数据 */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
@@ -136,7 +138,7 @@ export const DiagnosisResult = ({ result, caseId, timestamp, model, executionTim
                       <Calendar className="w-4 h-4 text-blue-600" />
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">诊断时间</p>
+                      <p className="text-xs text-gray-500">{t('diagnosisResult.diagnosisTime')}</p>
                       <p className="text-sm font-medium text-gray-700">{formatDateTime(timestamp)}</p>
                     </div>
                   </div>
@@ -148,7 +150,7 @@ export const DiagnosisResult = ({ result, caseId, timestamp, model, executionTim
                       <Package className="w-4 h-4 text-purple-600" />
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">AI 模型</p>
+                      <p className="text-xs text-gray-500">{t('diagnosisResult.aiModel')}</p>
                       <p className="text-sm font-medium text-gray-700">{model}</p>
                     </div>
                   </div>
@@ -160,7 +162,7 @@ export const DiagnosisResult = ({ result, caseId, timestamp, model, executionTim
                       <Zap className="w-4 h-4 text-cyan-600" />
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">执行时间</p>
+                      <p className="text-xs text-gray-500">{t('diagnosisResult.executionTime')}</p>
                       <p className="text-sm font-medium text-gray-700">{formatExecutionTime(executionTimeMs)}</p>
                     </div>
                   </div>
@@ -176,7 +178,7 @@ export const DiagnosisResult = ({ result, caseId, timestamp, model, executionTim
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex items-center gap-3">
               <FileText className="w-5 h-5 text-gray-700" />
-              <h3 className="text-base font-semibold text-gray-800">综合诊断摘要</h3>
+              <h3 className="text-base font-semibold text-gray-800">{t('diagnosisResult.comprehensiveSummary')}</h3>
             </div>
           </div>
           <div className="p-6">
@@ -194,9 +196,9 @@ export const DiagnosisResult = ({ result, caseId, timestamp, model, executionTim
             <div className="flex items-center gap-3">
               <Brain className="w-5 h-5 text-gray-700" />
               <div>
-                <h3 className="text-base font-semibold text-gray-800">专科智能体详细报告</h3>
+                <h3 className="text-base font-semibold text-gray-800">{t('diagnosisResult.specialistReports')}</h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  {specialistReports.length} 个专科分析
+                  {t('diagnosisResult.specialistsCount', { count: specialistReports.length })}
                 </p>
               </div>
             </div>
@@ -206,7 +208,7 @@ export const DiagnosisResult = ({ result, caseId, timestamp, model, executionTim
                 className="px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-none transition-colors text-sm font-medium flex items-center gap-2"
               >
                 <Eye className="w-4 h-4" />
-                全览报告
+                {t('diagnosisResult.viewAllReports')}
               </button>
               <div className="relative z-30">
                 <SmartDropdown
@@ -216,7 +218,7 @@ export const DiagnosisResult = ({ result, caseId, timestamp, model, executionTim
                     className="px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-none transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Download className="w-4 h-4 flex-shrink-0" />
-                    <span>{exporting ? '导出中...' : '导出报告'}</span>
+                    <span>{exporting ? t('diagnosisResult.exporting') : t('diagnosisResult.exportReport')}</span>
                     <ChevronDown className={`w-4 h-4 transition-transform ${showExportMenu ? 'rotate-180' : ''}`} />
                   </button>
                 }
@@ -227,22 +229,22 @@ export const DiagnosisResult = ({ result, caseId, timestamp, model, executionTim
               >
                 <DropdownItem
                   icon={<FileText className="w-4 h-4 text-red-500" />}
-                  label="PDF 格式"
+                  label={t('diagnosisResult.pdfFormat')}
                   onClick={() => handleExport('pdf')}
                 />
                 <DropdownItem
                   icon={<FileText className="w-4 h-4 text-blue-500" />}
-                  label="Word 格式"
+                  label={t('diagnosisResult.wordFormat')}
                   onClick={() => handleExport('docx')}
                 />
                 <DropdownItem
                   icon={<FileText className="w-4 h-4 text-gray-500" />}
-                  label="Markdown 格式"
+                  label={t('diagnosisResult.markdownFormat')}
                   onClick={() => handleExport('markdown')}
                 />
                 <DropdownItem
                   icon={<FileText className="w-4 h-4 text-green-500" />}
-                  label="JSON 格式"
+                  label={t('diagnosisResult.jsonFormat')}
                   onClick={() => handleExport('json')}
                 />
               </SmartDropdown>
@@ -256,12 +258,12 @@ export const DiagnosisResult = ({ result, caseId, timestamp, model, executionTim
             {specialistReports.map((report, index) => {
               const Icon = report.icon;
               // 根据不同专科设置不同的配色
-              const iconColors = {
-                '心脏科': { bg: 'bg-red-100', text: 'text-red-600' },
-                '心理学': { bg: 'bg-purple-100', text: 'text-purple-600' },
-                '呼吸科': { bg: 'bg-cyan-100', text: 'text-cyan-600' }
+              const iconColors: Record<string, { bg: string; text: string }> = {
+                [t('caseDetail.cardiology')]: { bg: 'bg-red-100', text: 'text-red-600' },
+                [t('caseDetail.psychology')]: { bg: 'bg-purple-100', text: 'text-purple-600' },
+                [t('caseDetail.pulmonology')]: { bg: 'bg-cyan-100', text: 'text-cyan-600' }
               };
-              const colors = iconColors[report.title as keyof typeof iconColors] || { bg: 'bg-gray-100', text: 'text-gray-600' };
+              const colors = iconColors[report.title] || { bg: 'bg-gray-100', text: 'text-gray-600' };
 
               return (
                 <div
@@ -283,7 +285,7 @@ export const DiagnosisResult = ({ result, caseId, timestamp, model, executionTim
                     </h4>
                   </div>
                   <p className="text-sm text-gray-600 leading-relaxed">
-                    点击查看详细诊断分析
+                    {t('diagnosisResult.clickToViewDetail')}
                   </p>
                 </div>
               );
@@ -293,7 +295,7 @@ export const DiagnosisResult = ({ result, caseId, timestamp, model, executionTim
           {specialistReports.length === 0 && (
             <div className="text-center py-12">
               <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 text-base">暂无专科报告数据</p>
+              <p className="text-gray-500 text-base">{t('diagnosisResult.noReportData')}</p>
             </div>
           )}
         </div>

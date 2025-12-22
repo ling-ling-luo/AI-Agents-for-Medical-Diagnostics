@@ -71,10 +71,6 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
     }
   };
 
-  const handleEditCase = (caseId: number) => {
-    navigate(`/edit/${caseId}`);
-  };
-
   const handleViewHistory = (patientId: string) => {
     // 跳转到全局诊断历史页面，并自动筛选该病例
     navigate(`/diagnoses?patient_id=${encodeURIComponent(patientId)}`);
@@ -563,12 +559,6 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                       <div className="dropdown-container">
                         <Dropdown
                           options={[
-                            {
-                              label: t('caseList.editProfile'),
-                              icon: 'edit',
-                              color: 'gray',
-                              onClick: () => handleEditCase(case_.id),
-                            },
                             {
                               label: t('caseList.viewHistory'),
                               icon: 'clock',

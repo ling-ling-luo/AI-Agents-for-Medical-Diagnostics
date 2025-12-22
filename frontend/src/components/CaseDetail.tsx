@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/useAuth';
 import { ArrowLeft, RefreshCw, AlertCircle, Brain, Heart, Wind, Loader, User, Calendar, Edit2, Save, X } from 'lucide-react';
 import { caseApi } from '../services/api';
@@ -28,56 +29,57 @@ interface AgentInfo {
   color: string;
 }
 
-// 智能体信息配置
-const agentsInfo: Record<string, AgentInfo> = {
-  cardiologist: {
-    name: '心脏科智能体',
-    role: 'Cardiologist',
-    description: '心脏科智能体专注于心血管系统的评估和诊断，能够分析心电图、血液检测、Holter监测结果和超声心动图等数据。',
-    task: '审查患者的心脏检查结果，包括ECG、血液检测、Holter监测结果和超声心动图，识别可能解释患者症状的心脏问题迹象。',
-    focus: '确定是否存在可能在常规检测中被遗漏的心脏问题的微妙迹象，排除任何潜在的心脏疾病，如心律失常或结构异常。',
-    prompt: `Act like a cardiologist. You will receive a medical report of a patient.
+export const CaseDetail = () => {
+  const { t } = useTranslation();
+
+  // 智能体信息配置（使用翻译）
+  const agentsInfo: Record<string, AgentInfo> = {
+    cardiologist: {
+      name: t('agentModal.cardiologist.name'),
+      role: t('agentModal.cardiologist.role'),
+      description: t('agentModal.cardiologist.description'),
+      task: t('agentModal.cardiologist.task'),
+      focus: t('agentModal.cardiologist.focus'),
+      prompt: `Act like a cardiologist. You will receive a medical report of a patient.
 Task: Review the patient's cardiac workup, including ECG, blood tests, Holter monitor results, and echocardiogram.
 Focus: Determine if there are any subtle signs of cardiac issues that could explain the patient's symptoms. Rule out any underlying heart conditions, such as arrhythmias or structural abnormalities, that might be missed on routine testing.
 Recommendation: Provide guidance on any further cardiac testing or monitoring needed to ensure there are no hidden heart-related concerns. Suggest potential management strategies if a cardiac issue is identified.
 Please only return the possible causes of the patient's symptoms and the recommended next steps.
 Medical Report: {medical_report}`,
-    icon: Heart,
-    color: 'bg-gradient-to-br from-red-50 to-pink-50'
-  },
-  psychologist: {
-    name: '心理学智能体',
-    role: 'Psychologist',
-    description: '心理学智能体专注于心理健康评估，能够识别焦虑、抑郁、创伤等心理问题，并提供相应的干预建议。',
-    task: '审查患者报告并提供心理评估，识别可能影响患者福祉的潜在心理健康问题。',
-    focus: '识别任何可能影响患者福祉的潜在心理健康问题，如焦虑、抑郁或创伤，提供应对这些心理健康问题的指导。',
-    prompt: `Act like a psychologist. You will receive a patient's report.
+      icon: Heart,
+      color: 'bg-gradient-to-br from-red-50 to-pink-50'
+    },
+    psychologist: {
+      name: t('agentModal.psychologist.name'),
+      role: t('agentModal.psychologist.role'),
+      description: t('agentModal.psychologist.description'),
+      task: t('agentModal.psychologist.task'),
+      focus: t('agentModal.psychologist.focus'),
+      prompt: `Act like a psychologist. You will receive a patient's report.
 Task: Review the patient's report and provide a psychological assessment.
 Focus: Identify any potential mental health issues, such as anxiety, depression, or trauma, that may be affecting the patient's well-being.
 Recommendation: Offer guidance on how to address these mental health concerns, including therapy, counseling, or other interventions.
 Please only return the possible mental health issues and the recommended next steps.
 Patient's Report: {medical_report}`,
-    icon: Brain,
-    color: 'bg-gradient-to-br from-purple-50 to-indigo-50'
-  },
-  pulmonologist: {
-    name: '呼吸科智能体',
-    role: 'Pulmonologist',
-    description: '呼吸科智能体专注于呼吸系统疾病的诊断和评估，能够识别哮喘、COPD、肺部感染等呼吸问题。',
-    task: '审查患者报告并提供肺部评估，识别可能影响患者呼吸的潜在呼吸问题。',
-    focus: '识别任何可能影响患者呼吸的潜在呼吸问题，如哮喘、COPD或肺部感染，提供应对这些呼吸问题的指导。',
-    prompt: `Act like a pulmonologist. You will receive a patient's report.
+      icon: Brain,
+      color: 'bg-gradient-to-br from-purple-50 to-indigo-50'
+    },
+    pulmonologist: {
+      name: t('agentModal.pulmonologist.name'),
+      role: t('agentModal.pulmonologist.role'),
+      description: t('agentModal.pulmonologist.description'),
+      task: t('agentModal.pulmonologist.task'),
+      focus: t('agentModal.pulmonologist.focus'),
+      prompt: `Act like a pulmonologist. You will receive a patient's report.
 Task: Review the patient's report and provide a pulmonary assessment.
 Focus: Identify any potential respiratory issues, such as asthma, COPD, or lung infections, that may be affecting the patient's breathing.
 Recommendation: Offer guidance on how to address these respiratory concerns, including pulmonary function tests, imaging studies, or other interventions.
 Please only return the possible respiratory issues and the recommended next steps.
 Patient's Report: {medical_report}`,
-    icon: Wind,
-    color: 'bg-gradient-to-br from-cyan-50 to-blue-50'
-  }
-};
-
-export const CaseDetail = () => {
+      icon: Wind,
+      color: 'bg-gradient-to-br from-cyan-50 to-blue-50'
+    }
+  };
   const { caseId } = useParams<{ caseId: string }>();
   const navigate = useNavigate();
   const { token } = useAuth();
@@ -168,7 +170,7 @@ export const CaseDetail = () => {
       setCaseDetail(updatedCase);
       setIsEditing(false);
     } catch (err) {
-      setError('保存失败，请检查输入并重试');
+      setError(t('caseDetail.saveFailed'));
       console.error('Error updating case:', err);
     } finally {
       setIsSaving(false);
@@ -246,7 +248,7 @@ export const CaseDetail = () => {
           setDiagnosisMetadata({});
         }
       } catch (err) {
-        setError('无法加载病例详情，请检查后端服务');
+        setError(t('caseDetail.loadFailed'));
         console.error('Error loading case detail:', err);
       } finally {
         setLoadingCase(false);
@@ -282,12 +284,12 @@ export const CaseDetail = () => {
         executionTimeMs: executionTime
       });
     } catch (err) {
-      setError('诊断失败，请检查后端服务并稍后重试');
+      setError(t('caseDetail.loadFailed'));
       console.error('Error running diagnosis:', err);
     } finally {
       setLoading(false);
     }
-  }, [caseId, selectedModel]);
+  }, [caseId, selectedModel, t]);
 
   // 检查是否需要自动触发诊断
   useEffect(() => {
@@ -312,7 +314,7 @@ export const CaseDetail = () => {
   if (loadingCase) {
     return (
       <div className="flex-1 bg-gray-50 flex items-center justify-center">
-        <Loading size="lg" text="正在加载病例详情..." />
+        <Loading size="lg" text={t('caseDetail.loadingCaseDetail')} />
       </div>
     );
   }
@@ -323,14 +325,14 @@ export const CaseDetail = () => {
       <div className="flex-1 bg-gray-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white/70 backdrop-blur-sm rounded-2xl border border-red-200/60 p-8 text-center">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-800 mb-2">加载失败</h3>
+          <h3 className="text-lg font-medium text-gray-800 mb-2">{t('caseDetail.loadError')}</h3>
           <p className="text-sm text-gray-600 mb-6">{error}</p>
           <button
             onClick={() => navigate('/cases')}
             className="px-4 py-2 bg-gradient-to-r from-blue-500/90 to-cyan-500/90 hover:from-blue-500 hover:to-cyan-500 text-white text-sm font-medium rounded-xl transition-all inline-flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            返回列表
+            {t('caseDetail.backToList')}
           </button>
         </div>
       </div>
@@ -356,7 +358,7 @@ export const CaseDetail = () => {
             className="inline-flex items-center text-gray-600 hover:text-gray-800 mb-5 transition-colors text-sm font-medium"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            返回病例列表
+            {t('caseDetail.backToCaseList')}
           </button>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -381,9 +383,9 @@ export const CaseDetail = () => {
               )}
               <div>
                 <h1 className="text-lg font-semibold text-gray-800">
-                  {caseDetail?.patient_name || `病例 #${caseId}`}
+                  {caseDetail?.patient_name || t('caseDetail.caseNumberPrefix', { id: caseId })}
                 </h1>
-                <p className="text-xs text-gray-500 mt-0.5">AI 智能诊断</p>
+                <p className="text-xs text-gray-500 mt-0.5">{t('caseDetail.aiDiagnosis')}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -401,9 +403,9 @@ export const CaseDetail = () => {
                 className="px-6 py-2.5 bg-transparent hover:bg-gray-50 text-blue-600 hover:text-blue-700 text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap min-w-[100px]"
               >
                 {loading ? (
-                  <span className="truncate">分析中...</span>
+                  <span className="truncate">{t('caseDetail.analyzing')}</span>
                 ) : (
-                  <span className="truncate">开始诊断</span>
+                  <span className="truncate">{t('caseDetail.startDiagnosis')}</span>
                 )}
               </button>
             </div>
@@ -418,7 +420,7 @@ export const CaseDetail = () => {
             <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <User className="w-5 h-5 text-gray-700" />
-                <h3 className="text-base font-semibold text-gray-800">病例详情</h3>
+                <h3 className="text-base font-semibold text-gray-800">{t('caseDetail.caseDetails')}</h3>
               </div>
               {!isEditing ? (
                 <button
@@ -426,7 +428,7 @@ export const CaseDetail = () => {
                   className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-white/50 transition-colors rounded-none"
                 >
                   <Edit2 className="w-4 h-4" />
-                  编辑
+                  {t('caseDetail.edit')}
                 </button>
               ) : (
                 <div className="flex items-center gap-2">
@@ -436,7 +438,7 @@ export const CaseDetail = () => {
                     className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-white/50 transition-colors rounded-none disabled:opacity-50"
                   >
                     <X className="w-4 h-4" />
-                    取消
+                    {t('caseDetail.cancel')}
                   </button>
                   <button
                     onClick={saveEdit}
@@ -444,7 +446,7 @@ export const CaseDetail = () => {
                     className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 transition-all rounded-none disabled:opacity-50"
                   >
                     <Save className="w-4 h-4" />
-                    {isSaving ? '保存中...' : '保存'}
+                    {isSaving ? t('caseDetail.saving') : t('caseDetail.save')}
                   </button>
                 </div>
               )}
@@ -454,34 +456,34 @@ export const CaseDetail = () => {
                 <>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-6">
                     <div className="p-4">
-                      <p className="text-xs text-gray-500 mb-1.5">患者姓名</p>
+                      <p className="text-xs text-gray-500 mb-1.5">{t('caseDetail.patientName')}</p>
                       <p className="text-sm font-semibold text-gray-800">{caseDetail.patient_name || '-'}</p>
                     </div>
                     <div className="p-4">
-                      <p className="text-xs text-gray-500 mb-1.5">病历号</p>
+                      <p className="text-xs text-gray-500 mb-1.5">{t('caseDetail.patientId')}</p>
                       <p className="text-sm font-semibold text-gray-800">{caseDetail.patient_id || '-'}</p>
                     </div>
                     <div className="p-4">
-                      <p className="text-xs text-gray-500 mb-1.5">年龄</p>
-                      <p className="text-sm font-semibold text-gray-800">{caseDetail.age ? `${caseDetail.age} 岁` : '-'}</p>
+                      <p className="text-xs text-gray-500 mb-1.5">{t('caseDetail.age')}</p>
+                      <p className="text-sm font-semibold text-gray-800">{caseDetail.age ? t('caseDetail.ageYears', { age: caseDetail.age }) : '-'}</p>
                     </div>
                     <div className="p-4">
-                      <p className="text-xs text-gray-500 mb-1.5">性别</p>
+                      <p className="text-xs text-gray-500 mb-1.5">{t('caseDetail.gender')}</p>
                       <p className="text-sm font-semibold text-gray-800">
-                        {caseDetail.gender === 'male' ? '男' : caseDetail.gender === 'female' ? '女' : '-'}
+                        {caseDetail.gender === 'male' ? t('caseDetail.male') : caseDetail.gender === 'female' ? t('caseDetail.female') : '-'}
                       </p>
                     </div>
                   </div>
 
                   {caseDetail.chief_complaint && (
                     <div className="mb-6 p-5 border-t border-gray-200">
-                      <p className="text-xs font-semibold text-gray-600 mb-2.5">主诉</p>
+                      <p className="text-xs font-semibold text-gray-600 mb-2.5">{t('caseDetail.chiefComplaint')}</p>
                       <p className="text-sm text-gray-700 leading-relaxed">{caseDetail.chief_complaint}</p>
                     </div>
                   )}
 
                   <div>
-                    <p className="text-sm font-semibold text-gray-700 mb-3">完整病历</p>
+                    <p className="text-sm font-semibold text-gray-700 mb-3">{t('caseDetail.fullMedicalRecord')}</p>
                     <div className="p-5 bg-gray-50 rounded-none border border-gray-200 max-h-80 overflow-y-auto">
                       <pre className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap font-sans">
                         {caseDetail.raw_report}
@@ -493,70 +495,70 @@ export const CaseDetail = () => {
                 <>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-6">
                     <div className="p-4">
-                      <label className="block text-xs font-semibold text-gray-600 mb-2">患者姓名</label>
+                      <label className="block text-xs font-semibold text-gray-600 mb-2">{t('caseDetail.patientName')}</label>
                       <input
                         type="text"
                         value={editForm.patient_name}
                         onChange={(e) => setEditForm({ ...editForm, patient_name: e.target.value })}
                         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-none focus:outline-none focus:border-blue-500"
-                        placeholder="输入患者姓名"
+                        placeholder={t('caseDetail.inputPatientName')}
                       />
                     </div>
                     <div className="p-4">
-                      <label className="block text-xs font-semibold text-gray-600 mb-2">病历号</label>
+                      <label className="block text-xs font-semibold text-gray-600 mb-2">{t('caseDetail.patientId')}</label>
                       <input
                         type="text"
                         value={editForm.patient_id}
                         onChange={(e) => setEditForm({ ...editForm, patient_id: e.target.value })}
                         disabled
                         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-none focus:outline-none focus:border-blue-500 bg-gray-100 text-gray-500 cursor-not-allowed"
-                        placeholder="自动生成"
+                        placeholder={t('caseDetail.autoGenerated')}
                       />
-                      <p className="text-xs text-gray-500 mt-1">病历号由系统自动生成，不可修改</p>
+                      <p className="text-xs text-gray-500 mt-1">{t('caseDetail.patientIdNote')}</p>
                     </div>
                     <div className="p-4">
-                      <label className="block text-xs font-semibold text-gray-600 mb-2">年龄</label>
+                      <label className="block text-xs font-semibold text-gray-600 mb-2">{t('caseDetail.age')}</label>
                       <input
                         type="number"
                         value={editForm.age}
                         onChange={(e) => setEditForm({ ...editForm, age: e.target.value })}
                         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-none focus:outline-none focus:border-blue-500"
-                        placeholder="输入年龄"
+                        placeholder={t('caseDetail.inputAge')}
                         min="0"
                         max="150"
                       />
                     </div>
                     <div className="p-4">
-                      <label className="block text-xs font-semibold text-gray-600 mb-2">性别</label>
+                      <label className="block text-xs font-semibold text-gray-600 mb-2">{t('caseDetail.gender')}</label>
                       <select
                         value={editForm.gender}
                         onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}
                         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-none focus:outline-none focus:border-blue-500"
                       >
-                        <option value="">请选择</option>
-                        <option value="male">男</option>
-                        <option value="female">女</option>
+                        <option value="">{t('caseDetail.pleaseSelect')}</option>
+                        <option value="male">{t('caseDetail.male')}</option>
+                        <option value="female">{t('caseDetail.female')}</option>
                       </select>
                     </div>
                   </div>
 
                   <div className="mb-6 p-5 border-t border-gray-200">
-                    <label className="block text-xs font-semibold text-gray-600 mb-2.5">主诉</label>
+                    <label className="block text-xs font-semibold text-gray-600 mb-2.5">{t('caseDetail.chiefComplaint')}</label>
                     <textarea
                       value={editForm.chief_complaint}
                       onChange={(e) => setEditForm({ ...editForm, chief_complaint: e.target.value })}
                       className="w-full px-3 py-2 text-sm border border-gray-300 rounded-none focus:outline-none focus:border-blue-500 min-h-[80px]"
-                      placeholder="输入主诉"
+                      placeholder={t('caseDetail.inputChiefComplaint')}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-3">完整病历</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">{t('caseDetail.fullMedicalRecord')}</label>
                     <textarea
                       value={editForm.raw_report}
                       onChange={(e) => setEditForm({ ...editForm, raw_report: e.target.value })}
                       className="w-full p-5 text-sm border border-gray-300 rounded-none focus:outline-none focus:border-blue-500 font-sans min-h-[320px]"
-                      placeholder="输入完整病历"
+                      placeholder={t('caseDetail.inputFullRecord')}
                     />
                   </div>
                 </>
@@ -564,7 +566,7 @@ export const CaseDetail = () => {
 
               <div className="mt-4 pt-4 border-t border-gray-200 flex items-center gap-2 text-xs text-gray-500">
                 <Calendar className="w-4 h-4" />
-                <span>创建时间: {new Date(caseDetail.created_at).toLocaleString('zh-CN')}</span>
+                <span>{t('caseDetail.createdTime', { time: new Date(caseDetail.created_at).toLocaleString() })}</span>
               </div>
             </div>
           </div>
@@ -572,8 +574,8 @@ export const CaseDetail = () => {
         {/* 专家智能体列表 - 增强质感，可点击查看详情 */}
         <div className="mb-7 mt-2">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-gray-700">专科智能体</h2>
-            <p className="text-xs text-gray-500">点击卡片查看智能体详情</p>
+            <h2 className="text-sm font-semibold text-gray-700">{t('caseDetail.specialistAgents')}</h2>
+            <p className="text-xs text-gray-500">{t('caseDetail.clickToViewDetails')}</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <div
@@ -590,9 +592,9 @@ export const CaseDetail = () => {
                       <Heart className="w-5 h-5 text-red-600" />
                     </div>
                   </div>
-                  <h3 className="font-semibold text-gray-800">心脏科</h3>
+                  <h3 className="font-semibold text-gray-800">{t('caseDetail.cardiology')}</h3>
                 </div>
-                <p className="text-sm text-gray-600 leading-relaxed">分析心血管系统相关症状</p>
+                <p className="text-sm text-gray-600 leading-relaxed">{t('caseDetail.cardiologyDesc')}</p>
               </div>
               <div className="h-1 bg-gradient-to-r from-red-500 to-pink-500"></div>
             </div>
@@ -611,9 +613,9 @@ export const CaseDetail = () => {
                       <Brain className="w-5 h-5 text-purple-600" />
                     </div>
                   </div>
-                  <h3 className="font-semibold text-gray-800">心理学</h3>
+                  <h3 className="font-semibold text-gray-800">{t('caseDetail.psychology')}</h3>
                 </div>
-                <p className="text-sm text-gray-600 leading-relaxed">评估心理和精神健康状况</p>
+                <p className="text-sm text-gray-600 leading-relaxed">{t('caseDetail.psychologyDesc')}</p>
               </div>
               <div className="h-1 bg-gradient-to-r from-purple-500 to-indigo-500"></div>
             </div>
@@ -632,9 +634,9 @@ export const CaseDetail = () => {
                       <Wind className="w-5 h-5 text-cyan-600" />
                     </div>
                   </div>
-                  <h3 className="font-semibold text-gray-800">呼吸科</h3>
+                  <h3 className="font-semibold text-gray-800">{t('caseDetail.pulmonology')}</h3>
                 </div>
-                <p className="text-sm text-gray-600 leading-relaxed">检查呼吸系统和肺部状况</p>
+                <p className="text-sm text-gray-600 leading-relaxed">{t('caseDetail.pulmonologyDesc')}</p>
               </div>
               <div className="h-1 bg-gradient-to-r from-cyan-500 to-blue-500"></div>
             </div>
@@ -646,33 +648,33 @@ export const CaseDetail = () => {
           <div className="bg-white rounded-none border border-gray-200 p-8 fade-in shadow-lg">
             <div className="text-center mb-8">
               <Loader className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
-              <p className="text-gray-800 font-semibold text-base">AI 智能体正在分析病例</p>
-              <p className="text-sm text-gray-500 mt-2">请稍候...</p>
+              <p className="text-gray-800 font-semibold text-base">{t('caseDetail.aiAnalyzing')}</p>
+              <p className="text-sm text-gray-500 mt-2">{t('caseDetail.pleaseWait')}</p>
             </div>
 
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-3.5">
                   <Heart className="w-5 h-5 text-red-600 animate-pulse" />
-                  <span className="text-sm font-semibold text-gray-800">心脏科智能体</span>
+                  <span className="text-sm font-semibold text-gray-800">{t('caseDetail.cardiologyAgent')}</span>
                 </div>
-                <span className="text-xs font-semibold text-orange-600 animate-pulse">分析中</span>
+                <span className="text-xs font-semibold text-orange-600 animate-pulse">{t('caseDetail.analyzing')}</span>
               </div>
 
               <div className="flex items-center justify-between p-4 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-3.5">
                   <Brain className="w-5 h-5 text-purple-600 animate-pulse" />
-                  <span className="text-sm font-semibold text-gray-800">心理学智能体</span>
+                  <span className="text-sm font-semibold text-gray-800">{t('caseDetail.psychologyAgent')}</span>
                 </div>
-                <span className="text-xs font-semibold text-orange-600 animate-pulse">分析中</span>
+                <span className="text-xs font-semibold text-orange-600 animate-pulse">{t('caseDetail.analyzing')}</span>
               </div>
 
               <div className="flex items-center justify-between p-4 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-3.5">
                   <Wind className="w-5 h-5 text-cyan-600 animate-pulse" />
-                  <span className="text-sm font-semibold text-gray-800">呼吸科智能体</span>
+                  <span className="text-sm font-semibold text-gray-800">{t('caseDetail.pulmonologyAgent')}</span>
                 </div>
-                <span className="text-xs font-semibold text-orange-600 animate-pulse">分析中</span>
+                <span className="text-xs font-semibold text-orange-600 animate-pulse">{t('caseDetail.analyzing')}</span>
               </div>
             </div>
           </div>
@@ -682,14 +684,14 @@ export const CaseDetail = () => {
         {error && (
           <div className="bg-white rounded-none border border-gray-200 p-8 fade-in shadow-lg text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">诊断失败</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">{t('caseDetail.diagnosisFailed')}</h3>
             <p className="text-base text-gray-600 mb-6">{error}</p>
             <button
               onClick={runDiagnosis}
               className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-semibold rounded-none transition-all inline-flex items-center gap-2 shadow hover:shadow-md"
             >
               <RefreshCw className="w-4 h-4" />
-              重试
+              {t('caseDetail.retry')}
             </button>
           </div>
         )}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Cpu, Check } from 'lucide-react';
 
 interface Model {
@@ -14,6 +15,7 @@ interface ModelSelectorProps {
 }
 
 export const ModelSelector = ({ selectedModel, onModelChange, models }: ModelSelectorProps) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
   const selectedModelData = models.find(m => m.id === selectedModel);
@@ -27,9 +29,9 @@ export const ModelSelector = ({ selectedModel, onModelChange, models }: ModelSel
       >
         <Cpu className="w-4 h-4 text-blue-600" />
         <div className="flex-1 text-left">
-          <div className="text-xs text-gray-500">AI 模型</div>
+          <div className="text-xs text-gray-500">{t('modelSelector.aiModel')}</div>
           <div className="text-sm font-semibold text-gray-800 truncate">
-            {selectedModelData ? selectedModelData.name : '选择模型'}
+            {selectedModelData ? selectedModelData.name : t('modelSelector.selectModel')}
           </div>
         </div>
         <svg
@@ -58,7 +60,7 @@ export const ModelSelector = ({ selectedModel, onModelChange, models }: ModelSel
           <div className="absolute top-full left-0 mt-2 w-72 bg-white shadow-xl border border-gray-200 z-20 max-h-96 overflow-y-auto">
             <div className="p-2">
               <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                选择 AI 模型
+                {t('modelSelector.selectAiModel')}
               </div>
               {models.map((model) => (
                 <button
