@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { NavigationProvider } from './context/NavigationContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/layout/Layout';
 import { Dashboard } from './pages/Dashboard';
@@ -22,8 +23,9 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="w-full min-h-screen">
-          <Routes>
+        <NavigationProvider>
+          <div className="w-full min-h-screen">
+            <Routes>
             {/* 公开路由 */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -32,10 +34,12 @@ function App() {
             <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/cases" element={<CaseList />} />
-              <Route path="/cases/new" element={<CreateCaseForm />} />
+              <Route path="/cases">
+                <Route index element={<CaseList />} />
+                <Route path="new" element={<CreateCaseForm />} />
+                <Route path=":caseId" element={<CaseDetail />} />
+              </Route>
               <Route path="/import" element={<ImportWizard />} />
-              <Route path="/case/:caseId" element={<CaseDetail />} />
               <Route path="/edit/:caseId" element={<EditCaseWrapper />} />
               <Route path="/diagnoses" element={<AllDiagnosisHistory />} />
               <Route path="/diagnoses/:caseId/:diagnosisId" element={<DiagnosisDetailPage />} />
@@ -44,8 +48,9 @@ function App() {
               <Route path="/style-guide" element={<StyleGuideExample />} />
               <Route path="/version-extractor" element={<VersionInfoExtractor />} />
             </Route>
-          </Routes>
-        </div>
+            </Routes>
+          </div>
+        </NavigationProvider>
       </AuthProvider>
     </Router>
   );

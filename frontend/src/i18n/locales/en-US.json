@@ -12,7 +12,13 @@
     "createCase": "New Case",
     "diagnoses": "Diagnosis History",
     "analysis": "Data Analysis",
-    "settings": "Settings"
+    "settings": "Settings",
+    "noCases": "Please select a case",
+    "diagnosed": "Diagnosed",
+    "viewAllCases": "View all cases",
+    "closeCase": "Close case",
+    "expand": "Expand",
+    "collapse": "Collapse"
   },
   "breadcrumb": {
     "home": "Home",

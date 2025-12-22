@@ -531,7 +531,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                   onClick={(e) => {
                     // 检查点击事件是否来自下拉菜单或其子元素
                     if (!(e.target as HTMLElement).closest('.dropdown-container')) {
-                      navigate(`/case/${case_.id}`);
+                      navigate(`/cases/${case_.id}`);
                     }
                   }}
                 >
@@ -618,7 +618,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation(); // 阻止事件冒泡到卡片容器
-                      navigate(`/case/${case_.id}?autoDiagnose=true`);
+                      navigate(`/cases/${case_.id}?autoDiagnose=true`);
                     }}
                     className="w-full px-3 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-xs font-semibold rounded-none rounded-b-md transition-all flex items-center justify-center gap-1.5 whitespace-nowrap"
                   >

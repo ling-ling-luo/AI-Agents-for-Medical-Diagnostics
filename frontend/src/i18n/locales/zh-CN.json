@@ -12,7 +12,13 @@
     "createCase": "新增病例",
     "diagnoses": "诊断历史",
     "analysis": "数据分析",
-    "settings": "系统设置"
+    "settings": "系统设置",
+    "noCases": "请选择病例",
+    "diagnosed": "已诊断",
+    "viewAllCases": "查看所有病例",
+    "closeCase": "关闭病例",
+    "expand": "展开",
+    "collapse": "收起"
   },
   "breadcrumb": {
     "home": "首页",

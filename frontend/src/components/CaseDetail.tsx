@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { ArrowLeft, RefreshCw, AlertCircle, Brain, Heart, Wind, Loader, User, Calendar, Edit2, Save, X } from 'lucide-react';
 import { caseApi } from '../services/api';
+import { useNavigation } from '../context/NavigationContext';
 import type { CaseDetail as CaseDetailType, DiagnosisResponse } from '../types';
 import { Loading } from './Loading';
 import { DiagnosisResult } from './DiagnosisResult';
@@ -80,6 +81,7 @@ export const CaseDetail = () => {
   const { caseId } = useParams<{ caseId: string }>();
   const navigate = useNavigate();
   const { token } = useAuth();
+  const { addOpenCase } = useNavigation();
   const [caseDetail, setCaseDetail] = useState<CaseDetailType | null>(null);
   const [diagnosis, setDiagnosis] = useState<DiagnosisResponse | null>(null);
   const [diagnosisMetadata, setDiagnosisMetadata] = useState<{
@@ -208,6 +210,13 @@ export const CaseDetail = () => {
         setError(null);
         const data = await caseApi.getCaseDetail(parseInt(caseId));
         setCaseDetail(data);
+
+        // 添加到已打开病例列表
+        addOpenCase({
+          id: data.id,
+          patient_name: data.patient_name,
+          patient_id: data.patient_id
+        });
 
         // 加载最新的诊断历史
         try {
