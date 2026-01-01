@@ -48,7 +48,8 @@ export const DiagnosisResult = ({ result, caseId, timestamp, model, executionTim
 
   // 提取诊断摘要
   const extractSummary = (markdown: string) => {
-    const summaryMatch = markdown.match(/## Final Diagnosis \(Summary\)[\s\S]*?(?=##|$)/);
+    // 支持中英文标题匹配
+    const summaryMatch = markdown.match(/## (Final Diagnosis \(Summary\)|最终诊断（摘要）)[\s\S]*?(?=##|$)/);
     if (summaryMatch) {
       return summaryMatch[0];
     }
@@ -59,8 +60,8 @@ export const DiagnosisResult = ({ result, caseId, timestamp, model, executionTim
   const extractSpecialistReports = (markdown: string) => {
     const reports: { title: string; content: string; icon: typeof Heart; bgColor: string; borderColor: string }[] = [];
 
-    // 心脏科
-    const cardioMatch = markdown.match(/### Cardiologist[\s\S]*?(?=###|$)/);
+    // 心脏科（支持中英文标题）
+    const cardioMatch = markdown.match(/### (Cardiologist|心脏科医生)[\s\S]*?(?=###|$)/);
     if (cardioMatch) {
       reports.push({
         title: t('caseDetail.cardiology'),
@@ -71,8 +72,8 @@ export const DiagnosisResult = ({ result, caseId, timestamp, model, executionTim
       });
     }
 
-    // 心理学
-    const psychMatch = markdown.match(/### Psychologist[\s\S]*?(?=###|$)/);
+    // 心理学（支持中英文标题）
+    const psychMatch = markdown.match(/### (Psychologist|心理学家)[\s\S]*?(?=###|$)/);
     if (psychMatch) {
       reports.push({
         title: t('caseDetail.psychology'),
@@ -83,8 +84,8 @@ export const DiagnosisResult = ({ result, caseId, timestamp, model, executionTim
       });
     }
 
-    // 呼吸科
-    const pulmoMatch = markdown.match(/### Pulmonologist[\s\S]*$/);
+    // 呼吸科（支持中英文标题）
+    const pulmoMatch = markdown.match(/### (Pulmonologist|呼吸科医生)[\s\S]*$/);
     if (pulmoMatch) {
       reports.push({
         title: t('caseDetail.pulmonology'),

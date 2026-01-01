@@ -261,21 +261,24 @@
       "role": "Cardiologist",
       "description": "The Cardiology Agent focuses on cardiovascular system assessment and diagnosis, capable of analyzing ECG, blood tests, Holter monitor results, and echocardiogram data.",
       "task": "Review the patient's cardiac workup, including ECG, blood tests, Holter monitor results, and echocardiogram, to identify signs of cardiac issues that could explain the patient's symptoms.",
-      "focus": "Determine if there are any subtle signs of cardiac issues that could be missed on routine testing, and rule out any underlying heart conditions, such as arrhythmias or structural abnormalities."
+      "focus": "Determine if there are any subtle signs of cardiac issues that could be missed on routine testing, and rule out any underlying heart conditions, such as arrhythmias or structural abnormalities.",
+      "prompt": "Act like a cardiologist. You will receive a medical report of a patient.\nTask: Review the patient's cardiac workup, including ECG, blood tests, Holter monitor results, and echocardiogram.\nFocus: Determine if there are any subtle signs of cardiac issues that could explain the patient's symptoms. Rule out any underlying heart conditions, such as arrhythmias or structural abnormalities, that might be missed on routine testing.\nRecommendation: Provide guidance on any further cardiac testing or monitoring needed to ensure there are no hidden heart-related concerns. Suggest potential management strategies if a cardiac issue is identified.\nPlease only return the possible causes of the patient's symptoms and the recommended next steps.\nMedical Report: {medical_report}"
     },
     "psychologist": {
       "name": "Psychology Agent",
       "role": "Psychologist",
       "description": "The Psychology Agent focuses on mental health assessment, capable of identifying anxiety, depression, trauma and other psychological issues, and providing appropriate intervention recommendations.",
       "task": "Review the patient's report and provide a psychological assessment to identify potential mental health issues that may be affecting the patient's well-being.",
-      "focus": "Identify any potential mental health issues, such as anxiety, depression, or trauma, that may be affecting the patient's well-being, and provide guidance on addressing these concerns."
+      "focus": "Identify any potential mental health issues, such as anxiety, depression, or trauma, that may be affecting the patient's well-being, and provide guidance on addressing these concerns.",
+      "prompt": "Act like a psychologist. You will receive a patient's report.\nTask: Review the patient's report and provide a psychological assessment.\nFocus: Identify any potential mental health issues, such as anxiety, depression, or trauma, that may be affecting the patient's well-being.\nRecommendation: Offer guidance on how to address these mental health concerns, including therapy, counseling, or other interventions.\nPlease only return the possible mental health issues and the recommended next steps.\nPatient's Report: {medical_report}"
     },
     "pulmonologist": {
       "name": "Pulmonology Agent",
       "role": "Pulmonologist",
       "description": "The Pulmonology Agent focuses on respiratory system disease diagnosis and assessment, capable of identifying asthma, COPD, lung infections and other respiratory problems.",
       "task": "Review the patient's report and provide a pulmonary assessment to identify potential respiratory issues that may be affecting the patient's breathing.",
-      "focus": "Identify any potential respiratory issues, such as asthma, COPD, or lung infections, that may be affecting the patient's breathing, and provide guidance on addressing these concerns."
+      "focus": "Identify any potential respiratory issues, such as asthma, COPD, or lung infections, that may be affecting the patient's breathing, and provide guidance on addressing these concerns.",
+      "prompt": "Act like a pulmonologist. You will receive a patient's report.\nTask: Review the patient's report and provide a pulmonary assessment.\nFocus: Identify any potential respiratory issues, such as asthma, COPD, or lung infections, that may be affecting the patient's breathing.\nRecommendation: Offer guidance on how to address these respiratory concerns, including pulmonary function tests, imaging studies, or other interventions.\nPlease only return the possible respiratory issues and the recommended next steps.\nPatient's Report: {medical_report}"
     }
   },
   "modelSelector": {

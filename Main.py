@@ -10,17 +10,18 @@ import json, os
 load_dotenv(dotenv_path='apikey.env')
 
 
-def run_multi_agent_diagnosis(medical_report: str, model_name: str = None) -> str:
+def run_multi_agent_diagnosis(medical_report: str, model_name: str = None, language: str = "en") -> str:
     """运行三个专科智能体 + 多学科团队智能体，返回**结构化的 markdown 结果**。
 
     Args:
         medical_report: 病历报告文本
         model_name: 使用的AI模型名称（可选，如果为None则使用环境变量）
+        language: 输出语言 ('en' 或 'zh'，默认为 'en')
 
     你可以在自己的项目中直接 import 使用，例如：
 
         from Main import run_multi_agent_diagnosis
-        result_md = run_multi_agent_diagnosis(medical_report, model_name="claude-sonnet-4.5")
+        result_md = run_multi_agent_diagnosis(medical_report, model_name="claude-sonnet-4.5", language="zh")
 
     返回值是一个包含以下结构的 markdown 字符串：
 
@@ -34,9 +35,9 @@ def run_multi_agent_diagnosis(medical_report: str, model_name: str = None) -> st
     ...
     """
     agents = {
-        "Cardiologist": Cardiologist(medical_report, model_name=model_name),
-        "Psychologist": Psychologist(medical_report, model_name=model_name),
-        "Pulmonologist": Pulmonologist(medical_report, model_name=model_name),
+        "Cardiologist": Cardiologist(medical_report, model_name=model_name, language=language),
+        "Psychologist": Psychologist(medical_report, model_name=model_name, language=language),
+        "Pulmonologist": Pulmonologist(medical_report, model_name=model_name, language=language),
     }
 
     # 定义一个函数，用于运行单个智能体并获取返回结果
@@ -61,6 +62,7 @@ def run_multi_agent_diagnosis(medical_report: str, model_name: str = None) -> st
         psychologist_report=responses.get("Psychologist"),
         pulmonologist_report=responses.get("Pulmonologist"),
         model_name=model_name,
+        language=language,
     )
 
     # 运行多学科团队智能体，生成最终诊断总结
@@ -68,15 +70,51 @@ def run_multi_agent_diagnosis(medical_report: str, model_name: str = None) -> st
 
     # 防御性处理：如果最终诊断为空或类型不正确，则给出说明性文本
     if not isinstance(final_diagnosis, str) or not final_diagnosis.strip():
-        final_section = "No final diagnosis could be generated due to upstream model errors."
+        if language == "zh":
+            final_section = "由于上游模型错误，无法生成最终诊断。"
+        else:
+            final_section = "No final diagnosis could be generated due to upstream model errors."
     else:
         final_section = final_diagnosis.strip()
 
-    cardiologist_md = (responses.get("Cardiologist") or "No cardiologist report (upstream error).").strip()
-    psychologist_md = (responses.get("Psychologist") or "No psychologist report (upstream error).").strip()
-    pulmonologist_md = (responses.get("Pulmonologist") or "No pulmonologist report (upstream error).").strip()
+    # 根据语言设置错误提示文本
+    if language == "zh":
+        no_cardio = "无心脏科报告（上游错误）。"
+        no_psycho = "无心理学报告（上游错误）。"
+        no_pulmo = "无呼吸科报告（上游错误）。"
+    else:
+        no_cardio = "No cardiologist report (upstream error)."
+        no_psycho = "No psychologist report (upstream error)."
+        no_pulmo = "No pulmonologist report (upstream error)."
 
-    full_md = f"""# Multidisciplinary Diagnosis
+    cardiologist_md = (responses.get("Cardiologist") or no_cardio).strip()
+    psychologist_md = (responses.get("Psychologist") or no_psycho).strip()
+    pulmonologist_md = (responses.get("Pulmonologist") or no_pulmo).strip()
+
+    # 根据语言生成 markdown 标题
+    if language == "zh":
+        full_md = f"""# 多学科诊断
+
+## 最终诊断（摘要）
+
+{final_section}
+
+## 专科报告
+
+### 心脏科医生
+
+{cardiologist_md}
+
+### 心理学家
+
+{psychologist_md}
+
+### 呼吸科医生
+
+{pulmonologist_md}
+"""
+    else:
+        full_md = f"""# Multidisciplinary Diagnosis
 
 ## Final Diagnosis (Summary)
 

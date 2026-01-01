@@ -312,6 +312,7 @@ class DiagnosisResponse(BaseModel):
 class RunDiagnosisRequest(BaseModel):
     """运行诊断请求参数"""
     model: Optional[str] = None  # 使用的模型，如果为None则使用默认模型
+    language: Optional[str] = "en"  # 输出语言 ('en' 或 'zh'，默认为 'en')
 
 
 @app.post("/api/cases/{case_id}/run-diagnosis", response_model=DiagnosisResponse)
@@ -359,7 +360,7 @@ async def run_diagnosis(
 
     # 3. 运行诊断（记录执行时间）
     start_time = time.time()
-    diagnosis_md = run_multi_agent_diagnosis(case.raw_report, model_name=model_name)
+    diagnosis_md = run_multi_agent_diagnosis(case.raw_report, model_name=model_name, language=request.language or "en")
     execution_time_ms = int((time.time() - start_time) * 1000)
 
     # 4. 保存诊断历史

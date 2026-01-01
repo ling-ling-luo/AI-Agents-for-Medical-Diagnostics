@@ -74,10 +74,10 @@ export const caseApi = {
   },
 
   // 运行诊断
-  runDiagnosis: async (caseId: number, model?: string): Promise<DiagnosisResponse> => {
+  runDiagnosis: async (caseId: number, model?: string, language?: string): Promise<DiagnosisResponse> => {
     const response = await api.post<DiagnosisResponse>(
       `/api/cases/${caseId}/run-diagnosis`,
-      { model }
+      { model, language }
     );
     return response.data;
   },

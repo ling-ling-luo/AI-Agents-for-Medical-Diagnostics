@@ -11,6 +11,7 @@ import { Loading } from './Loading';
 import { DiagnosisResult } from './DiagnosisResult';
 import { ModelSelector } from './ModelSelector';
 import { AgentInfoModal } from './AgentInfoModal';
+import i18n from '../i18n';
 
 interface Model {
   id: string;
@@ -40,12 +41,7 @@ export const CaseDetail = () => {
       description: t('agentModal.cardiologist.description'),
       task: t('agentModal.cardiologist.task'),
       focus: t('agentModal.cardiologist.focus'),
-      prompt: `Act like a cardiologist. You will receive a medical report of a patient.
-Task: Review the patient's cardiac workup, including ECG, blood tests, Holter monitor results, and echocardiogram.
-Focus: Determine if there are any subtle signs of cardiac issues that could explain the patient's symptoms. Rule out any underlying heart conditions, such as arrhythmias or structural abnormalities, that might be missed on routine testing.
-Recommendation: Provide guidance on any further cardiac testing or monitoring needed to ensure there are no hidden heart-related concerns. Suggest potential management strategies if a cardiac issue is identified.
-Please only return the possible causes of the patient's symptoms and the recommended next steps.
-Medical Report: {medical_report}`,
+      prompt: t('agentModal.cardiologist.prompt'),
       icon: Heart,
       color: 'bg-gradient-to-br from-red-50 to-pink-50'
     },
@@ -55,12 +51,7 @@ Medical Report: {medical_report}`,
       description: t('agentModal.psychologist.description'),
       task: t('agentModal.psychologist.task'),
       focus: t('agentModal.psychologist.focus'),
-      prompt: `Act like a psychologist. You will receive a patient's report.
-Task: Review the patient's report and provide a psychological assessment.
-Focus: Identify any potential mental health issues, such as anxiety, depression, or trauma, that may be affecting the patient's well-being.
-Recommendation: Offer guidance on how to address these mental health concerns, including therapy, counseling, or other interventions.
-Please only return the possible mental health issues and the recommended next steps.
-Patient's Report: {medical_report}`,
+      prompt: t('agentModal.psychologist.prompt'),
       icon: Brain,
       color: 'bg-gradient-to-br from-purple-50 to-indigo-50'
     },
@@ -70,12 +61,7 @@ Patient's Report: {medical_report}`,
       description: t('agentModal.pulmonologist.description'),
       task: t('agentModal.pulmonologist.task'),
       focus: t('agentModal.pulmonologist.focus'),
-      prompt: `Act like a pulmonologist. You will receive a patient's report.
-Task: Review the patient's report and provide a pulmonary assessment.
-Focus: Identify any potential respiratory issues, such as asthma, COPD, or lung infections, that may be affecting the patient's breathing.
-Recommendation: Offer guidance on how to address these respiratory concerns, including pulmonary function tests, imaging studies, or other interventions.
-Please only return the possible respiratory issues and the recommended next steps.
-Patient's Report: {medical_report}`,
+      prompt: t('agentModal.pulmonologist.prompt'),
       icon: Wind,
       color: 'bg-gradient-to-br from-cyan-50 to-blue-50'
     }
@@ -272,7 +258,12 @@ Patient's Report: {medical_report}`,
       setLoading(true);
       setError(null);
       const startTime = Date.now();
-      const result = await caseApi.runDiagnosis(parseInt(caseId), selectedModel);
+
+      // 获取当前语言并映射为后端支持的格式
+      const currentLang = i18n.language; // 'zh-CN' 或 'en-US'
+      const language = currentLang.startsWith('zh') ? 'zh' : 'en';
+
+      const result = await caseApi.runDiagnosis(parseInt(caseId), selectedModel, language);
       const executionTime = Date.now() - startTime;
 
       setDiagnosis(result);

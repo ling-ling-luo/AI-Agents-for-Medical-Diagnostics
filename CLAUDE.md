@@ -105,13 +105,15 @@ npm run preview
 
 ### 1) 诊断核心：多智能体 + 汇总
 
-- 复用入口：`Main.py:12` 的 `run_multi_agent_diagnosis(medical_report, model_name=None)`
+- 复用入口：`Main.py:13` 的 `run_multi_agent_diagnosis(medical_report, model_name=None, language="en")`
   - 并发运行 3 个专科智能体（心脏科/心理学/呼吸科）
   - 由多学科团队智能体汇总输出结构化 Markdown
+  - 支持中英文输出：`language="zh"` 输出中文诊断报告，`language="en"` 输出英文诊断报告
 - 智能体定义：`Utils/Agents.py`
-  - 这里的英文 prompt 直接影响输出质量；仓库约束为**不要修改 prompt**（如需讨论请先对齐需求）。
+  - 包含中英文两套完整的 prompt，内容严格对应翻译，不做风格和内容改动
+  - 中文 prompt 和英文 prompt 均不应随意修改，以保持诊断质量和稳定性（如需讨论请先对齐需求）
 
-> 任何需要“跑诊断”的新功能（API、导出、对比等），应优先复用 `run_multi_agent_diagnosis()`，不要在别处重复拼 prompt 或重复 LLM 调用流程。
+> 任何需要"跑诊断"的新功能（API、导出、对比等），应优先复用 `run_multi_agent_diagnosis()`，不要在别处重复拼 prompt 或重复 LLM 调用流程。
 
 ### 2) Web API：FastAPI + SQLAlchemy + RBAC
 
@@ -157,7 +159,10 @@ npm run preview
 
 ## 项目约定（和容易踩坑的点）
 
-- **提示词约束**：`Utils/Agents.py` 内的英文提示词不要改动（会影响诊断质量与稳定性）。
+- **提示词约束**：`Utils/Agents.py` 内的提示词（中文和英文）不要随意改动（会影响诊断质量与稳定性）。项目现支持中英文两套 prompt：
+  - 英文 prompt：原有英文提示词保持不变
+  - 中文 prompt：严格对应翻译的中文版本
+  - 前端根据用户界面语言自动选择对应的 prompt，确保诊断报告输出语言与界面一致
 - **迁移/脚本**：仓库存在 `api/migrations/` 下的脚本式迁移文件；依赖里包含 Alembic，但当前未见典型 `alembic.ini`/版本目录结构，做 DB 结构变更前先确认项目采用的迁移方式。
 - **前端 UI 风格**：整体保持"Google 简约风格 / 矩形设计 / 灰色分隔线 / 少装饰"的一致性（Tailwind）。详见 `DESIGN_SYSTEM.md`。
   - 所有卡片使用统一样式：`bg-white border border-gray-200 rounded-lg shadow-sm`
