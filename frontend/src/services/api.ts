@@ -1,5 +1,15 @@
 import axios from 'axios';
 import type { Case, CaseDetail, DiagnosisResponse, CreateCaseRequest, CreateCaseResponse, UpdateCaseRequest, DiagnosisHistoryResponse, DiagnosisDetail, AllDiagnosisResponse, DiagnosisFilters } from '../types';
+import type {
+  OverviewData,
+  DemographicsData,
+  TrendsData,
+  PerformanceData,
+  ModelComparisonData,
+  UserActivityData,
+  AnalyticsApiResponse,
+  AnalyticsFilters
+} from '../types/analytics';
 
 // 配置 API 基础 URL - 开发环境指向 FastAPI 后端
 const API_BASE_URL = 'http://localhost:8000';
@@ -191,6 +201,114 @@ export const caseApi = {
     };
 
     const response = await api.get<AllDiagnosisResponse>('/api/diagnoses/all', { params });
+    return response.data;
+  },
+};
+
+// ============ 数据分析 API ============
+export const analyticsApi = {
+  /**
+   * 获取概览数据
+   */
+  getOverview: async (filters?: AnalyticsFilters): Promise<OverviewData> => {
+    const params = {
+      start_date: filters?.start_date,
+      end_date: filters?.end_date,
+    };
+    const response = await api.get<AnalyticsApiResponse<OverviewData>>('/api/analytics/overview', { params });
+    return response.data.data;
+  },
+
+  /**
+   * 获取人口统计数据
+   */
+  getDemographics: async (filters?: AnalyticsFilters): Promise<DemographicsData> => {
+    const params = {
+      start_date: filters?.start_date,
+      end_date: filters?.end_date,
+      creator_id: filters?.creator_id,
+    };
+    const response = await api.get<AnalyticsApiResponse<DemographicsData>>('/api/analytics/cases/demographics', { params });
+    return response.data.data;
+  },
+
+  /**
+   * 获取病例趋势数据
+   */
+  getCaseTrends: async (filters?: AnalyticsFilters): Promise<TrendsData> => {
+    const params = {
+      start_date: filters?.start_date,
+      end_date: filters?.end_date,
+      granularity: filters?.granularity || 'day',
+    };
+    const response = await api.get<AnalyticsApiResponse<TrendsData>>('/api/analytics/cases/trends', { params });
+    return response.data.data;
+  },
+
+  /**
+   * 获取诊断趋势数据
+   */
+  getDiagnosisTrends: async (filters?: AnalyticsFilters): Promise<TrendsData> => {
+    const params = {
+      start_date: filters?.start_date,
+      end_date: filters?.end_date,
+      granularity: filters?.granularity || 'day',
+    };
+    const response = await api.get<AnalyticsApiResponse<TrendsData>>('/api/analytics/diagnoses/trends', { params });
+    return response.data.data;
+  },
+
+  /**
+   * 获取诊断性能数据
+   */
+  getPerformance: async (filters?: AnalyticsFilters): Promise<PerformanceData> => {
+    const params = {
+      start_date: filters?.start_date,
+      end_date: filters?.end_date,
+      model_name: filters?.model_name,
+    };
+    const response = await api.get<AnalyticsApiResponse<PerformanceData>>('/api/analytics/diagnoses/performance', { params });
+    return response.data.data;
+  },
+
+  /**
+   * 获取模型对比数据
+   */
+  getModelComparison: async (filters?: AnalyticsFilters): Promise<ModelComparisonData> => {
+    const params = {
+      start_date: filters?.start_date,
+      end_date: filters?.end_date,
+    };
+    const response = await api.get<AnalyticsApiResponse<ModelComparisonData>>('/api/analytics/models/comparison', { params });
+    return response.data.data;
+  },
+
+  /**
+   * 获取用户活动数据
+   */
+  getUserActivity: async (filters?: AnalyticsFilters): Promise<UserActivityData> => {
+    const params = {
+      start_date: filters?.start_date,
+      end_date: filters?.end_date,
+    };
+    const response = await api.get<AnalyticsApiResponse<UserActivityData>>('/api/analytics/users/activity', { params });
+    return response.data.data;
+  },
+
+  /**
+   * 导出分析报告
+   */
+  exportReport: async (reportType: string, format: 'pdf' | 'excel', filters?: AnalyticsFilters): Promise<Blob> => {
+    const params = {
+      report_type: reportType,
+      format,
+      start_date: filters?.start_date,
+      end_date: filters?.end_date,
+    };
+    const response = await api.post('/api/analytics/export', null, {
+      params,
+      responseType: 'blob',
+    });
     return response.data;
   },
 };

@@ -126,3 +126,6 @@ require_role_create = PermissionChecker("role", "create")
 require_role_read = PermissionChecker("role", "read")
 require_role_update = PermissionChecker("role", "update")
 require_role_delete = PermissionChecker("role", "delete")
+
+require_analytics_read = PermissionChecker("analytics", "read")
+require_analytics_export = PermissionChecker("analytics", "export")

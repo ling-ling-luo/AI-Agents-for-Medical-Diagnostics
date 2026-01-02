@@ -84,6 +84,7 @@ ROLE_PERMISSIONS = {
             ("diagnosis", "execute"),  # 运行AI诊断
             ("user", "create"), ("user", "read"), ("user", "update"), ("user", "delete"),
             ("role", "create"), ("role", "read"), ("role", "update"), ("role", "delete"),
+            ("analytics", "read"), ("analytics", "export"),  # 数据分析权限
         ]
     },
     "doctor": {
@@ -92,6 +93,7 @@ ROLE_PERMISSIONS = {
         "permissions": [
             ("case", "create"), ("case", "read"), ("case", "update"),
             ("diagnosis", "create"), ("diagnosis", "read"), ("diagnosis", "execute"),
+            ("analytics", "read"),  # 医生可以查看数据分析
         ]
     },
     "viewer": {

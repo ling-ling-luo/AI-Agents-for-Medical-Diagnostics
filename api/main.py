@@ -26,7 +26,7 @@ from api.auth.permissions import (
     require_case_create, require_case_read, require_case_update, require_case_delete,
     require_diagnosis_create, require_diagnosis_read, require_diagnosis_execute
 )
-from api.routes import auth, users, roles
+from api.routes import auth, users, roles, analytics
 
 app = FastAPI(title="AI Medical Diagnostics API")
 
@@ -34,6 +34,7 @@ app = FastAPI(title="AI Medical Diagnostics API")
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(roles.router)
+app.include_router(analytics.router)
 
 # 从配置文件加载支持的AI模型列表
 AVAILABLE_MODELS = ConfigLoader.load_models()
