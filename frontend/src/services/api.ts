@@ -298,9 +298,9 @@ export const analyticsApi = {
   /**
    * 导出分析报告
    */
-  exportReport: async (reportType: string, format: 'pdf' | 'excel', filters?: AnalyticsFilters): Promise<Blob> => {
+  exportReport: async (reportTypes: string[], format: 'pdf' | 'excel', filters?: AnalyticsFilters): Promise<Blob> => {
     const params = {
-      report_type: reportType,
+      report_types: reportTypes.join(','),
       format,
       start_date: filters?.start_date,
       end_date: filters?.end_date,

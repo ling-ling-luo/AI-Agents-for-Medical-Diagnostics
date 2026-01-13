@@ -1,5 +1,6 @@
 """数据分析相关API路由"""
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from typing import Optional, List
 from datetime import datetime, date
@@ -9,6 +10,7 @@ from api.auth.permissions import PermissionChecker
 from api.auth.dependencies import get_current_user
 from api.models.user import User
 from api.utils import analytics
+from api.utils.analytics_export import AnalyticsExporter
 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
 
@@ -242,7 +244,7 @@ async def get_user_activity(
 
 @router.post("/export")
 async def export_analytics_report(
-    report_type: str = Query(..., description="报告类型: overview/demographics/trends/performance"),
+    report_types: str = Query(..., description="报告类型，逗号分隔: overview,demographics,trends,models,users"),
     format: str = Query("pdf", description="导出格式: pdf/excel"),
     start_date: Optional[date] = Query(None, description="开始日期 (YYYY-MM-DD)"),
     end_date: Optional[date] = Query(None, description="结束日期 (YYYY-MM-DD)"),
@@ -250,7 +252,7 @@ async def export_analytics_report(
     current_user: User = Depends(require_analytics_export)
 ):
     """
-    导出数据分析报告
+    导出数据分析报告（支持多个报告类型合并到一个文件）
 
     支持PDF和Excel格式导出
 
@@ -260,14 +262,76 @@ async def export_analytics_report(
         if format not in ["pdf", "excel"]:
             raise HTTPException(status_code=400, detail="format 必须是 'pdf' 或 'excel'")
 
-        if report_type not in ["overview", "demographics", "trends", "performance"]:
-            raise HTTPException(
-                status_code=400,
-                detail="report_type 必须是 'overview', 'demographics', 'trends' 或 'performance'"
+        # 解析报告类型列表
+        valid_types = {"overview", "demographics", "trends", "models", "users"}
+        type_list = [t.strip() for t in report_types.split(",") if t.strip()]
+
+        for t in type_list:
+            if t not in valid_types:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"无效的报告类型: {t}。有效类型: {', '.join(valid_types)}"
+                )
+
+        if not type_list:
+            raise HTTPException(status_code=400, detail="至少需要选择一个报告类型")
+
+        # 收集所需数据
+        data = {}
+
+        if "overview" in type_list:
+            data["overview"] = analytics.calculate_overview(
+                db=db, start_date=start_date, end_date=end_date, user=current_user
             )
 
-        # TODO: 实现导出功能（阶段5）
-        raise HTTPException(status_code=501, detail="导出功能将在阶段5实现")
+        if "demographics" in type_list:
+            data["demographics"] = analytics.calculate_case_demographics(
+                db=db, start_date=start_date, end_date=end_date, user=current_user
+            )
+
+        if "trends" in type_list:
+            data["trends"] = {
+                "case_trends": analytics.calculate_time_series(
+                    db=db, entity_type="case", start_date=start_date, end_date=end_date, user=current_user
+                ),
+                "diagnosis_trends": analytics.calculate_time_series(
+                    db=db, entity_type="diagnosis", start_date=start_date, end_date=end_date, user=current_user
+                ),
+                "performance": analytics.calculate_model_performance(
+                    db=db, start_date=start_date, end_date=end_date, user=current_user
+                )
+            }
+
+        if "models" in type_list:
+            data["models"] = analytics.calculate_model_comparison(
+                db=db, start_date=start_date, end_date=end_date, user=current_user
+            )
+
+        if "users" in type_list:
+            data["users"] = analytics.calculate_user_activity(
+                db=db, start_date=start_date, end_date=end_date, user=current_user
+            )
+
+        # 生成报告
+        exporter = AnalyticsExporter()
+        filename = f"analytics_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
+        if format == "pdf":
+            file_bytes = exporter.export_combined_pdf(type_list, data, start_date, end_date)
+            filename += ".pdf"
+            media_type = "application/pdf"
+        else:
+            file_bytes = exporter.export_combined_excel(type_list, data, start_date, end_date)
+            filename += ".xlsx"
+            media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+        return Response(
+            content=file_bytes,
+            media_type=media_type,
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}"
+            }
+        )
 
     except HTTPException:
         raise

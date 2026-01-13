@@ -3,6 +3,7 @@
  * 提供统一的加载、错误和空状态处理
  */
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Loader2, AlertCircle, BarChart3 } from 'lucide-react';
 
 interface ChartContainerProps {
@@ -22,6 +23,8 @@ export const ChartContainer: React.FC<ChartContainerProps> = ({
   isEmpty = false,
   children,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
       {/* 标题和描述 */}
@@ -36,14 +39,17 @@ export const ChartContainer: React.FC<ChartContainerProps> = ({
       <div className="relative" style={{ minHeight: '300px' }}>
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75">
-            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+            <div className="flex flex-col items-center">
+              <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-2" />
+              <p className="text-sm text-gray-500">{t('analytics.loading')}</p>
+            </div>
           </div>
         )}
 
         {error && !loading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-            <p className="text-base text-gray-700 font-medium">加载失败</p>
+            <p className="text-base text-gray-700 font-medium">{t('analytics.loadError')}</p>
             <p className="text-sm text-gray-500 mt-2">{error}</p>
           </div>
         )}
@@ -51,7 +57,7 @@ export const ChartContainer: React.FC<ChartContainerProps> = ({
         {isEmpty && !loading && !error && (
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <BarChart3 className="w-12 h-12 text-gray-300 mb-4" />
-            <p className="text-base text-gray-500">暂无数据</p>
+            <p className="text-base text-gray-500">{t('analytics.noData')}</p>
           </div>
         )}
 

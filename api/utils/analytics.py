@@ -178,10 +178,24 @@ def calculate_case_demographics(
 
     age_distribution = [{"age_group": ag, "count": cnt} for ag, cnt in age_counts.items()]
 
+    # 性别标准化映射（将各种形式统一为英文小写）
+    def normalize_gender(g: str) -> str:
+        if not g:
+            return "unknown"
+        g_lower = g.lower().strip()
+        if g_lower in ("male", "男", "m", "男性"):
+            return "male"
+        elif g_lower in ("female", "女", "f", "女性"):
+            return "female"
+        elif g_lower in ("unknown", "未知", ""):
+            return "unknown"
+        else:
+            return "other"
+
     # 性别分布
     gender_counts = defaultdict(int)
     for case in cases:
-        gender = case.gender if case.gender else "未知"
+        gender = normalize_gender(case.gender)
         gender_counts[gender] += 1
 
     gender_distribution = [{"gender": g, "count": cnt} for g, cnt in gender_counts.items()]
@@ -211,7 +225,7 @@ def calculate_case_demographics(
             age_group = "81-90"
         else:
             age_group = "90+"
-        gender = case.gender if case.gender else "未知"
+        gender = normalize_gender(case.gender)
         age_gender_counts[(age_group, gender)] += 1
 
     age_gender_data = [[ag, g, cnt] for (ag, g), cnt in age_gender_counts.items()]
