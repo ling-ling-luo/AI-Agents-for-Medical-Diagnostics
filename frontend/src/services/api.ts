@@ -312,3 +312,174 @@ export const analyticsApi = {
     return response.data;
   },
 };
+
+// ============ 系统设置 API ============
+import type {
+  Provider,
+  ProviderCreate,
+  ProviderUpdate,
+  ProviderTemplate,
+  TestConnectionResult,
+  Model,
+  ModelCreate,
+  ModelUpdate,
+  PresetModel,
+  SystemConfig,
+  SystemConfigUpdate,
+  AvailableProvider,
+  SettingsApiResponse,
+  FetchModelsResponse,
+  ImportModelsResponse,
+} from '../types/settings';
+
+export const settingsApi = {
+  // ============ 供应商 API ============
+
+  /**
+   * 获取供应商列表
+   */
+  getProviders: async (): Promise<Provider[]> => {
+    const response = await api.get<SettingsApiResponse<Provider[]>>('/api/settings/providers');
+    return response.data.data;
+  },
+
+  /**
+   * 创建供应商
+   */
+  createProvider: async (data: ProviderCreate): Promise<Provider> => {
+    const response = await api.post<SettingsApiResponse<Provider>>('/api/settings/providers', data);
+    return response.data.data;
+  },
+
+  /**
+   * 更新供应商
+   */
+  updateProvider: async (id: number, data: ProviderUpdate): Promise<Provider> => {
+    const response = await api.put<SettingsApiResponse<Provider>>(`/api/settings/providers/${id}`, data);
+    return response.data.data;
+  },
+
+  /**
+   * 删除供应商
+   */
+  deleteProvider: async (id: number): Promise<void> => {
+    await api.delete(`/api/settings/providers/${id}`);
+  },
+
+  /**
+   * 测试供应商连接
+   */
+  testProviderConnection: async (id: number): Promise<TestConnectionResult> => {
+    const response = await api.post<SettingsApiResponse<TestConnectionResult>>(`/api/settings/providers/${id}/test`);
+    return response.data.data;
+  },
+
+  /**
+   * 获取预置供应商模板
+   */
+  getProviderTemplates: async (): Promise<ProviderTemplate[]> => {
+    const response = await api.get<SettingsApiResponse<ProviderTemplate[]>>('/api/settings/providers/templates');
+    return response.data.data;
+  },
+
+  /**
+   * 获取供应商的预置模型列表
+   */
+  getPresetModels: async (providerId: number): Promise<PresetModel[]> => {
+    const response = await api.get<SettingsApiResponse<PresetModel[]>>(`/api/settings/providers/${providerId}/preset-models`);
+    return response.data.data;
+  },
+
+  /**
+   * 从供应商 API 获取远程可用模型列表
+   */
+  fetchRemoteModels: async (providerId: number): Promise<FetchModelsResponse> => {
+    const response = await api.post<SettingsApiResponse<FetchModelsResponse>>(`/api/settings/providers/${providerId}/fetch-models`);
+    return response.data.data;
+  },
+
+  /**
+   * 导入选中的远程模型到数据库
+   */
+  importModels: async (providerId: number, modelIds: string[]): Promise<ImportModelsResponse> => {
+    const response = await api.post<SettingsApiResponse<ImportModelsResponse>>(
+      `/api/settings/providers/${providerId}/import-models`,
+      { model_ids: modelIds }
+    );
+    return response.data.data;
+  },
+
+  // ============ 模型 API ============
+
+  /**
+   * 获取模型列表
+   */
+  getModels: async (providerId?: number, isEnabled?: boolean): Promise<Model[]> => {
+    const params: Record<string, any> = {};
+    if (providerId !== undefined) params.provider_id = providerId;
+    if (isEnabled !== undefined) params.is_enabled = isEnabled;
+    const response = await api.get<SettingsApiResponse<Model[]>>('/api/settings/models', { params });
+    return response.data.data;
+  },
+
+  /**
+   * 创建模型
+   */
+  createModel: async (data: ModelCreate): Promise<Model> => {
+    const response = await api.post<SettingsApiResponse<Model>>('/api/settings/models', data);
+    return response.data.data;
+  },
+
+  /**
+   * 批量创建模型
+   */
+  createModelsBatch: async (providerId: number, models: ModelCreate[]): Promise<{ created_count: number; skipped_count: number }> => {
+    const response = await api.post<SettingsApiResponse<{ created_count: number; skipped_count: number }>>(
+      `/api/settings/models/batch?provider_id=${providerId}`,
+      models
+    );
+    return response.data.data;
+  },
+
+  /**
+   * 更新模型
+   */
+  updateModel: async (id: number, data: ModelUpdate): Promise<Model> => {
+    const response = await api.put<SettingsApiResponse<Model>>(`/api/settings/models/${id}`, data);
+    return response.data.data;
+  },
+
+  /**
+   * 删除模型
+   */
+  deleteModel: async (id: number): Promise<void> => {
+    await api.delete(`/api/settings/models/${id}`);
+  },
+
+  // ============ 系统配置 API ============
+
+  /**
+   * 获取系统配置
+   */
+  getConfig: async (): Promise<SystemConfig> => {
+    const response = await api.get<SettingsApiResponse<SystemConfig>>('/api/settings/config');
+    return response.data.data;
+  },
+
+  /**
+   * 更新系统配置
+   */
+  updateConfig: async (data: SystemConfigUpdate): Promise<void> => {
+    await api.put('/api/settings/config', data);
+  },
+
+  // ============ 可用模型 API ============
+
+  /**
+   * 获取可用于诊断的模型列表
+   */
+  getAvailableModels: async (): Promise<AvailableProvider[]> => {
+    const response = await api.get<SettingsApiResponse<AvailableProvider[]>>('/api/settings/available-models');
+    return response.data.data;
+  },
+};

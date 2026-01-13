@@ -85,6 +85,7 @@ ROLE_PERMISSIONS = {
             ("user", "create"), ("user", "read"), ("user", "update"), ("user", "delete"),
             ("role", "create"), ("role", "read"), ("role", "update"), ("role", "delete"),
             ("analytics", "read"), ("analytics", "export"),  # 数据分析权限
+            ("settings", "read"), ("settings", "write"),  # 系统设置权限
         ]
     },
     "doctor": {
@@ -94,6 +95,7 @@ ROLE_PERMISSIONS = {
             ("case", "create"), ("case", "read"), ("case", "update"),
             ("diagnosis", "create"), ("diagnosis", "read"), ("diagnosis", "execute"),
             ("analytics", "read"),  # 医生可以查看数据分析
+            ("settings", "read"),  # 医生可以查看系统设置
         ]
     },
     "viewer": {

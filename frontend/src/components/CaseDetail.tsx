@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/useAuth';
 import { ArrowLeft, RefreshCw, AlertCircle, Brain, Heart, Wind, Loader, User, Calendar, Edit2, Save, X } from 'lucide-react';
-import { caseApi } from '../services/api';
+import { caseApi, settingsApi } from '../services/api';
 import { useNavigation } from '../context/NavigationContext';
 import type { CaseDetail as CaseDetailType, DiagnosisResponse } from '../types';
 import { Loading } from './Loading';
@@ -163,25 +163,56 @@ export const CaseDetail = () => {
     }
   };
 
-  // 加载模型列表
+  // 加载模型列表（从系统设置获取）
   useEffect(() => {
     const loadModels = async () => {
       try {
-        const data = await caseApi.getAvailableModels();
-        setAvailableModels(data.models);
+        const providers = await settingsApi.getAvailableModels();
+
+        // 将供应商分组的模型转换为扁平列表
+        const flatModels: Model[] = [];
+        let defaultModelId: string | null = null;
+
+        for (const provider of providers) {
+          for (const model of provider.models) {
+            flatModels.push({
+              id: model.model_id,
+              name: model.display_name,
+              provider: provider.provider_name
+            });
+            // 记录默认模型
+            if (model.is_default) {
+              defaultModelId = model.model_id;
+            }
+          }
+        }
+
+        setAvailableModels(flatModels);
 
         // 从 localStorage 读取用户上次选择的模型
         const savedModel = localStorage.getItem('selectedModel');
-        if (savedModel && data.models.some(m => m.id === savedModel)) {
+        if (savedModel && flatModels.some(m => m.id === savedModel)) {
           setSelectedModel(savedModel);
-        } else if (data.models.length > 0) {
-          // 默认选择第一个模型
-          setSelectedModel(data.models[0].id);
+        } else if (defaultModelId) {
+          // 使用系统设置的默认模型
+          setSelectedModel(defaultModelId);
+        } else if (flatModels.length > 0) {
+          // 否则选择第一个模型
+          setSelectedModel(flatModels[0].id);
         }
       } catch (err) {
         console.error('Error loading models:', err);
-        // 设置默认模型
-        setSelectedModel('gemini-2.5-flash');
+        // 回退到旧 API
+        try {
+          const data = await caseApi.getAvailableModels();
+          setAvailableModels(data.models);
+          if (data.models.length > 0) {
+            setSelectedModel(data.models[0].id);
+          }
+        } catch {
+          // 最后的默认值
+          setSelectedModel('gpt-4o');
+        }
       }
     };
 

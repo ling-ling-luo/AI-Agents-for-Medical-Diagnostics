@@ -17,6 +17,7 @@ from Main import run_multi_agent_diagnosis
 from api.db.database import get_db
 from api.models.case import MedicalCase, DiagnosisHistory
 from api.models.user import User
+from api.models.settings import Provider, Model as SettingsModel
 from api.utils.case_formatter import CaseFormatter
 from api.utils.txt_parser import parse_txt_file
 from api.utils.export import DiagnosisExporter
@@ -26,7 +27,7 @@ from api.auth.permissions import (
     require_case_create, require_case_read, require_case_update, require_case_delete,
     require_diagnosis_create, require_diagnosis_read, require_diagnosis_execute
 )
-from api.routes import auth, users, roles, analytics
+from api.routes import auth, users, roles, analytics, settings
 
 app = FastAPI(title="AI Medical Diagnostics API")
 
@@ -35,6 +36,7 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(roles.router)
 app.include_router(analytics.router)
+app.include_router(settings.router)
 
 # 从配置文件加载支持的AI模型列表
 AVAILABLE_MODELS = ConfigLoader.load_models()
@@ -352,10 +354,20 @@ async def run_diagnosis(
         raise HTTPException(status_code=403, detail="无权对此病例进行诊断")
 
     # 2. 确定使用的模型
-    model_name = request.model if request.model else os.getenv("LLM_MODEL", "gemini-2.5-flash")
+    model_name = request.model if request.model else os.getenv("LLM_MODEL", "gpt-4o")
 
-    # 验证模型是否在支持列表中
-    valid_model_ids = [m["id"] for m in AVAILABLE_MODELS]
+    # 从数据库查询系统设置中已启用的模型
+    enabled_models = db.query(SettingsModel).join(Provider).filter(
+        SettingsModel.is_enabled == True,
+        Provider.is_enabled == True
+    ).all()
+
+    # 如果数据库中没有配置模型，回退到配置文件中的模型列表
+    if enabled_models:
+        valid_model_ids = [m.model_id for m in enabled_models]
+    else:
+        valid_model_ids = [m["id"] for m in AVAILABLE_MODELS]
+
     if model_name not in valid_model_ids:
         raise HTTPException(status_code=400, detail=f"不支持的模型: {model_name}。支持的模型: {', '.join(valid_model_ids)}")
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { HelpCircle } from 'lucide-react';
 import type { DiagnosisFilters } from '../types';
-import { caseApi } from '../services/api';
+import { caseApi, settingsApi } from '../services/api';
 import { DateRangeFilter } from './DateRangeFilter';
 
 interface DiagnosisFiltersProps {
@@ -20,8 +20,24 @@ export const DiagnosisFiltersComponent: React.FC<DiagnosisFiltersProps> = ({
   const [showTooltip, setShowTooltip] = useState(false);
 
   useEffect(() => {
-    caseApi.getAvailableModels().then(data => {
-      setAvailableModels(data.models);
+    // 从系统设置获取模型列表
+    settingsApi.getAvailableModels().then(providers => {
+      const flatModels: Array<{ id: string; name: string; provider: string }> = [];
+      for (const provider of providers) {
+        for (const model of provider.models) {
+          flatModels.push({
+            id: model.model_id,
+            name: model.display_name,
+            provider: provider.provider_name
+          });
+        }
+      }
+      setAvailableModels(flatModels);
+    }).catch(() => {
+      // 回退到旧 API
+      caseApi.getAvailableModels().then(data => {
+        setAvailableModels(data.models);
+      });
     });
   }, []);
 

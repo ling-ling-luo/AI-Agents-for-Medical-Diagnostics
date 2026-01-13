@@ -20,3 +20,5 @@ passlib[bcrypt]
 email-validator
 # 数据导出相关依赖
 openpyxl
+# HTTP 客户端
+httpx
