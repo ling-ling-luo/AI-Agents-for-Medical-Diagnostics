@@ -59,42 +59,42 @@ export const DiagnosisFiltersComponent: React.FC<DiagnosisFiltersProps> = ({
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded p-4 mb-6">
+    <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6 shadow-sm">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
             病例号
           </label>
           <input
             type="text"
             value={localFilters.patient_id || ''}
             onChange={(e) => handleInputChange('patient_id', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 hover:border-blue-500 transition-colors"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg hover:border-blue-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all bg-white"
             placeholder="输入病例号"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
             患者姓名
           </label>
           <input
             type="text"
             value={localFilters.patient_name || ''}
             onChange={(e) => handleInputChange('patient_name', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 hover:border-blue-500 transition-colors"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg hover:border-blue-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all bg-white"
             placeholder="输入患者姓名"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
             AI 模型
           </label>
           <select
             value={localFilters.model || ''}
             onChange={(e) => handleInputChange('model', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 hover:border-blue-500 transition-colors"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg hover:border-blue-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all bg-white cursor-pointer"
           >
             <option value="">全部模型</option>
             {availableModels.map(model => (
@@ -106,7 +106,7 @@ export const DiagnosisFiltersComponent: React.FC<DiagnosisFiltersProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1.5">
+          <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-1.5">
             诊断时间
             <div className="relative">
               <HelpCircle
@@ -115,7 +115,7 @@ export const DiagnosisFiltersComponent: React.FC<DiagnosisFiltersProps> = ({
                 onMouseLeave={() => setShowTooltip(false)}
               />
               {showTooltip && (
-                <div className="absolute left-0 top-6 z-50 w-64 p-3 bg-gray-800 text-white text-xs rounded shadow-lg">
+                <div className="absolute left-0 top-6 z-50 w-64 p-3 bg-gray-800 text-white text-xs rounded-lg shadow-lg">
                   <div className="space-y-2">
                     <p className="font-semibold">日期筛选使用说明：</p>
                     <ul className="list-disc list-inside space-y-1">
@@ -125,7 +125,6 @@ export const DiagnosisFiltersComponent: React.FC<DiagnosisFiltersProps> = ({
                       <li>快捷按钮：选择常用时间段</li>
                     </ul>
                   </div>
-                  {/* 小三角箭头 */}
                   <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
                 </div>
               )}
@@ -147,23 +146,23 @@ export const DiagnosisFiltersComponent: React.FC<DiagnosisFiltersProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
             创建者
           </label>
           <input
             type="text"
             value={localFilters.creator_username || ''}
             onChange={(e) => handleInputChange('creator_username', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 hover:border-blue-500 transition-colors"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg hover:border-blue-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all bg-white"
             placeholder="输入用户名"
           />
         </div>
 
-        {/* 重置按钮放在创建者同一行 */}
+        {/* 重置按钮 */}
         <div className="flex items-end justify-end">
           <button
             onClick={handleReset}
-            className="px-8 py-2 bg-white text-gray-700 border border-gray-300 rounded hover:bg-blue-50 hover:text-blue-600 hover:border-blue-500 font-medium transition-all whitespace-nowrap"
+            className="px-6 py-2 text-sm bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-blue-600 hover:border-blue-400 font-medium transition-all cursor-pointer"
           >
             重置
           </button>

@@ -233,8 +233,8 @@ export const CaseDetail = () => {
         // 添加到已打开病例列表
         addOpenCase({
           id: data.id,
-          patient_name: data.patient_name,
-          patient_id: data.patient_id
+          patient_name: data.patient_name || '',
+          patient_id: data.patient_id || ''
         });
 
         // 加载最新的诊断历史

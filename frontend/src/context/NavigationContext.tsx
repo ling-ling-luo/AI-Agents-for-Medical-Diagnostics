@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
 interface OpenCase {
   id: number;
@@ -86,7 +86,7 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({ children
     }));
   };
 
-  const expandToCase = (caseId: number) => {
+  const expandToCase = (_caseId: number) => {
     // 展开病例列表菜单项
     setExpandedItems(prev => ({
       ...prev,

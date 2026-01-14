@@ -19,6 +19,7 @@ import {
   Star,
   AlertCircle,
   Zap,
+  Globe,
   Clock,
   RefreshCw,
   MessageSquare,
@@ -1078,7 +1079,7 @@ const ModelsTab = () => {
                 className="border border-gray-200 rounded-lg overflow-hidden bg-white"
               >
                 {/* 供应商头部 */}
-                <button
+                <div
                   onClick={() => toggleProvider(provider.id)}
                   className="w-full flex items-center justify-between px-5 py-4 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
                 >
@@ -1112,7 +1113,7 @@ const ModelsTab = () => {
                     )}
                     {t('settings.addPresetModels')}
                   </button>
-                </button>
+                </div>
 
                 {/* 模型列表 */}
                 {expandedProviders.has(provider.id) && (
@@ -1650,13 +1651,13 @@ const ConfigTab = () => {
               </div>
               <button
                 onClick={() => setFormData((prev) => ({ ...prev, enable_streaming: !prev.enable_streaming }))}
-                className={`w-12 h-6 rounded-full transition-colors cursor-pointer relative ${
+                className={`w-11 h-6 rounded-full transition-colors cursor-pointer relative ${
                   formData.enable_streaming ? 'bg-blue-600' : 'bg-gray-300'
                 }`}
               >
                 <span
-                  className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                    formData.enable_streaming ? 'translate-x-6' : 'translate-x-0.5'
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                    formData.enable_streaming ? 'translate-x-5' : 'translate-x-0'
                   }`}
                 />
               </button>

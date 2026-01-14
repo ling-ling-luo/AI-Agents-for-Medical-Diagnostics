@@ -77,8 +77,6 @@ type TabType = 'overview' | 'demographics' | 'trends' | 'models' | 'users';
 const GENDER_MAP: Record<string, string> = {
   male: 'analytics.male',
   female: 'analytics.female',
-  other: 'analytics.other',
-  unknown: 'analytics.unknown',
 };
 
 // 翻译性别
@@ -601,7 +599,6 @@ export const DataAnalysis = () => {
                 <Legend />
                 <Bar dataKey="male" fill={COLORS.primary} name={t('analytics.male')} stackId="stack" activeBar={{ fill: '#1D4ED8' }} />
                 <Bar dataKey="female" fill={COLORS.secondary} name={t('analytics.female')} stackId="stack" activeBar={{ fill: '#7C3AED' }} />
-                <Bar dataKey="other" fill={COLORS.warning} name={t('analytics.other')} stackId="stack" activeBar={{ fill: '#D97706' }} />
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
@@ -1153,18 +1150,16 @@ export const DataAnalysis = () => {
 };
 
 // 辅助函数：处理年龄-性别交叉数据
-function processAgeGenderData(matrix: [string, string, number][]): { age_group: string; male: number; female: number; other: number }[] {
-  const grouped: Record<string, { male: number; female: number; other: number }> = {};
+function processAgeGenderData(matrix: [string, string, number][]): { age_group: string; male: number; female: number }[] {
+  const grouped: Record<string, { male: number; female: number }> = {};
 
   matrix.forEach(([ageGroup, gender, count]) => {
     if (!grouped[ageGroup]) {
-      grouped[ageGroup] = { male: 0, female: 0, other: 0 };
+      grouped[ageGroup] = { male: 0, female: 0 };
     }
-    const key = gender.toLowerCase() as 'male' | 'female' | 'other';
+    const key = gender.toLowerCase() as 'male' | 'female';
     if (key in grouped[ageGroup]) {
       grouped[ageGroup][key] = count;
-    } else {
-      grouped[ageGroup].other += count;
     }
   });
 

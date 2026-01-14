@@ -215,40 +215,40 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
       <main className={`${embedded ? 'py-2' : 'container-custom py-3'} min-h-[calc(100vh-120px)] flex flex-col`}>
         {/* 筛选区域 - 非嵌入模式 */}
         {!embedded && (
-          <div className="bg-white rounded-lg border border-gray-200 p-5 mb-4 shadow-sm">
-            {/* 第一行：患者姓名、病历号、创建日期 */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-3 mb-4">
+          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-4 shadow-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* 患者姓名 */}
-              <div className="flex items-center gap-2">
-                <label className="text-base text-gray-700 font-medium w-32 text-right flex-shrink-0 whitespace-nowrap">
-                  {t('caseList.patientName')}：
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  {t('caseList.patientName')}
                 </label>
                 <input
                   type="text"
                   placeholder={t('caseList.inputName')}
                   value={filters.patient_name}
                   onChange={(e) => updateFilter('patient_name', e.target.value)}
-                  className="w-40 px-3 py-2 text-sm border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg hover:border-blue-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all bg-white"
                 />
               </div>
 
               {/* 病历号 */}
-              <div className="flex items-center gap-2 -ml-10">
-                <label className="text-base text-gray-700 font-medium w-32 text-right flex-shrink-0 whitespace-nowrap">
-                  {t('caseList.patientId')}：
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  {t('caseList.patientId')}
                 </label>
                 <input
                   type="text"
                   placeholder={t('caseList.inputPatientId')}
                   value={filters.patient_id}
                   onChange={(e) => updateFilter('patient_id', e.target.value)}
-                  className="w-40 px-3 py-2 text-sm border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg hover:border-blue-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all bg-white"
                 />
               </div>
 
               {/* 创建日期 */}
-              <div className="flex items-center gap-2 -ml-16">
-                <label className="text-base text-gray-700 font-medium w-32 text-right flex-shrink-0 flex items-center justify-end gap-1.5 whitespace-nowrap">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-1.5">
+                  {t('caseList.createdDate')}
                   <div className="relative">
                     <HelpCircle
                       className="w-4 h-4 text-gray-400 hover:text-blue-500 cursor-help transition-colors"
@@ -256,7 +256,7 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                       onMouseLeave={() => setShowTooltip(false)}
                     />
                     {showTooltip && (
-                      <div className="absolute right-0 top-6 z-50 w-80 p-3 bg-gray-800 text-white text-xs rounded shadow-lg">
+                      <div className="absolute left-0 top-6 z-50 w-64 p-3 bg-gray-800 text-white text-xs rounded-lg shadow-lg">
                         <div className="space-y-2 text-left">
                           <p className="font-semibold">{t('caseList.dateFilterHelp')}</p>
                           <ul className="list-disc list-inside space-y-1">
@@ -266,39 +266,32 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                             <li>{t('caseList.dateFilterTip4')}</li>
                           </ul>
                         </div>
-                        {/* 小三角箭头 */}
-                        <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
+                        <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
                       </div>
                     )}
                   </div>
-                  {t('caseList.createdDate')}：
                 </label>
-                <div className="w-72">
-                  <DateRangeFilter
-                    value={{ from: filters.created_from, to: filters.created_to }}
-                    onChange={(range) => {
-                      setFilters(prev => ({
-                        ...prev,
-                        created_from: range.from,
-                        created_to: range.to,
-                      }));
-                    }}
-                  />
-                </div>
+                <DateRangeFilter
+                  value={{ from: filters.created_from, to: filters.created_to }}
+                  onChange={(range) => {
+                    setFilters(prev => ({
+                      ...prev,
+                      created_from: range.from,
+                      created_to: range.to,
+                    }));
+                  }}
+                />
               </div>
-            </div>
 
-            {/* 第二行：性别、诊断状态、创建者、重置按钮 */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-3">
               {/* 性别 */}
-              <div className="flex items-center gap-2">
-                <label className="text-base text-gray-700 font-medium w-32 text-right flex-shrink-0 whitespace-nowrap">
-                  {t('caseList.gender')}：
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  {t('caseList.gender')}
                 </label>
                 <select
                   value={filters.gender}
                   onChange={(e) => updateFilter('gender', e.target.value)}
-                  className="w-40 px-3 py-2 text-sm border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg hover:border-blue-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all bg-white cursor-pointer"
                 >
                   <option value="">{t('caseList.all')}</option>
                   <option value="male">{t('caseList.male')}</option>
@@ -307,14 +300,14 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
               </div>
 
               {/* 诊断状态 */}
-              <div className="flex items-center gap-2 -ml-10">
-                <label className="text-base text-gray-700 font-medium w-32 text-right flex-shrink-0 whitespace-nowrap">
-                  {t('caseList.diagnosedStatus')}：
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  {t('caseList.diagnosedStatus')}
                 </label>
                 <select
                   value={filters.diagnosed}
                   onChange={(e) => updateFilter('diagnosed', e.target.value)}
-                  className="w-40 px-3 py-2 text-sm border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg hover:border-blue-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all bg-white cursor-pointer"
                 >
                   <option value="">{t('caseList.all')}</option>
                   <option value="yes">{t('caseList.diagnosed')}</option>
@@ -322,50 +315,49 @@ export const CaseList = ({ embedded = false }: CaseListProps) => {
                 </select>
               </div>
 
-              {/* 创建者 + 重置按钮 */}
-              <div className="flex items-center gap-2 -ml-16">
-                {showCreatorFilter ? (
-                  <>
-                    <label className="text-base text-gray-700 font-medium w-32 text-right flex-shrink-0 whitespace-nowrap">
-                      {t('caseList.creator')}：
-                    </label>
-                    <select
-                      value={filters.creator_username}
-                      onChange={(e) => updateFilter('creator_username', e.target.value)}
-                      disabled={!hasRole('admin')}
-                      className="w-40 px-3 py-2 text-sm border border-gray-300 rounded hover:border-blue-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed disabled:hover:border-gray-300"
-                    >
-                      <option value="">{creatorFilterLabel}</option>
-                      {uniqueCreatorUsernames.map((u) => (
-                        <option key={u} value={u}>{u}</option>
-                      ))}
-                    </select>
-                    <div className="flex-1"></div>
-                    {/* 重置按钮 - 右对齐 */}
-                    <button
-                      type="button"
-                      onClick={clearFilters}
-                      className="px-5 py-2 text-sm bg-white text-gray-700 border border-gray-300 rounded hover:bg-blue-50 hover:text-blue-600 hover:border-blue-500 font-medium transition-all whitespace-nowrap flex-shrink-0"
-                    >
-                      {t('caseList.reset')}
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <div className="w-32 flex-shrink-0"></div>
-                    <div className="flex-1"></div>
-                    {/* 重置按钮 - 右对齐 */}
-                    <button
-                      type="button"
-                      onClick={clearFilters}
-                      className="px-5 py-2 text-sm bg-white text-gray-700 border border-gray-300 rounded hover:bg-blue-50 hover:text-blue-600 hover:border-blue-500 font-medium transition-all whitespace-nowrap flex-shrink-0"
-                    >
-                      {t('caseList.reset')}
-                    </button>
-                  </>
-                )}
-              </div>
+              {/* 创建者 */}
+              {showCreatorFilter ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    {t('caseList.creator')}
+                  </label>
+                  <select
+                    value={filters.creator_username}
+                    onChange={(e) => updateFilter('creator_username', e.target.value)}
+                    disabled={!hasRole('admin')}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg hover:border-blue-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all bg-white cursor-pointer disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed disabled:hover:border-gray-300"
+                  >
+                    <option value="">{creatorFilterLabel}</option>
+                    {uniqueCreatorUsernames.map((u) => (
+                      <option key={u} value={u}>{u}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="flex items-end">
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="w-full px-4 py-2 text-sm bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-blue-600 hover:border-blue-400 font-medium transition-all cursor-pointer"
+                  >
+                    {t('caseList.reset')}
+                  </button>
+                </div>
+              )}
             </div>
+
+            {/* 重置按钮 - 显示创建者筛选时单独一行 */}
+            {showCreatorFilter && (
+              <div className="mt-4 flex justify-end">
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="px-6 py-2 text-sm bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-blue-600 hover:border-blue-400 font-medium transition-all cursor-pointer"
+                >
+                  {t('caseList.reset')}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
